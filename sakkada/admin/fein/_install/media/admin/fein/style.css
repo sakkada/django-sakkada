@@ -1,0 +1,13 @@
+/* allow nested lists in error items */
+ul.errorlist ul { margin-left: 1em; padding-left: 0; list-style-type: square; }
+ul.errorlist li li { background-image:none; padding: 0; }
+
+/* tree editor */
+#result_list tr.cut { background-color: #5B80B2; }
+#result_list tr.cut a { color: #fff; }
+#result_list tr:focus, a:focus { background-color: #bcf !important; outline: 0px; }
+#result_list tr:hover { background-color: #bcf !important; outline: 0px; }
+
+.indented_short_title { overflow: hidden; display: block; padding-left: 4px; //zoom: 1; }
+.page_marker { float: left; }
+.node_indent { float: left; }

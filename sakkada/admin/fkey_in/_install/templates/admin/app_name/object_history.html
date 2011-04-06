@@ -1,0 +1,26 @@
+{% extends "admin/object_history.html" %}
+{% load i18n %}
+
+{% block content_title %}
+{{ block.super }}
+{% if request.FKEY_IN %}<h2 style="margin: 0 0 8px 0;"><a href="{{ request.FKEY_IN.list_link }}">{{ request.FKEY_IN.module_name|capfirst }} list</a> / <a href="{{ request.FKEY_IN.item_link }}">#{{ request.FKEY_IN.id }}: {{ request.FKEY_IN.item }}</a></h2>{% endif %}
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  {% if request.FKEY_IN %}
+  <a href="../../../../../">{% trans 'Home' %}</a> &rsaquo; 
+  <a href="../../../../">{{ app_label|capfirst }}</a> &rsaquo; 
+  <a href="../../../">{{ module_name }}</a> &rsaquo; 
+  <a href="../../">{{ module_name }} in {{ request.FKEY_IN.module_name|capfirst }} #{{ request.FKEY_IN.id }}</a> &rsaquo; 
+  <a href="../">{{ object|truncatewords:"18" }}</a> &rsaquo; 
+  {% trans 'History' %}
+  {% else %}
+  <a href="../../../../">{% trans 'Home' %}</a> &rsaquo; 
+  <a href="../../../">{{ app_label|capfirst }}</a> &rsaquo; 
+  <a href="../../">{{ module_name }}</a> &rsaquo; 
+  <a href="../">{{ object|truncatewords:"18" }}</a> &rsaquo; 
+  {% trans 'History' %}
+  {% endif %}
+</div>
+{% endblock %}

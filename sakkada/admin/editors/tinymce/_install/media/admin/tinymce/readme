@@ -1,0 +1,9 @@
+Unpack tinymce tar here.
+Result after unpack:
+media/
+    admin/
+        tinymce/
+            examples
+            jscripts
+            setup
+            changelog.txt

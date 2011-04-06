@@ -1,0 +1,14 @@
+Unpack wymeditor tar here.
+Result after unpack (depend on wymeditor version):
+media/
+    admin/
+        wymeditor/
+            iframe
+            lang
+            plugins
+            skins
+            styles
+            setup
+            jquery.wymeditor.js
+            jquery.wymeditor.min.js
+            jquery.wymeditor.pack.js

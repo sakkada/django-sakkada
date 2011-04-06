@@ -1,0 +1,5 @@
+/* editor_ex style (wymeditor) */
+.editor_tools { overflow: hidden; //zoom:1px; }
+.editor_tools .editor_tools_bar { padding: 0 0 5px 0; }
+.editor_tools .editor_tools_bar a { font-size: 14px; margin: 0 10px 0 0; }
+.editor_ex { height: 200px; }
