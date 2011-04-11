@@ -1,0 +1,3 @@
+Copy management folder into any app directory.
+Run 'python manage.py files_cleanup -r REGEX -l LISTDATA'.
+Run 'python manage.py help files_cleanup' to help.
