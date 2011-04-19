@@ -1,0 +1,39 @@
+Image field based on ImageWithThumbnailsField from sorl-thumnail (https://sorl-thumbnail.googlecode.com/hg/sorl/thumbnail/fields.py).
+AdvancedImageWithThumbnailsField based on ImrpovedImageWithThumbnailsField (http://django.org.ua/wiki/ImrpovedImageWithThumbnailsField)
+Used for Django 1.2.5 or later.
+
+Dependencies:
+ * Django 1.2.5 or later
+ * sorl-thumbnail 3.2.5
+
+Functionality added:
+ * 'max_width', 'max_height' and 'max_quality' optional arguments to fit uploaded image in specified size with specified quality.
+ * 'clearable' optional argument to erase file from fs on delete model, default False.
+ * image preview in admin and generated forms with sorl thumbnail arguments.
+ * 'delete image' checkbox in admin and generated forms wich allows to delete image file on form save if it is not required.
+
+Usage:
+ * install sorl-thumbnail
+ * import ImageWithThumbnailsField to your models module and use as usual image field
+ * see http://thumbnail.sorl.net/docs/#imagewiththumbnailsfield ImageWithThumbnailsField 
+   section to setup thumbnails. 'thumbnail' argument will be used as preview image in admin.
+ * optionally set 'max_width', 'max_height' and 'max_quality' to reduce big images
+ * optionally set 'clearable' to erase files from fs
+
+Example usage in model:
+    class MyModel(models.Model)
+        image = AdvancedImageWithThumbnailsField(
+                    _('Image'), blank=True, upload_to="upload/images/%Y/%m/",
+                    max_width=800, max_height=600, max_quality=90, clearable=True,
+                    thumbnail={'size': (70, 70), 'options': ('crop', 'upscale')},
+                    extra_thumbnails={'main': {'size': (150, 150), 'options': ('crop', 'upscale')}},
+                )
+        
+        def image_tag(self):
+            return self.image.thumbnail_tag if self.image else ""
+        photo_img.short_description = _("Image")
+        photo_img.allow_tags = True
+
+Example usage in admin config:
+    class MyModelAdmin(admin.ModelAdmin):
+        list_display = ('image_tag',)
