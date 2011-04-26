@@ -4,4 +4,3 @@ syntax: glob
 *.orig*
 *.yml*
 *.backup*
-.hgeol
