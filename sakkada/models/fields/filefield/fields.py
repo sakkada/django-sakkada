@@ -1,10 +1,10 @@
 from django.db.models.fields.files import FileField
-from forms import ClearableFormImageField
+from forms import ClearableFormFileField
 
-class AdvancedImageField(FileField):
-    def __init__(self, verbose_name=None, min_size=None, max_size=None, mimetypes=None, clearable=False, **kwargs):
-        super(AdvancedImageField, self).__init__(verbose_name=verbose_name, **kwargs)
-        self.min_size, self.max_size, self.mimetypes, self.clearable = min_size, max_size, mimetypes, clearable
+class AdvancedFileField(FileField):
+    def __init__(self, verbose_name=None, max_size=None, min_size=None, extensions=None, mimetypes=None, clearable=False, **kwargs):
+        super(AdvancedFileField, self).__init__(verbose_name=verbose_name, **kwargs)
+        self.max_size, self.min_size, self.extensions, self.mimetypes, self.clearable = max_size, min_size, extensions, mimetypes, clearable
 
     def save_form_data(self, instance, data):
         """Overwrite save_form_data to delete file if "delete" checkbox is selected"""
@@ -18,10 +18,10 @@ class AdvancedImageField(FileField):
                 original = instance.__class__.objects.get(pk=instance.pk)
                 original = getattr(original, self.name)
                 original and original != data and self.clearable and original.delete()
-            super(AdvancedImageField, self).save_form_data(instance, data)
+            super(AdvancedFileField, self).save_form_data(instance, data)
     
     def formfield(self, **kwargs):
-        kwargs['form_class'] = ClearableFormImageField
-        for i in ['min_size', 'max_size', 'mimetypes']:
+        kwargs['form_class'] = ClearableFormFileField
+        for i in ['max_size', 'min_size', 'extensions', 'mimetypes']:
             kwargs[i] = getattr(self, i, None)
-        return super(AdvancedImageField, self).formfield(**kwargs)
+        return super(AdvancedFileField, self).formfield(**kwargs)

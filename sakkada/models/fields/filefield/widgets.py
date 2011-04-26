@@ -3,16 +3,16 @@ from django.utils.translation import ugettext as _
 from django.conf import settings
 from django import forms
 
-class ClearableImageWidget(forms.widgets.FileInput):
+class ClearableFileWidget(forms.widgets.FileInput):
     """A AdminFileWidget that shows a delete checkbox"""
     input_type = 'file'
 
     def __init__(self, show_delete_checkbox=True, attrs={}):
-        super(ClearableImageWidget, self).__init__(attrs)
+        super(ClearableFileWidget, self).__init__(attrs)
         self.show_delete_checkbox = show_delete_checkbox
 
     def render(self, name, value, attrs=None):
-        input = super(ClearableImageWidget, self).render(name, value, attrs)
+        input = super(ClearableFileWidget, self).render(name, value, attrs)
         if value and hasattr(value, "url"):
             item_link   = u'%s&nbsp;<a target="_blank" href="%s%s">%s</a>'
             item_field  = u'<br>%s&nbsp;%s'
@@ -35,4 +35,4 @@ class ClearableImageWidget(forms.widgets.FileInput):
             return mark_safe(input)
 
     def value_from_datadict(self, data, files, name):
-        return u'__deleted__' if data.get(u'%s_delete' % name) else super(ClearableImageWidget, self).value_from_datadict(data, files, name)
+        return u'__deleted__' if data.get(u'%s_delete' % name) else super(ClearableFileWidget, self).value_from_datadict(data, files, name)
