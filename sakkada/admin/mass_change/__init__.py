@@ -8,9 +8,7 @@ from django.forms.models import modelform_factory, modelformset_factory, inlinef
 from django.conf import settings
 from django import forms
 
-csrf_protect_m = method_decorator(csrf_protect)
-
-class MassAdminModel(admin.ModelAdmin):
+class MassChangeAdmin(admin.ModelAdmin):
     list_editable_mass = None
 
     class Media:
@@ -21,7 +19,7 @@ class MassAdminModel(admin.ModelAdmin):
         ]
 
     def __init__(self, *args, **kwargs):
-        super(MassAdminModel, self).__init__(*args, **kwargs)
+        super(MassChangeAdmin, self).__init__(*args, **kwargs)
         opts = self.model._meta
         self.change_list_template = [
             'admin/mass_change/%s/%s/change_list.html' % (opts.app_label, opts.object_name.lower()),
@@ -31,7 +29,7 @@ class MassAdminModel(admin.ModelAdmin):
             'admin/%s/change_list.html' % opts.app_label,
             'admin/change_list.html'
         ]
-        
+
         list_editable_mass_error = False
         if self.list_editable_mass:
             if self.list_editable:
@@ -44,7 +42,7 @@ class MassAdminModel(admin.ModelAdmin):
             if list_editable_mass_error:
                 raise Exception('Mass Change: error defining list_editable_mass param. It must contain only list_editable fields.')
 
-    @csrf_protect_m
+    @method_decorator(csrf_protect)
     def changelist_view(self, request, extra_context=None, *args, **kwargs):
         """
         Handle the changelist view, the django view for the model instances change list/actions page.
@@ -52,7 +50,7 @@ class MassAdminModel(admin.ModelAdmin):
         """
 
         if not self.list_editable_mass:
-            return super(MassAdminModel, self).changelist_view(request, extra_context, *args, **kwargs)
+            return super(MassChangeAdmin, self).changelist_view(request, extra_context, *args, **kwargs)
 
         # django admin minimal code
         from django.contrib.admin.views.main import ERROR_FLAG
@@ -104,9 +102,9 @@ class MassAdminModel(admin.ModelAdmin):
                 queryset.update(**save_data)
                 self.message_user(request, "Mass update operation successfull complete. Updated %s items." % queryset.count())
                 return HttpResponseRedirect(request.get_full_path())
-            
+
         tr_mass_form = []
         for i in cl.list_display:
             tr_mass_form.append({'field': form[i], 'field_drop': form['%s_drop' % i] if form.base_fields.has_key('%s_drop' % i) else None} if form.base_fields.has_key(i) else None)
-        extra_context = {'mass': {'tr_form': tr_mass_form,}}
-        return super(MassAdminModel, self).changelist_view(request, extra_context, *args, **kwargs)
+        extra_context = {'mass_change': {'tr_form': tr_mass_form,}}
+        return super(MassChangeAdmin, self).changelist_view(request, extra_context, *args, **kwargs)

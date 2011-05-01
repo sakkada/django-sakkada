@@ -5,21 +5,29 @@
     {% if action_form and actions_on_top and cl.full_result_count %}{% admin_actions %}{% endif %}
     {% result_list cl %}
     {% if action_form and actions_on_bottom and cl.full_result_count %}{% admin_actions %}{% endif %}
-    
+
     <table id="mass_change_table">
     <tr>{% for field in cl.list_display %}<td>{{ field }}</td>{% endfor %}</tr>
     {% if mass_change.tr_form %}
-    <tr style="background-color: #e0e0e0;">{% for field in mass_change.tr_form %}<td><nobr>{{ field.field }}{{ field.field_drop }}</nobr></td>{% endfor %}</tr>
-    {% endif %}                                                                                  
+    <tr class="mass_change_tr" style="background-color: #e0e0e0;">
+        {% for field in mass_change.tr_form %}
+        <td><nobr>{{ field.field }}{% if field.field_drop %}{{ field.field_drop }}{% endif %}</nobr></td>
+        {% endfor %}
+    </tr>
+    {% endif %}
     </table>
-    
+
 {% endblock %}
 
 {% block extrahead %}{{ block.super }}
 <script type="text/javascript">
 $(document).ready(function() {
-    $('#result_list tr:last').after($('#mass_change_table tr:last'))
-    $('#mass_change_table').remove()
+    $('#result_list tr:last').after($('#mass_change_table tr:last'));
+    $('#mass_change_table').remove();
+    // call first input change of original table to set list_editable_changed = true in actions
+    $('.mass_change_tr :input').change(function() {
+        $('form#changelist-form table#result_list tr').find('td:gt(0) :input').first().change();
+    });
 });
 </script>
 {% endblock %}

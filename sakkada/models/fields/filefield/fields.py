@@ -19,9 +19,16 @@ class AdvancedFileField(FileField):
                 original = getattr(original, self.name)
                 original and original != data and self.clearable and original.delete()
             super(AdvancedFileField, self).save_form_data(instance, data)
-    
+
     def formfield(self, **kwargs):
         kwargs['form_class'] = ClearableFormFileField
         for i in ['max_size', 'min_size', 'extensions', 'mimetypes']:
             kwargs[i] = getattr(self, i, None)
         return super(AdvancedFileField, self).formfield(**kwargs)
+
+    def south_field_triple(self):
+        """Return a suitable description of this field for South."""
+        from south.modelsinspector import introspector
+        field_class = "django.db.models.fields.files.FileField"
+        args, kwargs = introspector(self)
+        return (field_class, args, kwargs)

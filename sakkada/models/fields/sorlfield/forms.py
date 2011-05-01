@@ -4,7 +4,7 @@ from widgets import DeleteImageWidget
 class DeleteImageFormField(ImageField):
     def __init__(self, *args, **kwargs):
         kwargs["widget"] = DeleteImageWidget(show_delete_checkbox=not kwargs.get("required", True),
-                                             thumbnail=kwargs.pop("thumbnail", None), 
+                                             thumbnail=kwargs.pop("thumbnail", None),
                                              thumbnail_tag=kwargs.pop("thumbnail_tag", None),)
         super(DeleteImageFormField, self).__init__(*args, **kwargs)
 

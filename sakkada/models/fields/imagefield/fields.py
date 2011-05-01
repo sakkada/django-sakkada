@@ -1,7 +1,7 @@
-from django.db.models.fields.files import FileField
+from django.db.models.fields.files import ImageField
 from forms import ClearableFormImageField
 
-class AdvancedImageField(FileField):
+class AdvancedImageField(ImageField):
     def __init__(self, verbose_name=None, min_size=None, max_size=None, mimetypes=None, clearable=False, **kwargs):
         super(AdvancedImageField, self).__init__(verbose_name=verbose_name, **kwargs)
         self.min_size, self.max_size, self.mimetypes, self.clearable = min_size, max_size, mimetypes, clearable
@@ -19,9 +19,16 @@ class AdvancedImageField(FileField):
                 original = getattr(original, self.name)
                 original and original != data and self.clearable and original.delete()
             super(AdvancedImageField, self).save_form_data(instance, data)
-    
+
     def formfield(self, **kwargs):
         kwargs['form_class'] = ClearableFormImageField
         for i in ['min_size', 'max_size', 'mimetypes']:
             kwargs[i] = getattr(self, i, None)
         return super(AdvancedImageField, self).formfield(**kwargs)
+
+    def south_field_triple(self):
+        """Return a suitable description of this field for South."""
+        from south.modelsinspector import introspector
+        field_class = "django.db.models.fields.files.ImageField"
+        args, kwargs = introspector(self)
+        return (field_class, args, kwargs)

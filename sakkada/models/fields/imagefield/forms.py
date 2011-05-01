@@ -25,6 +25,6 @@ class ClearableFormImageField(ImageField):
             raise ValidationError(_('Please keep filesize under %(max)s. Current filesize %(real)s') % {'max': filesizeformat(self.max_size), 'real': filesizeformat(data._size)})
 
         return data
-        
+
     def clean(self, data, initial=None):
         return '__deleted__' if data == '__deleted__' else super(ClearableFormImageField, self).clean(data, initial)

@@ -9,7 +9,7 @@ if (typeof(Array.prototype.indexOf) == 'undefined') {
         if(!i)i=0;
         if(i>=0){
             while(i<j){if(this[i++]===elm){i=i-1+j;j=i-j;}}
-        } else 
+        } else
             j=this.indexOf(elm,j+i);
         return j!==this.length?j:-1;
     }
@@ -70,7 +70,7 @@ var inplace_toggle_boolean = function(item_id, attr) {
         url: ".",
         type: "POST",
         dataType: "json",
-        data: { '__cmd': 'toggle_boolean', 'item_id': item_id, 'attr': attr },
+        data: { '__cmd': 'toggle_boolean', 'item_id': item_id, 'attr': attr, 'csrfmiddlewaretoken': $.cookie('csrftoken') },
         success: replace_elements,
         error: function(xhr, status, err) {
           alert("Unable to toggle " + attr + ": " + xhr.responseText)
@@ -162,7 +162,7 @@ var page_tree_handler = function(item_id) {
         open_subtree(item_id)
         feincms_page_open_list.push(item_id)
     }
-    
+
     // do I really want that?
     recolor_lines()
     return false
@@ -181,7 +181,7 @@ var tree_structure_clean = function() {
         if(!p.children || p.children.length == 0)
            $(opt).replaceWith('')
     })
-    
+
     // START TREE_STRUCTURE_CLEAN
     if (false == feincms_page_open_list_is_get) {
         feincms_page_open_list_is_get = true
@@ -199,11 +199,11 @@ var tree_structure_clean = function() {
             $.cookie('feincms_page_open_list', feincms_page_open_list.join(','), {'path':'/'})
         })
     }
-    
+
     // prepare structure, set row and pointer
     for(k in tree_structure) {
         var p = page(k)
-        
+
         // Precompute object links for no object-id lookups later
         m = $('#page_marker-' + k)
         if(m.length) {
@@ -215,7 +215,7 @@ var tree_structure_clean = function() {
             tree_structure[k] = {}
         }
     }
-    
+
     // clean out tree_structure: Remove non existant parents, children, descendants
     for (k in tree_structure) {
         var p = page(k)
@@ -244,14 +244,14 @@ var tree_structure_clean = function() {
         p.ptr.parent().find('.node_indent').remove() //? is it need
         p.ptr.before(indent)
     }
-    
+
     // mark as open if page not deleted
     for(i in feincms_page_open_list) {
         var p = page(feincms_page_open_list[i])
         if(p) p.open = true
     }
     // END TREE_STRUCTURE_CLEAN
-    
+
     // sort rows by tree_structure_sort
     last = 0
     for(k in tree_structure_sort) {
@@ -262,7 +262,7 @@ var tree_structure_clean = function() {
           : p.row.parent().prepend(p.row)
         last++
     }
-    
+
     // fill root_items and hide all rows
     root_items = []
     for(k in tree_structure) {
@@ -281,7 +281,7 @@ var tree_structure_clean = function() {
         if(p.open)
             open_subtree(p.id)
     }
-    
+
     // Recolor lines to correctly alternate again
     $('tbody tr').removeClass('row1').removeClass('row2')
     $('table').show()
@@ -338,8 +338,9 @@ function paste_item(pk, position) {
             '__cmd': 'move_node',
             'position': position,
             'cut_item': cut_item_pk,
-            'pasted_on': pk
-        }, 
+            'pasted_on': pk,
+            'csrfmiddlewaretoken': $.cookie('csrftoken')
+        },
         function(data) {
             var error_message = ''
             if(data.slice(0,2) == 'OK') {
@@ -348,7 +349,7 @@ function paste_item(pk, position) {
                 catch(err) { error_message = 'Error: JSON parsing error.' }
                 if (!data) { error_message = 'Error: No data received after request.' }
                 if (error_message) { alert(error_message); return }
-                
+
                 tree_structure = data
                 tree_structure_sort = tree_structure.sort
                 delete tree_structure.sort
@@ -359,7 +360,6 @@ function paste_item(pk, position) {
             }
         }
     )
-
     return false
 }
 
