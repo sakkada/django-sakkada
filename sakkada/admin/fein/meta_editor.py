@@ -4,7 +4,7 @@ from django.utils import simplejson
 from django.utils.safestring import mark_safe
 from django.contrib import admin
 
-FEIN_ADMIN_MEDIA = settings.MEDIA_URL + 'admin/fein/'
+FEIN_ADMIN_MEDIA = settings.STATIC_URL + 'admin/fein/'
 
 # ------------------------------------------------------------------------
 def django_boolean_icon(field_val, alt_text=None, title=None):
@@ -82,8 +82,8 @@ class MetaEditor(admin.ModelAdmin):
         js = (
             settings.ADMIN_MEDIA_PREFIX + 'js/jquery.min.js', 
             settings.ADMIN_MEDIA_PREFIX + 'js/jquery.init.js',
-            settings.MEDIA_URL + 'admin/jquery/init.js',
-            settings.MEDIA_URL + 'admin/jquery/jquery.cookie.js',
+            settings.STATIC_URL + 'admin/jquery/init.js',
+            settings.STATIC_URL + 'admin/jquery/jquery.cookie.js',
             FEIN_ADMIN_MEDIA + 'toolbox.js',
         )
 

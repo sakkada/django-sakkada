@@ -1,6 +1,6 @@
 Unpack wymeditor tar here.
 Result after unpack (depend on wymeditor version):
-media/
+static/
     admin/
         wymeditor/
             iframe

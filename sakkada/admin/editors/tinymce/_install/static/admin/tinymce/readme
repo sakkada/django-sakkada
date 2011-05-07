@@ -1,6 +1,6 @@
 Unpack tinymce tar here.
 Result after unpack:
-media/
+static/
     admin/
         tinymce/
             examples

@@ -11,12 +11,12 @@ class EditorAdmin(admin.ModelAdmin):
         js = [
             settings.ADMIN_MEDIA_PREFIX + 'js/jquery.min.js',
             settings.ADMIN_MEDIA_PREFIX + 'js/jquery.init.js',
-            settings.MEDIA_URL + 'admin/jquery/init.js',
-            settings.MEDIA_URL + 'admin/jquery/jquery.cookie.js',
-            settings.MEDIA_URL + 'admin/wymeditor/jquery.wymeditor.pack.js',
-            settings.MEDIA_URL + setup,
+            settings.STATIC_URL + 'admin/jquery/init.js',
+            settings.STATIC_URL + 'admin/jquery/jquery.cookie.js',
+            settings.STATIC_URL + 'admin/wymeditor/jquery.wymeditor.pack.js',
+            settings.STATIC_URL + setup,
         ]
-        css = {'all': [settings.MEDIA_URL + 'admin/wymeditor/setup/activater.css',]}
+        css = {'all': [settings.STATIC_URL + 'admin/wymeditor/setup/activater.css',]}
 
         media = getattr(super(EditorAdmin, self), 'media', None) or Media()
         media.add_js(js)

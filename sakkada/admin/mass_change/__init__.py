@@ -15,7 +15,7 @@ class MassChangeAdmin(admin.ModelAdmin):
         js = [
             settings.ADMIN_MEDIA_PREFIX + 'js/jquery.min.js',
             settings.ADMIN_MEDIA_PREFIX + 'js/jquery.init.js',
-            settings.MEDIA_URL + 'admin/jquery/init.js',
+            settings.STATIC_URL + 'admin/jquery/init.js',
         ]
 
     def __init__(self, *args, **kwargs):

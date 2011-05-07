@@ -1,7 +1,7 @@
 """
 install
-    * media
-        copy to media folder
+    * static
+        copy to static folder
     * templates
         copy templates to app templates folder        
 """

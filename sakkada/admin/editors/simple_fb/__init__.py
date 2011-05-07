@@ -7,11 +7,11 @@ class EditorAdmin(admin.ModelAdmin):
         js = [
             settings.ADMIN_MEDIA_PREFIX + 'js/jquery.min.js',
             settings.ADMIN_MEDIA_PREFIX + 'js/jquery.init.js',
-            settings.MEDIA_URL + 'admin/jquery/init.js',
-            settings.MEDIA_URL + 'admin/simple_fb/activater.js',
+            settings.STATIC_URL + 'admin/jquery/init.js',
+            settings.STATIC_URL + 'admin/simple_fb/activater.js',
         ]
         
-        css = {'all': [settings.MEDIA_URL + 'admin/simple_fb/activater.css',]}
+        css = {'all': [settings.STATIC_URL + 'admin/simple_fb/activater.css',]}
 
     simple_fb_fields = {}
     
