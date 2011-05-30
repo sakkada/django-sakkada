@@ -11,6 +11,7 @@ Functionality added:
  * 'clearable' optional argument to erase file from fs on delete model, default False.
  * image preview in admin and generated forms with sorl thumbnail arguments.
  * 'delete image' checkbox in admin and generated forms wich allows to delete image file on form save if it is not required.
+ * 'extension' property
 
 Usage:
  * install sorl-thumbnail

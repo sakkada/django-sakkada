@@ -11,6 +11,11 @@ class AdvancedImageWithThumbnailsFieldFile(ImageWithThumbnailsFieldFile):
         super(AdvancedImageWithThumbnailsFieldFile, self).save(name, content, save)
         resize(getattr(self.instance, self.field.name).path, self.field.max_width, self.field.max_height, self.field.max_quality)
 
+    @property
+    def extension(self):
+        file = getattr(self.instance, self.field.name)
+        return file and os.path.splitext(file.name)[1][1:]
+
 class AdvancedImageWithThumbnailsField(ImageWithThumbnailsField):
     attr_class = AdvancedImageWithThumbnailsFieldFile
 

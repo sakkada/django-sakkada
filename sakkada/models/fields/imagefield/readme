@@ -10,6 +10,7 @@ Functionality added:
  * 'mimetypes' optional arguments to allow upload files only with specified memitype (image/gif, image/png, image/jpeg).
  * 'clearable' optional argument to erase file from fs on delete model, default False.
  * 'delete file' checkbox in admin and generated forms wich allows to delete file on form save if it is not required.
+ * 'extension' property
 
 Usage:
  * import AdvancedFileField to your models module and use as usual file field

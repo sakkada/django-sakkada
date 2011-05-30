@@ -1,7 +1,15 @@
-from django.db.models.fields.files import ImageField
+from django.db.models.fields.files import ImageField, ImageFieldFile
 from forms import ClearableFormImageField
 
+class AdvancedImageFieldFile(ImageFieldFile):
+    @property
+    def extension(self):
+        file = getattr(self.instance, self.field.name)
+        return file and os.path.splitext(file.name)[1][1:]
+
 class AdvancedImageField(ImageField):
+    attr_class = AdvancedImageFieldFile
+
     def __init__(self, verbose_name=None, min_size=None, max_size=None, mimetypes=None, clearable=False, **kwargs):
         super(AdvancedImageField, self).__init__(verbose_name=verbose_name, **kwargs)
         self.min_size, self.max_size, self.mimetypes, self.clearable = min_size, max_size, mimetypes, clearable

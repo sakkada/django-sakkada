@@ -1,7 +1,15 @@
-from django.db.models.fields.files import FileField
+from django.db.models.fields.files import FileField, FieldFile
 from forms import ClearableFormFileField
 
+class AdvancedFieldFile(FieldFile):
+    @property
+    def extension(self):
+        file = getattr(self.instance, self.field.name)
+        return file and os.path.splitext(file.name)[1][1:]
+
 class AdvancedFileField(FileField):
+    attr_class = AdvancedFieldFile
+
     def __init__(self, verbose_name=None, max_size=None, min_size=None, extensions=None, mimetypes=None, clearable=False, **kwargs):
         super(AdvancedFileField, self).__init__(verbose_name=verbose_name, **kwargs)
         self.max_size, self.min_size, self.extensions, self.mimetypes, self.clearable = max_size, min_size, extensions, mimetypes, clearable
