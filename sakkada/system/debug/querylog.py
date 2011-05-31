@@ -38,7 +38,11 @@ class SqlPrintingMiddleware(object):
             if request.POST:
                 message.append("\033[34mREQUEST POST: %s\033[0m" % (',\n              '.join([i.encode('utf8') + '=' + j.encode('utf8') for i,j in sorted(request.POST.items())])))
             for query in connection.queries:
-                nice_sql = query['sql'].replace('"', '').encode('utf8')
+                nice_sql = query['sql'].replace('"', '')
+                try:
+                    nice_sql = nice_sql.encode('utf8')
+                except UnicodeDecodeError:
+                    pass
                 sql = "\033[31m[%s]\033[0m %s" % (query['time'], nice_sql)
                 total_time = total_time + float(query['time'])
                 message.append(sql)
