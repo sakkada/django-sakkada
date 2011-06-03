@@ -11,7 +11,10 @@ class ClearableFormFileField(FileField):
         self.max_size = kwargs.pop('max_size', None)
         self.extensions = kwargs.pop('extensions', None)
         self.mimetypes = kwargs.pop('mimetypes', None)
-        kwargs["widget"] = ClearableFileWidget(show_delete_checkbox=not kwargs.get("required", True),)
+        widget = kwargs.get('widget', None)
+        widget = widget if isinstance(widget, type) and issubclass(widget, ClearableFileWidget) else ClearableFileWidget
+        widget = widget(show_delete_checkbox=not kwargs.get("required", True),)
+        kwargs["widget"] = widget
         super(ClearableFormFileField, self).__init__(*args, **kwargs)
 
     def to_python(self, data):

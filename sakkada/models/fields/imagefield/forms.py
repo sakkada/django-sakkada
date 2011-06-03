@@ -10,7 +10,10 @@ class ClearableFormImageField(ImageField):
         self.min_size = kwargs.pop('min_size', None)
         self.max_size = kwargs.pop('max_size', None)
         self.mimetypes = kwargs.pop('mimetypes', None)
-        kwargs["widget"] = ClearableImageWidget(show_delete_checkbox=not kwargs.get("required", True),)
+        widget = kwargs.get('widget', None)
+        widget = widget if isinstance(widget, type) and issubclass(widget, ClearableImageWidget) else ClearableImageWidget
+        widget = widget(show_delete_checkbox=not kwargs.get("required", True),)
+        kwargs["widget"] = widget
         super(ClearableFormImageField, self).__init__(*args, **kwargs)
 
     def to_python(self, data):
