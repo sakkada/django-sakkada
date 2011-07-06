@@ -1,0 +1,66 @@
+Template filters, which allows you change some widget attrs in you template without code change.
+
+Installation:
+    Copy templatetags folder into any app directory.
+
+Usage:
+    {% load html_attrs %}
+
+    Filter "attrs":
+        Receive BoundField object, and add some attrs to field widget.
+        If default field is:
+            {{ form.field }}
+            ---
+            <input class="bar" size="10">
+
+        You can do this:    
+            {{ form.field|attrs:'class="foo -bar" font=red size=25' }}
+            ---
+            <input class="foo" font="red" size="25">
+            (Add css class "foo", remove css class "bar", add param font="red" and change size to "25".)
+        
+        If you want to remove all previous css classes, and set new one, just use equal ('=') with first class:
+            {{ form.field|attrs:'class="=foo new" font=red size=25' }}
+            ---
+            <input class="foo new" font="red" size="25">
+
+        To remove any param, just set it value to None:
+            {{ form.field|attrs:'class="foo new" font=red size=None' }}
+            ---
+            <input class="bar foo new" font="red">
+
+        Each filter below return string object with rendered widget, if you need real field object, use 'as field' at the end:
+            {{ form.field|attrs:'class="foo new" font=red size=None as field'|some_another_filter_working_with_field_objects }}
+        
+        !!! Caution: Using 'as field' param changes original attrs dict of field's widget, because we need return changed object.
+            So:
+                {{ form.field|attrs:'class="foo -bar" font=red size=None' }}
+                {{ form.field }}
+                {{ form.field|attrs:'class="foo -bar" font=red size=None as field' }}
+                {{ form.field }}
+            Will return:
+                <input class="foo" font="red">
+                <input class="bar" size="10">
+                <input class="foo" font="red">
+                <input class="foo" font="red">
+            Fourth field equals to third, because 'as field' param change original attrs dict in field widget, but second is original after first.
+
+    Filter "html_attrs":
+        Receive String object with html text, search tags by received regex pattern and replace some params in finded tags.
+        Params processing is like in 'attrs' filter, but added regex pattern and python like slice argument.
+        
+        If text is:
+            {{ text }}
+            ---
+            <input class="bar"><input class="foo"><input type="password">
+        
+        You can do this:    
+            {{ text|html_attrs:'input[:-1]|class="new" size=50' }}
+            ---
+            <input class="bar new" size="50"><input class="foo new" size="50"><input type="password">
+        
+        First param is regex pattern, in example 'input'.
+        Real regex pattern will be like r"""<(?!/)(%s[^>?]*)/?>""" where '%s' change by received regex.
+        In example below it will be r"""<(?!/)(input[^>?]*)/?>""".
+        If after regex param received slice param ('[:-1]'), result will sliced by it.
+        If you need squre bracket in you regex and no need slice, just use '[:]' after regex ('su[b|p][:]|class="new"').
