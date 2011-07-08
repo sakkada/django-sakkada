@@ -27,16 +27,21 @@ class SqlPrintingMiddleware(object):
     """
     def process_response(self, request, response):
         
-        if settings.DEBUG and not request.path.startswith(settings.MEDIA_URL) and len(connection.queries) > 0:
+        if settings.DEBUG and len(connection.queries) > 0:
+
             logger = get_logger()
             total_time = 0.0
             message = []
             message.append("\n")
             message.append("\033[34mREQUEST PATH: %s\033[0m" % request.path.encode('utf8'))
             if request.GET:
-                message.append("\033[34mREQUEST GET:  %s\033[0m" % (',\n              '.join([i.encode('utf8') + '=' + j.encode('utf8') for i,j in sorted(request.GET.items())])))
+                message.append("\033[34mREQUEST GET:  %s\033[0m" % (',\n              '.join(
+                    [i.encode('utf8') + '=' + (j.encode('utf8') if isinstance(j, unicode) else str(j)) for i,j in sorted(request.GET.items())]
+                )))
             if request.POST:
-                message.append("\033[34mREQUEST POST: %s\033[0m" % (',\n              '.join([i.encode('utf8') + '=' + j.encode('utf8') for i,j in sorted(request.POST.items())])))
+                message.append("\033[34mREQUEST POST: %s\033[0m" % (',\n              '.join(
+                    [i.encode('utf8') + '=' + (j.encode('utf8') if isinstance(j, unicode) else str(j)) for i,j in sorted(request.POST.items())]
+                )))
             for query in connection.queries:
                 nice_sql = query['sql'].replace('"', '')
                 try:
