@@ -63,11 +63,11 @@ def pagination(page, window=2):
     pagination['dots_right']    = end+1 if end_dot and end+1<pages else None
     pagination['last']          = pages if end_dot else None
     pagination['next']          = current + 1 if current < pages else None
-    
+
     for i in range(start, end+1):
         pagination['pages'].append({'current': i == current, 'number':i})
 
     pagination['wind_left']     = start-2 if start_dot else None
     pagination['wind_right']    = end-current if end_dot else None
-    
+
     return pagination

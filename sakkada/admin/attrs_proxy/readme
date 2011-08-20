@@ -6,7 +6,7 @@ Usage:
  * set attr with name attrs_proxy in model admin (keys - field names, values - attrs dict)
 
 If attr name starts with '+', new attr value will be prepended with old value.
- 
+
 Example usage in Admin:
 -------------------------------------------------------------------------------
 from django.contrib import admin

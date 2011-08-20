@@ -35,5 +35,5 @@ class ListEditor(MetaEditor):
         self._refresh_changelist_caches()
         extra_context = extra_context or {}
         extra_context['FEIN_ADMIN_MEDIA'] = FEIN_ADMIN_MEDIA
-        
+
         return super(ListEditor, self).changelist_view(request, extra_context, *args, **kwargs)

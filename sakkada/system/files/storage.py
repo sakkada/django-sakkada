@@ -2,6 +2,7 @@ from pytils.translit import translify
 from django.core.files.storage import FileSystemStorage as FileSystemStorageOriginal
 from django.utils.text import get_valid_filename
 import os
+import unicodedata
 
 class FileSystemStorage(FileSystemStorageOriginal):
 
@@ -10,9 +11,12 @@ class FileSystemStorage(FileSystemStorageOriginal):
         Returns a filename, based on the provided filename, that's suitable for
         use in the target storage system.
 
-        Extend: transliterate and lowerize name of file.
+        Extend: transliterate (from russian) and lowerize name of file.
         """
-        return get_valid_filename(translify(name).lower())
+        name = unicodedata.normalize('NFKD', name)
+        name = name.encode('cp1251', 'ignore').decode('cp1251')
+        name = translify(name).lower()
+        return get_valid_filename(name)
 
     def get_available_name(self, name):
         """

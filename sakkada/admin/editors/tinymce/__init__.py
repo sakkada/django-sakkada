@@ -26,13 +26,13 @@ class EditorAdmin(admin.ModelAdmin):
 
     tinymce_fields = {}
     tinymce_setup = None
-    
+
     def get_form(self, request, obj=None, **kwargs):
         form = super(EditorAdmin, self).get_form(request, obj=None, **kwargs)
         # set some css classes
         self.tinymce_set(form)
         return form
-        
+
     # css proxy classes set
     def tinymce_set(self, form):
         if hasattr(self, 'tinymce_fields') and self.tinymce_fields:

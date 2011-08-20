@@ -16,7 +16,7 @@ Functionality added:
 Usage:
  * install sorl-thumbnail
  * import ImageWithThumbnailsField to your models module and use as usual image field
- * see http://thumbnail.sorl.net/docs/#imagewiththumbnailsfield ImageWithThumbnailsField 
+ * see http://thumbnail.sorl.net/docs/#imagewiththumbnailsfield ImageWithThumbnailsField
    section to setup thumbnails. 'thumbnail' argument will be used as preview image in admin.
  * optionally set 'max_width', 'max_height' and 'max_quality' to reduce big images
  * optionally set 'clearable' to erase files from fs
@@ -29,7 +29,7 @@ Example usage in model:
                     thumbnail={'size': (70, 70), 'options': ('crop', 'upscale')},
                     extra_thumbnails={'main': {'size': (150, 150), 'options': ('crop', 'upscale')}},
                 )
-        
+
         def image_tag(self):
             return self.image.thumbnail_tag if self.image else ""
         photo_img.short_description = _("Image")

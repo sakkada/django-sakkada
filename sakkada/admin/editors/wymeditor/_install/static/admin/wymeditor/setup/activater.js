@@ -10,7 +10,7 @@ $(function() {
         django_admin_editor_ex = $.cookie('django_admin_editor_ex') == 'true'
         $(window).unload(function() { $.cookie('django_admin_editor_ex', django_admin_editor_ex+'', {'path':'/'}) })
     }
-    
+
     // post init wymeditor handler
     var wymeditor_postinit = function(wym){
         // update wymeditor value on textarea blur if toggled
@@ -37,7 +37,7 @@ $(function() {
             }
         })
     }
-    
+
     // filebrowser for wymeditor
     var wymeditor_filebrowser = function(wym, wdw) {
         // the URL to the Django filebrowser, depends on your URLconf
@@ -63,7 +63,7 @@ $(function() {
                 return false;
             });
         }
-    }    
+    }
 
     // editor_ex activator
     var textarea_class = 'editor_wymeditor'
@@ -93,7 +93,7 @@ $(function() {
             container.find('textarea.'+textarea_class).animate(object)
         }
     }
-    
+
     filebrowser_link = function() {
         // the URL to the Django filebrowser, depends on your URLconf
         fb_url = '/admin/filebrowser/browse/'
@@ -124,7 +124,7 @@ $(function() {
            .prepend($("<a/>").addClass('editor_tools_bar_browse').attr('href', '#').html('filemanager').css('color', '#0a0'))
            .prepend($("<a/>").addClass('editor_tools_bar_resize') .attr('href', '#').html('large'))
         env.append($(this))
-        
+
         django_admin_editor_ex && editor_ex(this)
 
         $('a.editor_tools_bar_browse', env).click(function() {

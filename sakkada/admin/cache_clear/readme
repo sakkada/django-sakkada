@@ -1,0 +1,17 @@
+Usage:
+ * install django-sakkada
+ * import CacheClearAdmin from sakkada.admin.clear_cache
+ * set CacheClearAdmin as class of admin model
+ * optionally set index_template attr in admin.site to show link at index page
+   and replace {APP_NAME} and {MODEL_NAME} to real values
+
+Example usage in Admin:
+-------------------------------------------------------------------------------
+from django.contrib import admin
+from sakkada.admin.cache_clear import CacheClearAdmin
+
+class SomeAdmin(CacheClearAdmin, admin.ModelAdmin):
+    pass
+
+# optionally set index_template attr
+admin.site.index_template = 'admin/cache/index_admin.html'

@@ -36,11 +36,11 @@ var tinymce_activater = function (){
 }
 
 // filebrowser callback (in global scope)
-var CustomFileBrowser = function(field_name, url, type, win) { 
-    var cmsURL = "/admin/filebrowser/browse/?pop=2"; 
-    cmsURL = cmsURL + "&type=" + type; 
+var CustomFileBrowser = function(field_name, url, type, win) {
+    var cmsURL = "/admin/filebrowser/browse/?pop=2";
+    cmsURL = cmsURL + "&type=" + type;
     tinyMCE.activeEditor.windowManager.open(
-        {file: cmsURL, width: 900, height: 600, resizable: "yes", scrollbars: "yes",}, 
+        {file: cmsURL, width: 900, height: 600, resizable: "yes", scrollbars: "yes",},
         {window: win, input: field_name, editor_id: tinyMCE.selectedInstance.editorId}
     );
     return false;
@@ -95,16 +95,16 @@ $(function() {
         .prepend($("<a/>").addClass('editor_tools_bar_browse').attr('href', '#').html('filemanager').css('color', '#0a0'))
         .prepend($("<a/>").addClass('editor_tools_bar_resize') .attr('href', '#').html('large'))
         env.append($(this))
-        
+
         $('a.editor_tools_bar_browse', env).click(function() {
             filebrowser_link()
             return false
         })
 
         $('a.editor_tools_bar_resize', env).click(function() {
-            if (tinyMCE.editors.length) { 
-                alert('Для изменения размеров редактора tinyMCE\nпотяните за правый нижний угол окна редактора!'); 
-                return false; 
+            if (tinyMCE.editors.length) {
+                alert('Для изменения размеров редактора tinyMCE\nпотяните за правый нижний угол окна редактора!');
+                return false;
             }
             data = 'large' == $(this).text() ? {name: 'small', size: 450}
                                             : {name: 'large', size: 200}

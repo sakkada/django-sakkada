@@ -3,6 +3,7 @@
 0.0.2 - added different applications support
 0.0.3 - reverse fixed ((args[1]) -> (args[1],))
 0.0.4 - added FkeyInMpttAdmin for MpttTree models
+0.0.5 - refactor fkey_in_link (change add link to image and show verbose names)
 
 install:
     * no media
@@ -27,18 +28,24 @@ def fkey_in_link(name, model_set=None, fkey_name=None)
 """
 from django.core.urlresolvers import reverse
 from django.contrib import admin
+from django.conf import settings
 
 def fkey_in_link(name, model_set=None, fkey_name=None, with_add_link=False):
-    def link(self, item):
+    def link(self, item, url_only=None):
         modelset    = model_set if model_set else '%s_set' % name
         if not hasattr(item, modelset):
-            raise Exception, 'FkeyIn link generater: "%s" does not exist' % modelset
+            raise Exception, u'FkeyIn link generater: "%s" does not exist' % modelset
         modelset    = getattr(item, modelset)
         fkeyname    = fkey_name if fkey_name else item._meta.module_name
-        link        = 'admin:%s_%s_changelist_fkeyin' % (modelset.model._meta.app_label, modelset.model._meta.module_name)
+        link        = u'admin:%s_%s_changelist_fkeyin' % (modelset.model._meta.app_label, modelset.model._meta.module_name)
         link        = reverse(link, None, (fkeyname, item.pk), {})
-        result      = '<nobr><a href="%s">%s list</a> (%d)</nobr>' % (link, name, modelset.count())
-        result      = '%s <nobr><a href="%sadd/">%s add</nobr>' % (result, link, name) if with_add_link else result
+        if url_only in ['list', 'add']:
+            result  = '%s%s' % (link, 'add/' if url_only == 'add' else '')
+        else:
+            vernames    = modelset.model._meta.verbose_name, modelset.model._meta.verbose_name_plural
+            addicon     = u'%simg/admin/icon_addlink.gif' % settings.ADMIN_MEDIA_PREFIX
+            result      = u'<a href="%s" title="show related &laquo;%s&raquo;">%s</a> (%d)' % (link, vernames[1], vernames[1], modelset.count())
+            result      = u'<nobr>%s&nbsp;<a href="%sadd/" title="create related &laquo;%s&raquo;"><img src="%s"></a></nobr>' % (result, link, vernames[0], addicon) if with_add_link else result
         return result
     link.short_description  = '%s list' % name
     link.allow_tags         = True

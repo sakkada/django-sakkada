@@ -40,7 +40,7 @@ $(function() {
         .prepend($("<a/>").addClass('editor_tools_bar_browse').attr('href', '#').html('filemanager').css('color', '#0a0'))
         .prepend($("<a/>").addClass('editor_tools_bar_resize') .attr('href', '#').html('large'))
         env.append($(this))
-        
+
         $('a.editor_tools_bar_browse', env).click(function() {
             filebrowser_link()
             return false

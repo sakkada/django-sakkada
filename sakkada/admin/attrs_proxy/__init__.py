@@ -3,13 +3,13 @@ from django.contrib import admin
 class AttrsProxyAdmin(admin.ModelAdmin):
     """Set attrs to widgets from self.attrs_proxy['fieldname']['attrname'] to fieldname.widget['attrname']"""
     attrs_proxy = {}
-    
+
     def get_form(self, request, obj=None, **kwargs):
         form = super(AttrsProxyAdmin, self).get_form(request, obj=None, **kwargs)
         # set some css classes
         self.attrs_proxy_set(form)
         return form
-        
+
     # css proxy classes set
     def attrs_proxy_set(self, form):
         if hasattr(self, 'attrs_proxy') and self.attrs_proxy:

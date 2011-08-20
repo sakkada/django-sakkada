@@ -10,13 +10,13 @@
 {% if not is_popup %}
 <div class="breadcrumbs">
   {% if request.FKEY_IN %}
-  <a href="../../../">{% trans "Home" %}</a>&rsaquo; 
-  <a href="../../">{{ app_label|capfirst }}</a>&rsaquo; 
-  <a href="../">{{ cl.opts.verbose_name_plural|capfirst }}</a>&rsaquo; 
+  <a href="../../../">{% trans "Home" %}</a> &rsaquo;
+  <a href="../../">{{ app_label|capfirst }}</a> &rsaquo;
+  <a href="../">{{ cl.opts.verbose_name_plural|capfirst }}</a> &rsaquo;
   {{ cl.opts.verbose_name_plural|capfirst }} in {{ request.FKEY_IN.module_name|capfirst }} #{{ request.FKEY_IN.id }}</a>
   {% else%}
-  <a href="../../">{% trans "Home" %}</a>&rsaquo; 
-  <a href="../">{{ app_label|capfirst }}</a>&rsaquo; 
+  <a href="../../">{% trans "Home" %}</a> &rsaquo;
+  <a href="../">{{ app_label|capfirst }}</a> &rsaquo;
   {{ cl.opts.verbose_name_plural|capfirst }}
   {% endif %}
 </div>

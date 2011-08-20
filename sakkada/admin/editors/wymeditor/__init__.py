@@ -22,16 +22,16 @@ class EditorAdmin(admin.ModelAdmin):
         media.add_js(js)
         media.add_css(css)
         return media
-    
+
     wymeditor_fields = {}
     wymeditor_setup = None
-    
+
     def get_form(self, request, obj=None, **kwargs):
         form = super(EditorAdmin, self).get_form(request, obj=None, **kwargs)
         # set some css classes
         self.wymeditor_set(form)
         return form
-        
+
     # css proxy classes set
     def wymeditor_set(self, form):
         if hasattr(self, 'wymeditor_fields') and self.wymeditor_fields:

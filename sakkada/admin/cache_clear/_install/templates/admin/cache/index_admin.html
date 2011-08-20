@@ -1,0 +1,19 @@
+{% extends "admin/index.html" %}
+
+{% block sidebar %}
+    <div id="content-related">
+        <div class="module">
+            <h2>Administration tools</h2>
+            <h3>Cache system</h3>
+            <ul class="actionlist">
+                <li class="deletelink">
+                    <a href="{% url admin:{APP_NAME}_{MODEL_NAME}_cache_clear %}"><b>Clear cache</b></a>
+                    <br/><span class="mini quiet">Clear whole system cache</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <br clear="right">
+    {{ block.super }}
+{% endblock %}

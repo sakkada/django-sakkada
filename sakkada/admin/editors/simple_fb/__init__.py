@@ -10,17 +10,17 @@ class EditorAdmin(admin.ModelAdmin):
             settings.STATIC_URL + 'admin/jquery/init.js',
             settings.STATIC_URL + 'admin/simple_fb/activater.js',
         ]
-        
+
         css = {'all': [settings.STATIC_URL + 'admin/simple_fb/activater.css',]}
 
     simple_fb_fields = {}
-    
+
     def get_form(self, request, obj=None, **kwargs):
         form = super(EditorAdmin, self).get_form(request, obj=None, **kwargs)
         # set some css classes
         self.simple_fb_set(form)
         return form
-        
+
     # css proxy classes set
     def simple_fb_set(self, form):
         if hasattr(self, 'simple_fb_fields') and self.simple_fb_fields:

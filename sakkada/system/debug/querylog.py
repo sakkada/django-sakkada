@@ -26,7 +26,7 @@ class SqlPrintingMiddleware(object):
     for each view that is processed.  This is only useful for debugging.
     """
     def process_response(self, request, response):
-        
+
         if settings.DEBUG and len(connection.queries) > 0:
 
             logger = get_logger()

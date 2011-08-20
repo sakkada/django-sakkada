@@ -80,7 +80,7 @@ class MetaEditor(admin.ModelAdmin):
 
     class Media:
         js = (
-            settings.ADMIN_MEDIA_PREFIX + 'js/jquery.min.js', 
+            settings.ADMIN_MEDIA_PREFIX + 'js/jquery.min.js',
             settings.ADMIN_MEDIA_PREFIX + 'js/jquery.init.js',
             settings.STATIC_URL + 'admin/jquery/init.js',
             settings.STATIC_URL + 'admin/jquery/jquery.cookie.js',
@@ -109,7 +109,7 @@ class MetaEditor(admin.ModelAdmin):
         self._ajax_editable_booleans = {}
 
         for field in self.list_display:
-            
+
             # The ajax_editable_boolean return value has to be assigned
             # to the ModelAdmin class
             item = getattr(self.__class__, field, None)
@@ -132,7 +132,7 @@ class MetaEditor(admin.ModelAdmin):
             attr = str(request.POST.get('attr', None))
         except:
             return HttpResponseBadRequest("Malformed request")
-            
+
         if not request.user.is_staff:
             return HttpResponseForbidden("You do not have permission to access this page")
 
@@ -150,7 +150,7 @@ class MetaEditor(admin.ModelAdmin):
 
         try:
             before_data = self._ajax_editable_booleans[attr](self, obj)
-            
+
             setattr(obj, attr, not getattr(obj, attr))
             obj.save()
 

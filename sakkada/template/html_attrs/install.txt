@@ -13,12 +13,12 @@ Usage:
             ---
             <input class="bar" size="10">
 
-        You can do this:    
+        You can do this:
             {{ form.field|attrs:'class="foo -bar" font=red size=25' }}
             ---
             <input class="foo" font="red" size="25">
             (Add css class "foo", remove css class "bar", add param font="red" and change size to "25".)
-        
+
         If you want to remove all previous css classes, and set new one, just use equal ('=') with first class:
             {{ form.field|attrs:'class="=foo new" font=red size=25' }}
             ---
@@ -31,7 +31,7 @@ Usage:
 
         Each filter below return string object with rendered widget, if you need real field object, use 'as field' at the end:
             {{ form.field|attrs:'class="foo new" font=red size=None as field'|some_another_filter_working_with_field_objects }}
-        
+
         !!! Caution: Using 'as field' param changes original attrs dict of field's widget, because we need return changed object.
             So:
                 {{ form.field|attrs:'class="foo -bar" font=red size=None' }}
@@ -48,17 +48,17 @@ Usage:
     Filter "html_attrs":
         Receive String object with html text, search tags by received regex pattern and replace some params in finded tags.
         Params processing is like in 'attrs' filter, but added regex pattern and python like slice argument.
-        
+
         If text is:
             {{ text }}
             ---
             <input class="bar"><input class="foo"><input type="password">
-        
-        You can do this:    
+
+        You can do this:
             {{ text|html_attrs:'input[:-1]|class="new" size=50' }}
             ---
             <input class="bar new" size="50"><input class="foo new" size="50"><input type="password">
-        
+
         First param is regex pattern, in example 'input'.
         Real regex pattern will be like r"""<(?!/)(%s[^>?]*)/?>""" where '%s' change by received regex.
         In example below it will be r"""<(?!/)(input[^>?]*)/?>""".

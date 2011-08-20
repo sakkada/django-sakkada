@@ -8,7 +8,7 @@
     var tree_structure = {{ tree_structure|default:"{}" }};
     var tree_structure_sort = tree_structure.sort
     delete tree_structure.sort
-    
+
     // After loading the page, show all root nodes
     $(function() {
         {% if is_popup %}
@@ -46,7 +46,7 @@
                 case 39:    changelist_openclose(this, 1);
                             break;
                 // return
-                case 13: 
+                case 13:
                 case 10:    item_id = changelist_itemid(this);
                             document.location = document.location.pathname + item_id + '/'
                             break;

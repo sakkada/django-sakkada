@@ -1,4 +1,3 @@
-from django.conf import settings as django_settings
 from django.contrib.admin.views.main import ChangeList as ChangeListOriginal
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -33,7 +32,7 @@ def _build_tree_structure(cls):
         if parent_id:
             all_nodes[parent_id]['children'].append(p_id)
             add_as_descendant(parent_id, p_id)
-            
+
     return all_nodes
 
 # ------------------------------------------------------------------------
@@ -70,7 +69,6 @@ class TreeEditor(MetaEditor):
                 self.list_display[1] = 'indented_short_title'
             else:
                 self.list_display[0] = 'indented_short_title'
-        self.list_display_links = ('indented_short_title',)
 
         opts = self.model._meta
         self.change_list_template = [
@@ -91,11 +89,11 @@ class TreeEditor(MetaEditor):
         r = '''<span onclick="return page_tree_handler('%d')" id="page_marker-%d" class="page_marker" style="width: 12px;" level="%d">&nbsp;</span>''' % (item.id, item.id, item.level)
         if hasattr(item, 'get_absolute_url'):
             r = '''<input type="hidden" class="medialibrary_file_path" value="%s">%s''' % (item.get_absolute_url(), r)
-                
-        if hasattr(item, 'short_title'):
-            r += '<span class="indented_short_title">%s</span>' % item.short_title()
+
+        if hasattr(self, 'indented_short_title_text'):
+            r += '<span class="indented_short_title">%s</span>' % self.indented_short_title_text(item)
         else:
-            r += '<span class="indented_short_title">%s</span>' % unicode(item)
+            r += '<span class="indented_short_title">%s</span>' % getattr(item, 'short_title', item.__unicode__)()
         return mark_safe(r)
     indented_short_title.short_description = _('title')
     indented_short_title.allow_tags = True

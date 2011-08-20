@@ -1,3 +1,5 @@
+from django.utils.safestring import mark_safe
+
 class QueryString(object):
     """
     QueryString (GET query string tool)
@@ -51,4 +53,4 @@ class QueryString(object):
             query = '%s%s' % (first, query) if query else ''
             query = query + ('&' if query else first) if out['left'] else query
 
-        return query
+        return mark_safe(query)
