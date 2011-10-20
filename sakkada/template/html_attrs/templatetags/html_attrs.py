@@ -104,7 +104,7 @@ def cssclass_parser(extra):
 def cssclass_processor(extra, cattr):
     """Process class param with some rules"""
     if not extra: return cattr
-    cattr = set(cattr.split())
+    cattr = set(cattr and cattr.split() or [])
 
     if extra[0][0] == '=':
         cattr = set([extra[0][1]])
