@@ -1,5 +1,6 @@
 from django.db.models.fields.files import FileField, FieldFile
 from forms import ClearableFormFileField
+import os
 
 class AdvancedFieldFile(FieldFile):
     @property
