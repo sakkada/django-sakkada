@@ -1,5 +1,4 @@
 Usage:
-
  * install django-sakkada
  * import AttrsProxyAdmin from sakkada.admin.attrs_proxy
  * set AttrsProxyAdmin as class of admin model

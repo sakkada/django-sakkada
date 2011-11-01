@@ -1,0 +1,21 @@
+Based on FEINCMS tree editor (see http://www.feinheit.ch/, 
+                                  https://github.com/matthiask/feincms, LICENSE file)
+
+Usage:
+-----
+ * install django-sakkada
+ * import MpttTreeAdmin (AjaxBoolAdmin), and ajax_boolean from sakkada.admin.mptt_tree
+ * set MpttTreeAdmin (AjaxBoolAdmin) as class of admin model
+ * define ajax_boolean params for required fields
+ * copy templates (admin/mptt_tree/*) to your application template folder
+ * copy static (mptt_tree and jquery) to your application static folder
+
+Example usage:
+-------------
+from sakkada.admin.mptt_tree import MpttTreeAdmin, AjaxBoolAdmin, ajax_boolean
+
+class SomeTreeAdmin(MpttTreeAdmin, admin.ModelAdmin):
+    ajax_active = ajax_boolean('active', _('is active?'))
+
+class SomeFlatAdmin(AjaxBoolAdmin, admin.ModelAdmin):
+    ajax_active = ajax_boolean('active', _('is active?'))

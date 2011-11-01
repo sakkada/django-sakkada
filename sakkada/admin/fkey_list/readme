@@ -1,0 +1,44 @@
+Installation:
+------------
+ * install templates to your app:
+   copy files from _install dir to your app templates,
+   change app_name with current application name, or
+   change app_name with appname/modelname (create subdir)
+ * extends admin model with FkeyListAdmin (FkeyMpttAdmin) between admin.ModelAdmin, 
+   for example, class SomeAdmin(FkeyListAdmin, admin.ModelAdmin): pass
+ * set links to related changelist_view with fkey_list_link (see below)
+   item_link = fkey_list_link('item')
+
+Usage:
+-----
+def fkey_list_link(name, model_set=None, fkey_name=None, with_add_link=False)
+    - name:             name of child model
+    - model_set:        required, if related_name value in child model is not default
+    - fkey_name:        required, if foreign key field name is not equal parent model name
+    - with_add_link:    append second link "add" to main
+
+!   init FkeyListAdmin instance update admin urls with _fkeyin postfix, that's why
+    for use fkey_list_link('model_name') you have to register admin, extended with FkeyListAdmin
+    for model with name 'model_name', else catch:
+        Caught NoReverseMatch while rendering: Reverse for '[app_name]_[model_name]_changelist_fkeyin'
+        
+Usage example:
+-------------
+from sakkada.admin.fkey_list import FkeyListAdmin, FkeyMpttAdmin, fkey_list_link
+from nodes.admin import NodeAdmin, ItemAdmin
+
+class NodeNiceAdmin(FkeyMpttAdmin, NodeAdmin):
+    # fkey_list links
+    item_link = fkey_list_link('item', model_set='item_set',  fkey_name='node',   with_add_link=True)
+    node_link = fkey_list_link('node', model_set='children',  fkey_name='parent', with_add_link=True)
+
+class ItemNiceAdmin(FkeyListAdmin, ItemAdmin):
+    pass
+
+History:
+-------
+0.0.1 - first release
+0.0.2 - added different applications support
+0.0.3 - reverse fixed ((args[1]) -> (args[1],))
+0.0.4 - added FkeyMpttAdmin for MpttTree models
+0.0.5 - refactor fkey_list_link (change add link to image and show verbose names)

@@ -3,17 +3,17 @@
 
 {% block content_title %}
 {{ block.super }}
-{% if request.FKEY_IN %}<h2 style="margin: 0 0 8px 0;"><a href="{{ request.FKEY_IN.list_link }}">{{ request.FKEY_IN.module_name|capfirst }} list</a> / <a href="{{ request.FKEY_IN.item_link }}">#{{ request.FKEY_IN.id }}: {{ request.FKEY_IN.item }}</a></h2>{% endif %}
+{% if request.FKEY_LIST %}<h2 style="margin: 0 0 8px 0;"><a href="{{ request.FKEY_LIST.list_link }}">{{ request.FKEY_LIST.module_name|capfirst }} list</a> / <a href="{{ request.FKEY_LIST.item_link }}">#{{ request.FKEY_LIST.id }}: {{ request.FKEY_LIST.item }}</a></h2>{% endif %}
 {% endblock %}
 
 {% block breadcrumbs %}
 {% if not is_popup %}
   <div class="breadcrumbs">
-    {% if request.FKEY_IN %}
+    {% if request.FKEY_LIST %}
     <a href="../../../../">{% trans "Home" %}</a> &rsaquo;
     <a href="../../../">{{ app_label|capfirst|escape }}</a> &rsaquo;
     {% if has_change_permission %}<a href="../../">{{ opts.verbose_name_plural|capfirst }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }}{% endif %} &rsaquo;
-    {% if has_change_permission %}<a href="../">{{ opts.verbose_name_plural|capfirst }} in {{ request.FKEY_IN.module_name|capfirst }} #{{ request.FKEY_IN.id }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }} in {{ request.FKEY_IN.module_name|capfirst }} #{{ request.FKEY_IN.id }}{% endif %} &rsaquo;
+    {% if has_change_permission %}<a href="../">{{ opts.verbose_name_plural|capfirst }} in {{ request.FKEY_LIST.module_name|capfirst }} #{{ request.FKEY_LIST.id }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }} in {{ request.FKEY_LIST.module_name|capfirst }} #{{ request.FKEY_LIST.id }}{% endif %} &rsaquo;
     {% if add %}{% trans "Add" %} {{ opts.verbose_name }}{% else %}{{ original|truncatewords:"18" }}{% endif %}
     {% else%}
     <a href="../../../">{% trans "Home" %}</a> &rsaquo;

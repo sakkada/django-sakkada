@@ -109,8 +109,8 @@ var changelist_openclose = function(elem, openclose) {
 //  25b7: white right-pointing triangle, 25BD: white down-pointing triangle
 var expand_sym = '\u25B7'
 var collapse_sym = '\u25BD'
-var feincms_page_open_list
-var feincms_page_open_list_is_get = false
+var mptt_tree_page_open_list
+var mptt_tree_page_open_list_is_get = false
 var page = function(item_id) { return tree_structure[item_id] }
 var recolor_lines = function() {
     $('tbody tr').removeClass('row1').removeClass('row2')
@@ -157,10 +157,10 @@ var page_tree_handler = function(item_id) {
 
     if(open) {
         close_subtree(item_id)
-        feincms_page_open_list = feincms_page_open_list.filter(function(o) { return o != item_id })
+        mptt_tree_page_open_list = mptt_tree_page_open_list.filter(function(o) { return o != item_id })
     } else {
         open_subtree(item_id)
-        feincms_page_open_list.push(item_id)
+        mptt_tree_page_open_list.push(item_id)
     }
 
     // do I really want that?
@@ -183,20 +183,20 @@ var tree_structure_clean = function() {
     })
 
     // START TREE_STRUCTURE_CLEAN
-    if (false == feincms_page_open_list_is_get) {
-        feincms_page_open_list_is_get = true
-        feincms_page_open_list = $.cookie('feincms_page_open_list')
+    if (false == mptt_tree_page_open_list_is_get) {
+        mptt_tree_page_open_list_is_get = true
+        mptt_tree_page_open_list = $.cookie('mptt_tree_page_open_list')
         // keep a list of open pages to save state across reloads
-        if (feincms_page_open_list) {
-            var lst = feincms_page_open_list.split(',')
-            feincms_page_open_list = []
+        if (mptt_tree_page_open_list) {
+            var lst = mptt_tree_page_open_list.split(',')
+            mptt_tree_page_open_list = []
             for(var i=0; i<lst.length; i++)
-                feincms_page_open_list.push(parseInt(lst[i]))
+                mptt_tree_page_open_list.push(parseInt(lst[i]))
         } else
-            feincms_page_open_list = []
+            mptt_tree_page_open_list = []
 
         $(window).unload(function() {
-            $.cookie('feincms_page_open_list', feincms_page_open_list.join(','), {'path':'/'})
+            $.cookie('mptt_tree_page_open_list', mptt_tree_page_open_list.join(','), {'path':'/'})
         })
     }
 
@@ -246,8 +246,8 @@ var tree_structure_clean = function() {
     }
 
     // mark as open if page not deleted
-    for(i in feincms_page_open_list) {
-        var p = page(feincms_page_open_list[i])
+    for(i in mptt_tree_page_open_list) {
+        var p = page(mptt_tree_page_open_list[i])
         if(p) p.open = true
     }
     // END TREE_STRUCTURE_CLEAN
@@ -297,16 +297,16 @@ var close_entire_tree = function() {
     for(k in tree_structure) {
         close_subtree(k)
     }
-    feincms_page_open_list = []
+    mptt_tree_page_open_list = []
     recolor_lines()
 }
 
 var open_entire_tree = function() {
-    feincms_page_open_list = []
+    mptt_tree_page_open_list = []
     for(k in tree_structure) {
         if(page(k) && page(k).children) {
             open_subtree(k)
-            feincms_page_open_list.push(k)
+            mptt_tree_page_open_list.push(k)
         }
     }
     recolor_lines()
@@ -368,8 +368,8 @@ $(function(){
     var cb_first = $('table#result_list tr:eq(1)').find('td div input:checkbox:eq(0)').parent().parent().prevAll().length
     var cb_count = $('table#result_list tr:eq(1)').find('td div input:checkbox').length
     var tb_cells = $('table#result_list tr').find('> :gt('+(cb_first-1)+'):lt('+(cb_count)+')')
-    feincms_page_hide_bools = $.cookie('feincms_page_hide_bools') == 'true'
-    feincms_page_hide_bools && tb_cells.hide()
-    $(window).unload(function() { $.cookie('feincms_page_hide_bools', feincms_page_hide_bools+'', {'path':'/'}) })
-    $('#show_hide_ajax_bools').click(function (){ if ($(tb_cells[0]).css('display') == 'none') { feincms_page_hide_bools = false; tb_cells.show(); } else { feincms_page_hide_bools = true; tb_cells.hide(); } })
+    mptt_tree_page_hide_bools = $.cookie('mptt_tree_page_hide_bools') == 'true'
+    mptt_tree_page_hide_bools && tb_cells.hide()
+    $(window).unload(function() { $.cookie('mptt_tree_page_hide_bools', mptt_tree_page_hide_bools+'', {'path':'/'}) })
+    $('#show_hide_ajax_bools').click(function (){ if ($(tb_cells[0]).css('display') == 'none') { mptt_tree_page_hide_bools = false; tb_cells.show(); } else { mptt_tree_page_hide_bools = true; tb_cells.hide(); } })
 })
