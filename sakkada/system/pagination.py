@@ -4,7 +4,8 @@ def pagination(page, window=2):
     ----------
     usage:
         pg = pagination(page, 2) # page - core paginator Page object
-        pg = pagination(page, 2) # page - dict {'page': 3, 'count': 200, 'onpage': 20}
+        pg = pagination(page, 2) # page - dict {'page': 3, 'count': 200, 'perpage': 20,}
+                                 #        or   {'page': 3, 'pages': 10,}
 
     template:
         {% if pagination and pagination.num_pages > 1 %}
@@ -29,7 +30,8 @@ def pagination(page, window=2):
     """
 
     if isinstance(page, dict):
-        pages       = page['count']//page['onpage'] + (page['count'] % page['onpage'] and 1)
+        pages       = page.get('pages') or 1 if page.has_key('pages') else None
+        pages       = pages or (page['count']//page['perpage'] + (page['count'] % page['perpage'] and 1))
         current     = page['page'] if 1 <= page['page'] <= pages else 1
     else:
         pages       = page.paginator.num_pages
