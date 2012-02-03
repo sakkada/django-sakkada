@@ -32,7 +32,7 @@ def html_attrs(field, extra=None):
             attrs = attrs and params_parser(attrs) or {}
             csscl = cssclass_processor(excls, attrs.get('class', ''))
             csscl and attrs.__setitem__('class', csscl)
-            attrs = params_processor(attrs, extra)
+            attrs = params_processor(attrs, extra) or attrs
             html += field[index:i.start()] + ("<%s%s%s>" % (name, flatatt(attrs), slash))
             index = i.end()
         html += field[index:]
