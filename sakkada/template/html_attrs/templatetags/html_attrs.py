@@ -66,7 +66,12 @@ def regex_parser(extra):
         if regex[-1] == ']':
             regex, slices = regex.split('[', 1)
             try:
-                slices = [int(i) if i else None for i in slices[:-1].split(':')[:3]]
+                # try to get slice object from string
+                slices = slices[:-1].split(':')[:3]
+                slices = [int(i) if i else None for i in slices]
+                # imitate direct indexing if no ":" char exist because of stop param in slice
+                # is default, see also http://docs.python.org/library/functions.html#slice
+                slices.__len__() == 1 and slices.append(None)
             except ValueError, e:
                 slices = (None,)
         else:
