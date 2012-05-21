@@ -13,9 +13,10 @@ class FileSystemStorage(FileSystemStorageOriginal):
 
         Extend: transliterate (from russian) and lowerize name of file.
         """
-        name = unicodedata.normalize('NFKD', name)
-        name = name.encode('cp1251', 'ignore').decode('cp1251')
-        name = translify(name).lower()
+        if isinstance(name, unicode):
+            name = unicodedata.normalize('NFKD', name)
+            name = name.encode('cp1251', 'ignore').decode('cp1251')
+            name = translify(name).lower()
         return get_valid_filename(name)
 
     def get_available_name(self, name):

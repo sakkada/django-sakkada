@@ -23,8 +23,8 @@ def html_attrs(field, extra=None):
     html = field
     if tags:
         index, html  = 0, ''
-        extra = extra and (params_parser(extra) if isinstance(extra, basestring) else extra)
-        excls = cssclass_parser(extra.pop('class'))
+        extra = extra and params_parser(extra)
+        excls = cssclass_parser(extra.pop('class', False))
         for i in tags:
             tag = i.group()[1:-1].strip('/ ').split(' ', 1)
             name, attrs = len(tag) == 2 and tag or (tag[0], '')
@@ -64,7 +64,7 @@ def regex_parser(extra):
     if len(params) == 2:
         regex, extra = params
         if regex[-1] == ']':
-            regex, slices = regex.split('[', 1)
+            regex, slices = regex.rsplit('[', 1)
             try:
                 # try to get slice object from string
                 slices = slices[:-1].split(':')[:3]
@@ -79,7 +79,7 @@ def regex_parser(extra):
     else:
         regex = 'a-z{1}\w*'
         slices = (None,)
-    return extra, re.escape(regex), slice(*slices)
+    return extra, regex, slice(*slices)
 
 def params_parser(extra):
     """Parse string params into dict"""
@@ -101,9 +101,9 @@ def params_processor(attrs, extra):
     return attrs
 
 def cssclass_parser(extra):
-    """Process class param with some rules"""
-    extra = re.findall(RECLS, extra) or [] if extra else []
-    extra = [(c[0] or '+', c[1]) for c in extra]
+    """Parse string param with some rules"""
+    extra = extra and re.findall(RECLS, extra) or []
+    extra = extra and [(c[0] or '+', c[1]) for c in extra]
     return extra
 
 def cssclass_processor(extra, cattr):
