@@ -10,7 +10,7 @@ def message_from_template(context={}, template=None, email_to=None, email_from=N
     
     site, date = site or Site.objects.get_current(), date or datetime.datetime.now()
     email_from = email_from or settings.DEFAULT_FROM_EMAIL
-    email_to = email_to if isinstance(email_to, list) else [email_to]
+    email_to = email_to if isinstance(email_to, (list, tuple)) else [email_to]
 
     message = {'context': context, 'current_site': site, 'current_date':date,}
     message = render_to_string(template, message).replace('\r', '').split('\n')
