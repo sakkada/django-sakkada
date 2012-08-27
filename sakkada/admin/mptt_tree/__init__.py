@@ -62,8 +62,8 @@ def _build_tree_structure(cls):
 
 class TreeChangeList(ChangeList):
     "TreeEditor ChangeList always need to order by 'tree_id' and 'lft'."
-    def get_query_set(self):
-        qs = super(TreeChangeList, self).get_query_set()
+    def get_query_set(self, request):
+        qs = super(TreeChangeList, self).get_query_set(request)
         if isinstance(self.model_admin, MpttTreeAdmin):
             return qs.order_by('tree_id', 'lft')
         return qs
@@ -71,8 +71,8 @@ class TreeChangeList(ChangeList):
 class AjaxBoolAdmin(admin.ModelAdmin):
     class Media:
         js = (
-            settings.ADMIN_MEDIA_PREFIX + 'js/jquery.min.js',
-            settings.ADMIN_MEDIA_PREFIX + 'js/jquery.init.js',
+            settings.STATIC_URL + 'admin/js/jquery.min.js',
+            settings.STATIC_URL + 'admin/js/jquery.init.js',
             settings.STATIC_URL + 'admin/jquery/init.js',
             settings.STATIC_URL + 'admin/jquery/jquery.cookie.js',
             TREE_ADMIN_MEDIA + 'scripts.js',

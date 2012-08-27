@@ -36,13 +36,10 @@ def cache_clear(request, model_admin):
         return redirect('.')
 
     opts = model_admin.model._meta
-    admin_site = model_admin.admin_site
     has_perm = request.user.has_perm(opts.app_label + '.' + opts.get_change_permission())
     context = {
-        'admin_site':               admin_site.name,
         'title':                    _("Cache clear page"),
         'opts':                     opts,
-        'root_path':                '/%s' % admin_site.root_path,
         'app_label':                opts.app_label,
         'has_change_permission':    has_perm,
     }

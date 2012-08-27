@@ -10,8 +10,8 @@ class EditorAdmin(admin.ModelAdmin):
         setup = 'admin/tinymce/setup/activater%s.js' % setup
 
         js = [
-            settings.ADMIN_MEDIA_PREFIX + 'js/jquery.min.js',
-            settings.ADMIN_MEDIA_PREFIX + 'js/jquery.init.js',
+            settings.STATIC_URL + 'admin/js/jquery.min.js',
+            settings.STATIC_URL + 'admin/js/jquery.init.js',
             settings.STATIC_URL + 'admin/jquery/init.js',
             settings.STATIC_URL + 'admin/jquery/jquery.cookie.js',
             settings.STATIC_URL + 'admin/tinymce/jscripts/tiny_mce/tiny_mce.js',

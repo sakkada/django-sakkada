@@ -5,8 +5,8 @@ from django.conf import settings
 class EditorAdmin(admin.ModelAdmin):
     class Media:
         js = [
-            settings.ADMIN_MEDIA_PREFIX + 'js/jquery.min.js',
-            settings.ADMIN_MEDIA_PREFIX + 'js/jquery.init.js',
+            settings.STATIC_URL + 'admin/js/jquery.min.js',
+            settings.STATIC_URL + 'admin/js/jquery.init.js',
             settings.STATIC_URL + 'admin/jquery/init.js',
             settings.STATIC_URL + 'admin/simple_fb/activater.js',
         ]

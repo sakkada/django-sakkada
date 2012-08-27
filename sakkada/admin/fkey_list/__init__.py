@@ -10,15 +10,20 @@ def fkey_list_link(name, model_set=None, fkey_name=None, with_add_link=False):
             raise Exception, u'FkeyList link generater: "%s" does not exist' % modelset
         modelset    = getattr(item, modelset)
         fkeyname    = fkey_name if fkey_name else item._meta.module_name
-        link        = u'admin:%s_%s_changelist_fkeylist' % (modelset.model._meta.app_label, modelset.model._meta.module_name)
+        link        = u'admin:%s_%s_changelist_fkeylist' % (modelset.model._meta.app_label, 
+                                                            modelset.model._meta.module_name)
         link        = reverse(link, None, (fkeyname, item.pk), {})
         if url_only in ['list', 'add']:
             result  = '%s%s' % (link, 'add/' if url_only == 'add' else '')
         else:
             vernames    = modelset.model._meta.verbose_name, modelset.model._meta.verbose_name_plural
-            addicon     = u'%simg/admin/icon_addlink.gif' % settings.ADMIN_MEDIA_PREFIX
-            result      = u'<a href="%s" title="show related &laquo;%s&raquo;">%s</a> (%d)' % (link, vernames[1], vernames[1], modelset.count())
-            result      = u'<nobr>%s&nbsp;<a href="%sadd/" title="create related &laquo;%s&raquo;"><img src="%s"></a></nobr>' % (result, link, vernames[0], addicon) if with_add_link else result
+            addicon     = u'%sadmin/img/icon_addlink.gif' % settings.STATIC_URL
+            result      = u'<a href="%s" title="show related &laquo;%s&raquo;">%s</a> (%d)' \
+                          % (link, vernames[1], vernames[1], modelset.count())
+            result      = u'<nobr>%s&nbsp;<a href="%sadd/" title="create related &laquo;%s&raquo;">'\
+                          u'<img src="%s"></a></nobr>' % (result, link, vernames[0], addicon) \
+                          if with_add_link else result
+
         return result
     link.short_description  = '%s list' % name
     link.allow_tags         = True
@@ -51,17 +56,21 @@ class FkeyListAdmin(admin.ModelAdmin):
 
         # check fkey instance
         if not hasattr(self.model, args[0]):
-            raise Exception, 'FkeyList: field "%s" does not exist in model "%s"' % (args[0], self.model._meta.module_name)
+            raise Exception, 'FkeyList: field "%s" does not exist in model "%s"' \
+                             % (args[0], self.model._meta.module_name)
         parent = getattr(self.model, args[0]).field.rel.to.objects.filter(pk=args[1])
         if parent.count() != 1:
-            raise Exception, 'FkeyList: fkey "%s" #%s for "%s" model does not exist' % (args[0], args[1], self.model._meta.module_name)
+            raise Exception, 'FkeyList: fkey "%s" #%s for "%s" model does not exist' \
+                             % (args[0], args[1], self.model._meta.module_name)
         parent = parent[0]
 
         request.FKEY_LIST = {
             'module_name':  args[0],
             'id':           args[1],
             'item':         parent,
-            'item_link':    reverse('admin:%s_%s_change' % (parent.__class__._meta.app_label, parent.__class__._meta.module_name), None, (args[1],), {}),
+            'item_link':    reverse('admin:%s_%s_change' % (parent.__class__._meta.app_label, 
+                                                            parent.__class__._meta.module_name), 
+                                    None, (args[1],), {}),
             'list_link':    self.fkeys_link(args[0]),
         }
 
@@ -83,11 +92,16 @@ class FkeyListAdmin(admin.ModelAdmin):
 
         info = self.model._meta.app_label, self.model._meta.module_name
         urlpatterns = patterns('',
-            url(r'^([\w\d\_]+)-(\d+)/$',                wrap(self.fkey_view), {'view_name': 'changelist_view'}, name='%s_%s_changelist_fkeylist' % info),
-            url(r'^([\w\d\_]+)-(\d+)/add/$',            wrap(self.fkey_view), {'view_name': 'add_view'},        name='%s_%s_add_fkeylist' % info),
-            url(r'^([\w\d\_]+)-(\d+)/(.+)/history/$',   wrap(self.fkey_view), {'view_name': 'history_view'},    name='%s_%s_history_fkeylist' % info),
-            url(r'^([\w\d\_]+)-(\d+)/(.+)/delete/$',    wrap(self.fkey_view), {'view_name': 'delete_view'},     name='%s_%s_delete_fkeylist' % info),
-            url(r'^([\w\d\_]+)-(\d+)/(.+)/$',           wrap(self.fkey_view), {'view_name': 'change_view'},     name='%s_%s_change_fkeylist' % info),
+            url(r'^([\w\d\_]+)-(\d+)/$', wrap(self.fkey_view), 
+                {'view_name': 'changelist_view'}, name='%s_%s_changelist_fkeylist' % info),
+            url(r'^([\w\d\_]+)-(\d+)/add/$', wrap(self.fkey_view), 
+                {'view_name': 'add_view'}, name='%s_%s_add_fkeylist' % info),
+            url(r'^([\w\d\_]+)-(\d+)/(.+)/history/$', wrap(self.fkey_view), 
+                {'view_name': 'history_view'}, name='%s_%s_history_fkeylist' % info),
+            url(r'^([\w\d\_]+)-(\d+)/(.+)/delete/$', wrap(self.fkey_view), 
+                {'view_name': 'delete_view'}, name='%s_%s_delete_fkeylist' % info),
+            url(r'^([\w\d\_]+)-(\d+)/(.+)/$', wrap(self.fkey_view), 
+                {'view_name': 'change_view'}, name='%s_%s_change_fkeylist' % info),
         )
 
         urls = super(FkeyListAdmin, self).get_urls()
@@ -95,12 +109,16 @@ class FkeyListAdmin(admin.ModelAdmin):
 
     def fkeys_link(self, fkey_name):
         """Admin link to fkeys list"""
-        return reverse('admin:%s_%s_changelist' % (getattr(self.model, fkey_name).field.rel.to._meta.app_label, getattr(self.model, fkey_name).field.rel.to._meta.module_name), None, (), {})
+        return reverse('admin:%s_%s_changelist' \
+                       % (getattr(self.model, fkey_name).field.rel.to._meta.app_label, 
+                          getattr(self.model, fkey_name).field.rel.to._meta.module_name,), 
+                       None, (), {})
 
     def get_form(self, request, obj=None, **kwargs):
         """preset foreign key value if FKEY_LIST"""
         form = super(FkeyListAdmin, self).get_form(request, obj, **kwargs)
-        if obj is None and hasattr(request, 'FKEY_LIST') and form.base_fields.has_key(request.FKEY_LIST['module_name']):
+        if obj is None and hasattr(request, 'FKEY_LIST') \
+                       and form.base_fields.has_key(request.FKEY_LIST['module_name']):
             form.base_fields[request.FKEY_LIST['module_name']].initial = request.FKEY_LIST['id']
         return form
 
