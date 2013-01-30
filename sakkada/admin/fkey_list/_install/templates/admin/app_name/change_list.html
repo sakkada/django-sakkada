@@ -1,9 +1,19 @@
 {% extends "admin/change_list.html" %}
 {% load adminmedia admin_list i18n %}
+{% load url from future %}
 
 {% block content_title %}
 {{ block.super }}
-{% if request.FKEY_LIST %}<h2 style="margin: 0 0 8px 0;"><a href="{{ request.FKEY_LIST.list_link }}">{{ request.FKEY_LIST.module_name|capfirst }} list</a> / <a href="{{ request.FKEY_LIST.item_link }}">#{{ request.FKEY_LIST.id }}: {{ request.FKEY_LIST.item }}</a></h2>{% endif %}
+{% if request.FKEY_LIST %}<h2 style="margin: 0 0 8px 0;"><a href="{{ request.FKEY_LIST.list_link }}">{{ request.FKEY_LIST.fkey_name|capfirst }} list</a> / <a href="{{ request.FKEY_LIST.item_link }}">#{{ request.FKEY_LIST.id }}: {{ request.FKEY_LIST.item }}</a></h2>{% endif %}
+{% endblock %}
+
+{% block object-tools-items %}
+  {% if request.FKEY_LIST %}
+  <li><a href="{% url request.FKEY_LIST.link_name.add_fkeylist request.FKEY_LIST.fkey_name request.FKEY_LIST.id %}{% if is_popup %}?_popup=1{% endif %}" class="addlink">
+      {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}</a></li>
+  {% else %}
+  {{ block.super }}
+  {% endif %}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -13,8 +23,8 @@
   <a href="../../../">{% trans "Home" %}</a> &rsaquo;
   <a href="../../">{{ app_label|capfirst }}</a> &rsaquo;
   <a href="../">{{ cl.opts.verbose_name_plural|capfirst }}</a> &rsaquo;
-  {{ cl.opts.verbose_name_plural|capfirst }} in {{ request.FKEY_LIST.module_name|capfirst }} #{{ request.FKEY_LIST.id }}</a>
-  {% else%}
+  {{ cl.opts.verbose_name_plural|capfirst }} in {{ request.FKEY_LIST.fkey_name|capfirst }} #{{ request.FKEY_LIST.id }}</a>
+  {% else %}
   <a href="../../">{% trans "Home" %}</a> &rsaquo;
   <a href="../">{{ app_label|capfirst }}</a> &rsaquo;
   {{ cl.opts.verbose_name_plural|capfirst }}

@@ -29,13 +29,22 @@ def fkey_list_link(name, model_set=None, fkey_name=None, with_add_link=False):
     link.allow_tags         = True
     return link
 
+class FkeyLinkName(object):
+    """Object return full revers urlname by postfix only"""
+
+    def __init__(self, opts):
+        self.opts = opts
+
+    def __getattr__(self, name):
+        return 'admin:%s_%s_%s' % (self.opts.app_label, self.opts.module_name, name)
+
 class FkeyListAdmin(admin.ModelAdmin):
     # fkey_list functionality
     def queryset(self, request):
         """Add fkey id filter from request if exists"""
         qs = super(FkeyListAdmin, self).queryset(request)
         if hasattr(request, 'FKEY_LIST'):
-            qs = qs.filter(**{request.FKEY_LIST['module_name'].__str__():request.FKEY_LIST['id']})
+            qs = qs.filter(**{request.FKEY_LIST['fkey_name'].__str__():request.FKEY_LIST['id']})
         return qs
 
     def fkey_view(self, request, *args, **kwargs):
@@ -65,20 +74,34 @@ class FkeyListAdmin(admin.ModelAdmin):
         parent = parent[0]
 
         request.FKEY_LIST = {
-            'module_name':  args[0],
+            'fkey_name':    args[0],
             'id':           args[1],
             'item':         parent,
             'item_link':    reverse('admin:%s_%s_change' % (parent.__class__._meta.app_label, 
                                                             parent.__class__._meta.module_name), 
                                     None, (args[1],), {}),
             'list_link':    self.fkeys_link(args[0]),
+            'link_name':    FkeyLinkName(self.model._meta),
         }
 
-        # clean ex data
+        # default and fkey links dependencies
+        link_name, link_args = request.FKEY_LIST['link_name'], args[:2]
+        link_deps = {
+            reverse(link_name.changelist): reverse(link_name.changelist_fkeylist, None, args[:2]),
+            reverse(link_name.add): reverse(link_name.add_fkeylist, None, args[:2]),
+        }
+
+        # clean ex data and get response
         args = tuple(args[2:])
         del kwargs['view_name']
+        response = getattr(self, view_name)(request, *args, **kwargs)
 
-        return getattr(self, view_name)(request, *args, **kwargs)
+        # try to return fkey location in HttpResponseRedirect instead original
+        location = isinstance(response, HttpResponseRedirect) and response['Location'].split('?', 1)
+        if location and location[0] in link_deps:
+            response['Location'] = link_deps[location[0]] + ('?%s' % location[1] if location.__len__() > 1 else '')
+
+        return response
 
     def get_urls(self):
         """Extends urls by nodein routes to nodein_view with view_name param"""
@@ -118,8 +141,8 @@ class FkeyListAdmin(admin.ModelAdmin):
         """preset foreign key value if FKEY_LIST"""
         form = super(FkeyListAdmin, self).get_form(request, obj, **kwargs)
         if obj is None and hasattr(request, 'FKEY_LIST') \
-                       and form.base_fields.has_key(request.FKEY_LIST['module_name']):
-            form.base_fields[request.FKEY_LIST['module_name']].initial = request.FKEY_LIST['id']
+                       and form.base_fields.has_key(request.FKEY_LIST['fkey_name']):
+            form.base_fields[request.FKEY_LIST['fkey_name']].initial = request.FKEY_LIST['id']
         return form
 
 class FkeyMpttAdmin(FkeyListAdmin):
