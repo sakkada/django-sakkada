@@ -51,9 +51,12 @@ def _build_tree_structure(cls):
         if n_parent_id:
             add_as_descendant(n_parent_id, p)
 
-    for p_id, parent_id, level in cls.objects.order_by(cls._meta.tree_id_attr, cls._meta.left_attr).values_list("pk", "%s_id" % cls._meta.parent_attr, "level"):
+    opts = cls._mptt_meta
+    for p_id, parent_id, level in cls.objects.order_by(opts.tree_id_attr, opts.left_attr) \
+                                             .values_list("pk", "%s_id" % opts.parent_attr, "level"):
         all_nodes['sort'].append(p_id)
-        all_nodes[p_id] = {'id': p_id, 'children' : [ ], 'descendants' : [ ], 'parent' : parent_id, 'level': level}
+        all_nodes[p_id] = {'id': p_id, 'children' : [], 'descendants' : [], 
+                           'parent' : parent_id, 'level': level,}
         if parent_id:
             all_nodes[parent_id]['children'].append(p_id)
             add_as_descendant(parent_id, p_id)
@@ -218,15 +221,22 @@ class MpttTreeAdmin(AjaxBoolAdmin):
         return TreeChangeList
 
     def indented_short_title(self, item):
-        """Generate a short title for a page, indent it depending on the page's depth in the hierarchy."""
-        r = '<span onclick="return page_tree_handler(\'%d\');" id="page_marker-%d" class="page_marker" style="width: 12px;" level="%d">' \
-             '&nbsp;</span>' % (item.id, item.id, item.level)
+        """
+        Generate a short title for a page, indent it depending 
+        on the page's depth in the hierarchy.
+        """
+        r = '<span onclick="return page_tree_handler(\'%d\');" id="page_marker-%d"' \
+            ' class="page_marker" style="width: 12px;" level="%d">&nbsp;</span>' \
+            % (item.id, item.id, item.level)
         if hasattr(item, 'get_absolute_url'):
-            r = '<input type="hidden" class="medialibrary_file_path" value="%s">%s' % (item.get_absolute_url(), r)
+            r = '<input type="hidden" class="medialibrary_file_path" value="%s">%s' \
+                % (item.get_absolute_url(), r)
         if hasattr(self, 'indented_short_title_text'):
-            r = '%s<span class="indented_short_title">%s</span>' % (r, self.indented_short_title_text(item))
+            r = '%s<span class="indented_short_title">%s</span>' \
+                % (r, self.indented_short_title_text(item))
         else:
-            r = '%s<span class="indented_short_title">%s</span>' % (r, getattr(item, 'short_title', item.__unicode__)())
+            r = '%s<span class="indented_short_title">%s</span>' \
+                % (r, getattr(item, 'short_title', item.__unicode__)())
         return mark_safe(r)
     indented_short_title.short_description = _('title')
     indented_short_title.allow_tags = True
@@ -251,11 +261,16 @@ class MpttTreeAdmin(AjaxBoolAdmin):
     def _actions_column(self, page):
         actions = []
         actions.append(u'<nobr>')
-        actions.append(u'<a href="#" onclick="return cut_item(\'%s\', this)" title="%s">move</a>&nbsp;&nbsp;&nbsp;' %                           (page.pk, _('Cut')))
-        actions.append(u'<a class="paste_target" href="#" onclick="return paste_item(\'%s\', \'left\')" title="%s">&#9650;</a>' %               (page.pk, _('Insert before (left)')))
-        actions.append(u'<a class="paste_target" href="#" onclick="return paste_item(\'%s\', \'right\')" title="%s">&#9660;</a>&nbsp;&nbsp;' %  (page.pk, _('Insert after (right)')))
-        actions.append(u'<a class="paste_target" href="#" onclick="return paste_item(\'%s\', \'first-child\')" title="%s">&#x2198;</a>' %       (page.pk, _('Insert as first child')))
-        actions.append(u'<a class="paste_target" href="#" onclick="return paste_item(\'%s\', \'last-child\')" title="%s">&#x21d8;</a>' %        (page.pk, _('Insert as last child')))
+        actions.append(u'<a href="#" onclick="return cut_item(\'%s\', this)" ' \
+                       u'title="%s">move</a>&nbsp;&nbsp;&nbsp;' % (page.pk, _('Cut')))
+        actions.append(u'<a class="paste_target" href="#" onclick="return paste_item(\'%s\', \'left\')" ' \
+                       u'title="%s">&#9650;</a>' % (page.pk, _('Insert before (left)')))
+        actions.append(u'<a class="paste_target" href="#" onclick="return paste_item(\'%s\', \'right\')" ' \
+                       u'title="%s">&#9660;</a>&nbsp;&nbsp;' % (page.pk, _('Insert after (right)')))
+        actions.append(u'<a class="paste_target" href="#" onclick="return paste_item(\'%s\', \'first-child\')" ' \
+                       u'title="%s">&#x2198;</a>' % (page.pk, _('Insert as first child')))
+        actions.append(u'<a class="paste_target" href="#" onclick="return paste_item(\'%s\', \'last-child\')" ' \
+                       u'title="%s">&#x21d8;</a>' % (page.pk, _('Insert as last child')))
         actions.append(u'</nobr>')
         return actions
 

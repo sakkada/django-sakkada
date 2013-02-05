@@ -152,8 +152,8 @@ class FkeyMpttAdmin(FkeyListAdmin):
         qs = super(FkeyListAdmin, self).queryset(request)
         if hasattr(request, 'FKEY_LIST'):
             item = request.FKEY_LIST['item']
-            opts = item._meta
-            filters = {opts.tree_id_attr: getattr(item, opts.tree_id_attr)}
+            opts = item._mptt_meta
+            filters = {opts.tree_id_attr: getattr(item, opts.tree_id_attr),}
             filters['%s__gt' % opts.left_attr] = getattr(item, opts.left_attr)
             filters['%s__lt' % opts.left_attr] = getattr(item, opts.right_attr)
             qs = qs.filter(**filters)
