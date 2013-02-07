@@ -1,26 +1,44 @@
 AdvancedFileField based on django FileField.
-AdvancedFileField based on ImrpovedFileField (http://django.org.ua/wiki/ImrpovedFileField)
+AdvancedFileField partially based on ImrpovedFileField
+          (http://django.org.ua/wiki/ImrpovedFileField)
 Used for Django 1.2.5 or later.
+
+Contains:
+    AdvancedFileField
+    AdvancedImageField (same, but mixed with ImageField)
 
 Dependencies:
  * Django 1.2.5 or later
 
 Functionality added:
- * 'max_size', 'min_size' optional arguments to keep filesize of uploaded file in specified limits.
- * 'extensions', 'mimetypes' optional arguments to allow upload files only with specified extension and/or memitype.
- * 'clearable' optional argument to erase file from fs on delete model, default False.
- * 'delete file' checkbox in admin and generated forms wich allows to delete file on form save if it is not required.
- * 'extension' property
+ * 'erasable' optional argument to erase file from fs on delete model, default False
+ * 'clearable' optional argument - show delete checkbox in generated forms which allows
+                to delete filefield value on form save if field is not required (blank)
+ * 'extension' property (value with dot, for example: '.ext')
 
 Usage:
- * import AdvancedFileField to your models module and use as usual file field
- * optionally set 'min_size', 'max_size', 'extensions' and 'mimetypes'
- * optionally set 'clearable' to erase files from fs
+ * import AdvancedFileField to your models module and use as usual FileField
+ * optionally set 'erasable' to erase files from fs on delete
+ * optionally set 'clearable' to allow users clear only filefield, not whole object
 
-Example usage in model:
-    class MyModel(models.Model)
-        attach = AdvancedFileField(
-                    _('Attach'), blank=True, upload_to="upload/files/%Y/%m/",
-                    min_size=1024, max_size=1024*1024, clearable=True,
-                    extensions=['.zip', '.gz'], mimetypes=['application/x-gzip', 'application/zip'],
-                 )
+Simple example of usage in model:
+--------------------------------
+
+from sakkada.models.fields.filefield import fields
+from sakkada.system import validators
+
+class MyModel(models.Model)
+    attach  = fields.AdvancedFileField(
+                _('Attach'), blank=True, null=False, upload_to="upload/files/%Y/%m/",
+                clearable=True, erasable=True,
+                validators=[validators.extension(['.zip', '.tar.gz', '.gz',]),
+                            validators.mimetype(['application/x-gzip', 'application/zip',]),
+                            validators.filesize(max=1024*1024*10),]
+              )
+
+    attach  = fields.AdvancedImageField(
+                _('Attach'), blank=False, null=False, upload_to="upload/images/%Y/%m/",
+                clearable=False, erasable=True,
+                validators=[validators.mimetype(['image/jpeg', 'image/png',]),
+                            validators.filesize(max=1024*1024*5),]
+              )
