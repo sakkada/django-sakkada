@@ -53,7 +53,7 @@ def filesize_validator(value, min=None, max=None):
 
 # utils
 def isuploaded(value):
-    # note: check for closed first, because UploadedFile must not be closed
+    # note: check for _file first, because UploadedFile must be already cached
     # just uploaded file should be UploadedFile instance with _size and
     # content_type attributes
-    return not value.closed and isinstance(value.file, UploadedFile)
+    return getattr(value, '_file', False) and isinstance(value._file, UploadedFile)
