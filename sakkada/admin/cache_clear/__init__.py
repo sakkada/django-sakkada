@@ -19,7 +19,7 @@ class CacheClearAdmin(admin.ModelAdmin):
         return cache_clear(request, self)
 
     def get_urls(self):
-        from django.conf.urls.defaults import patterns, url
+        from django.conf.urls import patterns, url
         info = self.opts.app_label, self.opts.module_name
         urls = patterns('', url(
             r'^cache_clear/$', self.admin_site.admin_view(self.cache_clear),
