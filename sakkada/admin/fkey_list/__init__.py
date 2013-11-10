@@ -105,7 +105,7 @@ class FkeyListAdmin(admin.ModelAdmin):
 
     def get_urls(self):
         """Extends urls by nodein routes to nodein_view with view_name param"""
-        from django.conf.urls.defaults import patterns, url
+        from django.conf.urls import patterns, url
         from django.utils.functional import update_wrapper
 
         def wrap(view):

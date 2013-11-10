@@ -52,5 +52,6 @@ class QueryString(object):
             query = query.urlencode()
             query = '%s%s' % (first, query) if query else ''
             query = query + ('&' if query else first) if out['left'] else query
+            query = mark_safe(query)
 
-        return mark_safe(query)
+        return query
