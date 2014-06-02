@@ -241,6 +241,9 @@ class MpttTreeAdmin(AjaxBoolAdmin):
     indented_short_title.short_description = _('title')
     indented_short_title.allow_tags = True
 
+    def save_moved_node(self, node):
+        return node.save()
+
     def _move_node(self, request):
         position = request.POST.get('position')
         if position in ('last-child', 'first-child', 'left', 'right'):
@@ -252,7 +255,7 @@ class MpttTreeAdmin(AjaxBoolAdmin):
                 return HttpResponse('FAIL: ' + e.__str__())
             # Ensure that model save has been run
             source = self.model._tree_manager.get(pk=request.POST.get('cut_item'))
-            source.save(is_moved=True)
+            self.save_moved_node(source)
             tree_structure = mark_safe(simplejson.dumps(_build_tree_structure(self.model)))
             return HttpResponse('OK' + tree_structure)
 
