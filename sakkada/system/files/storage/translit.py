@@ -4,7 +4,7 @@ from django.core.files.storage import FileSystemStorage
 from django.utils.text import get_valid_filename
 
 
-class CyrillicTranslitFileSystemStorage(FileSystemStorage):
+class TranslitNameFileSystemStorage(FileSystemStorage):
     """
     Transliterate cyrillic unicode filename, ignore any other symbols.
     Requires pytils (translify) for transliteration.

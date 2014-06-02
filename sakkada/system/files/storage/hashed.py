@@ -23,7 +23,7 @@ class NoAvailableName(Exception):
     pass
 
 
-class HashedFilenameFileSystemStorage(FileSystemStorage):
+class HashedNameFileSystemStorage(FileSystemStorage):
     segments = None
     uniquify_names = False
 
@@ -43,6 +43,8 @@ class HashedFilenameFileSystemStorage(FileSystemStorage):
         if self.uniquify_names is not None:
             self.uniquify_names = uniquify_names
 
+        super(HashedNameFileSystemStorage, self).__init__(*args, **kwargs)
+
     def get_available_name(self, name):
         if self.uniquify_names:
             return self._get_available_name(name)
@@ -51,7 +53,7 @@ class HashedFilenameFileSystemStorage(FileSystemStorage):
 
     def _get_available_name(self, name, content=None, chunk_size=None):
         dirname, basename = os.path.split(name)
-        ext = os.path.splitext(file_name)[1].lower()
+        ext = os.path.splitext(basename)[1].lower()
         root = (self._compute_hash_by_name(name) if self.uniquify_names
                 else self._compute_hash_by_content(content=content,
                                                    chunk_size=chunk_size))
@@ -108,7 +110,7 @@ class HashedFilenameFileSystemStorage(FileSystemStorage):
 
     def _save(self, name, content, *args, **kwargs):
         try:
-            return super(HashedFilenameFileSystemStorage,
+            return super(HashedNameFileSystemStorage,
                          self)._save(name, content, *args, **kwargs)
         except NoAvailableName:
             # File already exists, so we can safely do nothing
