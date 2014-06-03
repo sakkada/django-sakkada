@@ -1,9 +1,21 @@
 {% extends "admin/change_form.html" %}
-{% load i18n %}
+{% load i18n admin_urls %}
 
 {% block content_title %}
 {{ block.super }}
 {% if request.FKEY_LIST %}<h2 style="margin: 0 0 8px 0;"><a href="{{ request.FKEY_LIST.list_link }}">{{ request.FKEY_LIST.fkey_name|capfirst }} list</a> / <a href="{{ request.FKEY_LIST.item_link }}">#{{ request.FKEY_LIST.id }}: {{ request.FKEY_LIST.item }}</a></h2>{% endif %}
+{% endblock %}
+
+{% block object-tools-items %}
+{% if request.FKEY_LIST %}
+  <li>
+    {% url request.FKEY_LIST.link_name.history_fkeylist request.FKEY_LIST.fkey_name request.FKEY_LIST.id|admin_urlquote original.pk|admin_urlquote as history_url %}
+    <a href="{% add_preserved_filters history_url %}" class="historylink">{% trans "History" %}</a>
+  </li>
+  {% if has_absolute_url %}<li><a href="{% url 'admin:view_on_site' content_type_id original.pk %}" class="viewsitelink">{% trans "View on site" %}</a></li>{% endif%}
+{% else %}
+  {{ block.super }}
+{% endif %}
 {% endblock %}
 
 {% block breadcrumbs %}

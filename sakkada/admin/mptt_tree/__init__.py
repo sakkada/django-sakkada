@@ -1,5 +1,6 @@
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseServerError, \
-                        HttpResponseForbidden, HttpResponseNotFound
+from django.http import (HttpResponse, HttpResponseBadRequest,
+                         HttpResponseServerError, HttpResponseForbidden,
+                         HttpResponseNotFound)
 from django.conf import settings
 from django.utils import simplejson
 from django.utils.safestring import mark_safe
@@ -13,9 +14,9 @@ TREE_ADMIN_MEDIA = '%s%s' % (settings.STATIC_URL, 'admin/mptt_tree/')
 def ajax_boolean_cell(item, attr, text=''):
     text = text and '&nbsp;(%s)' % unicode(text)
     cbox = getattr(item, attr) and ' checked="checked"' or ''
-    cbox = u'<div id="wrap_%s_%d">' \
-            u'<input type="checkbox"%s onclick="return inplace_toggle_boolean(%d, \'%s\')"; />' \
-             u'%s</div>' % (attr, item.id, cbox, item.id, attr, text)
+    cbox = (u'<div id="wrap_%s_%d">'
+            u'<input type="checkbox"%s onclick="return inplace_toggle_boolean(%d, \'%s\')"; />'
+            u'%s</div>' % (attr, item.id, cbox, item.id, attr, text))
     return cbox
 
 def ajax_boolean(attr, short_description = ''):
@@ -53,10 +54,11 @@ def _build_tree_structure(cls):
 
     opts = cls._mptt_meta
     for p_id, parent_id, level in cls.objects.order_by(opts.tree_id_attr, opts.left_attr) \
-                                             .values_list("pk", "%s_id" % opts.parent_attr, "level"):
+                                             .values_list("pk", "%s_id" % opts.parent_attr,
+                                                          "level"):
         all_nodes['sort'].append(p_id)
-        all_nodes[p_id] = {'id': p_id, 'children' : [], 'descendants' : [], 
-                           'parent' : parent_id, 'level': level,}
+        all_nodes[p_id] = {'id': p_id, 'parent': parent_id, 'level': level,
+                           'children': [], 'descendants': [],}
         if parent_id:
             all_nodes[parent_id]['children'].append(p_id)
             add_as_descendant(parent_id, p_id)
@@ -64,7 +66,7 @@ def _build_tree_structure(cls):
     return all_nodes
 
 class TreeChangeList(ChangeList):
-    "TreeEditor ChangeList always need to order by 'tree_id' and 'lft'."
+    """TreeEditor ChangeList always need to order by 'tree_id' and 'lft'."""
     def get_query_set(self, request):
         qs = super(TreeChangeList, self).get_query_set(request)
         if isinstance(self.model_admin, MpttTreeAdmin):
@@ -73,15 +75,12 @@ class TreeChangeList(ChangeList):
 
 class AjaxBoolAdmin(admin.ModelAdmin):
     class Media:
-        js = (
-            settings.STATIC_URL + 'admin/js/jquery.min.js',
-            settings.STATIC_URL + 'admin/js/jquery.init.js',
-            settings.STATIC_URL + 'admin/jquery/init.js',
-            settings.STATIC_URL + 'admin/jquery/jquery.cookie.js',
-            TREE_ADMIN_MEDIA + 'scripts.js',
-        )
-
-        css = {'all': [TREE_ADMIN_MEDIA + 'styles.css',]}
+        js = ('admin/js/jquery.min.js',
+              'admin/js/jquery.init.js',
+              'admin/jquery/init.js',
+              'admin/jquery/jquery.cookie.js',
+              'scripts.js',)
+        css = {'all': ('styles.css',)}
 
     def __init__(self, *args, **kwargs):
         """AjaxBool Admin initialisation"""
@@ -89,7 +88,8 @@ class AjaxBoolAdmin(admin.ModelAdmin):
         self.list_display = list(self.list_display)
         opts = self.model._meta
         self.change_list_template = [
-            'admin/mptt_tree/%s/%s/ajax_change_list.html' % (opts.app_label, opts.object_name.lower()),
+            'admin/mptt_tree/%s/%s/ajax_change_list.html' % (opts.app_label,
+                                                             opts.object_name.lower()),
             'admin/mptt_tree/%s/ajax_change_list.html' % opts.app_label,
             'admin/mptt_tree/ajax_change_list.html',
         ]
@@ -107,7 +107,8 @@ class AjaxBoolAdmin(admin.ModelAdmin):
 
         extra_context = extra_context or {}
         extra_context['TREE_ADMIN_MEDIA'] = TREE_ADMIN_MEDIA
-        return super(AjaxBoolAdmin, self).changelist_view(request, extra_context, *args, **kwargs)
+        return super(AjaxBoolAdmin, self).changelist_view(request, extra_context,
+                                                          *args, **kwargs)
 
     # common methods
     def _collect_editable_booleans(self):
@@ -187,7 +188,8 @@ class MpttTreeAdmin(AjaxBoolAdmin):
 
         opts = self.model._meta
         self.change_list_template = [
-            'admin/mptt_tree/%s/%s/tree_change_list.html' % (opts.app_label, opts.object_name.lower()),
+            'admin/mptt_tree/%s/%s/tree_change_list.html' % (opts.app_label,
+                                                             opts.object_name.lower()),
             'admin/mptt_tree/%s/tree_change_list.html' % opts.app_label,
             'admin/mptt_tree/tree_change_list.html',
         ]
@@ -212,17 +214,28 @@ class MpttTreeAdmin(AjaxBoolAdmin):
 
         extra_context = extra_context or {}
         extra_context['TREE_ADMIN_MEDIA'] = TREE_ADMIN_MEDIA
-        extra_context['tree_structure'] = mark_safe(simplejson.dumps(_build_tree_structure(self.model)))
+        extra_context['tree_structure'] = mark_safe(simplejson.dumps(
+                                                    _build_tree_structure(self.model)))
 
-        return super(AjaxBoolAdmin, self).changelist_view(request, extra_context, *args, **kwargs)
+        return super(AjaxBoolAdmin, self).changelist_view(request, extra_context,
+                                                          *args, **kwargs)
 
     def get_changelist(self, request, **kwargs):
-        """Returns the ChangeList class for use on the changelist page."""
-        return TreeChangeList
+        """Extent ChangeList class."""
+        if not getattr(self, '_changelist_class', None):
+            cls = super(MpttTreeAdmin, self).get_changelist(request, **kwargs)
+            if cls is not ChangeList:
+                class TreeChangeListMixed(TreeChangeList, cls):
+                    pass
+                self._changelist_class = TreeChangeListMixed
+            else:
+                self._changelist_class = TreeChangeList
+
+        return self._changelist_class
 
     def indented_short_title(self, item):
         """
-        Generate a short title for a page, indent it depending 
+        Generate a short title for a page, indent it depending
         on the page's depth in the hierarchy.
         """
         r = '<span onclick="return page_tree_handler(\'%d\');" id="page_marker-%d"' \
@@ -262,19 +275,22 @@ class MpttTreeAdmin(AjaxBoolAdmin):
         return HttpResponse('FAIL: ' + position)
 
     def _actions_column(self, page):
+        action = (u'<a class="paste_target" href="#"'
+                  u' onclick="return paste_item(\'%s\', \'%s\')"'
+                  u' title="%s">%s</a>')
+
         actions = []
         actions.append(u'<nobr>')
-        actions.append(u'<a href="#" onclick="return cut_item(\'%s\', this)" ' \
-                       u'title="%s">move</a>&nbsp;&nbsp;&nbsp;' % (page.pk, _('Cut')))
-        actions.append(u'<a class="paste_target" href="#" onclick="return paste_item(\'%s\', \'left\')" ' \
-                       u'title="%s">&#9650;</a>' % (page.pk, _('Insert before (left)')))
-        actions.append(u'<a class="paste_target" href="#" onclick="return paste_item(\'%s\', \'right\')" ' \
-                       u'title="%s">&#9660;</a>&nbsp;&nbsp;' % (page.pk, _('Insert after (right)')))
-        actions.append(u'<a class="paste_target" href="#" onclick="return paste_item(\'%s\', \'first-child\')" ' \
-                       u'title="%s">&#x2198;</a>' % (page.pk, _('Insert as first child')))
-        actions.append(u'<a class="paste_target" href="#" onclick="return paste_item(\'%s\', \'last-child\')" ' \
-                       u'title="%s">&#x21d8;</a>' % (page.pk, _('Insert as last child')))
+        actions.append(u'<a href="#" onclick="return cut_item(\'%s\', this)"'
+                       u' title="%s">move</a>' % (page.pk, _('Cut')))
+        actions.append(u'&nbsp;&nbsp;&nbsp;')
+        actions.append(action % (page.pk, 'left', _('Insert before (left)'), u'&#9650;')
+        actions.append(action % (page.pk, 'right', _('Insert after (right)'), u'&#9660;')
+        actions.append(u'&nbsp;&nbsp;')
+        actions.append(action % (page.pk, 'first-child', _('Insert as first child'), u'&#x2198;')
+        actions.append(action % (page.pk, 'last-child', _('Insert as last child'), u'&#x21d8;')
         actions.append(u'</nobr>')
+
         return actions
 
     def actions_column(self, page):
