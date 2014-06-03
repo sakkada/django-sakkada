@@ -1,12 +1,13 @@
 from django.http import (HttpResponse, HttpResponseBadRequest,
                          HttpResponseServerError, HttpResponseForbidden,
                          HttpResponseNotFound)
-from django.conf import settings
-from django.utils import simplejson
 from django.utils.safestring import mark_safe
-from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
+from django.utils import simplejson
+from django.contrib.admin.templatetags.admin_static import static
 from django.contrib.admin.views.main import ChangeList
+from django.contrib import admin
+from django.conf import settings
 from mptt.exceptions import InvalidMove
 
 TREE_ADMIN_MEDIA = '%s%s' % (settings.STATIC_URL, 'admin/mptt_tree/')
@@ -75,12 +76,15 @@ class TreeChangeList(ChangeList):
 
 class AjaxBoolAdmin(admin.ModelAdmin):
     class Media:
-        js = ('admin/js/jquery.min.js',
-              'admin/js/jquery.init.js',
-              'admin/jquery/init.js',
-              'admin/jquery/jquery.cookie.js',
-              'scripts.js',)
-        css = {'all': ('styles.css',)}
+        js = '' if settings.DEBUG else '.min'
+        js = (
+            static('admin/js/jquery%s.js' % js),
+            static('admin/js/jquery.init.js'),
+            static('admin/jquery/init.js'),
+            static('admin/jquery/jquery.cookie.js'),
+            static('admin/mptt_tree/scripts.js',),
+        )
+        css = {'all': (static('admin/mptt_tree/styles.css'),)}
 
     def __init__(self, *args, **kwargs):
         """AjaxBool Admin initialisation"""
@@ -284,11 +288,11 @@ class MpttTreeAdmin(AjaxBoolAdmin):
         actions.append(u'<a href="#" onclick="return cut_item(\'%s\', this)"'
                        u' title="%s">move</a>' % (page.pk, _('Cut')))
         actions.append(u'&nbsp;&nbsp;&nbsp;')
-        actions.append(action % (page.pk, 'left', _('Insert before (left)'), u'&#9650;')
-        actions.append(action % (page.pk, 'right', _('Insert after (right)'), u'&#9660;')
+        actions.append(action % (page.pk, 'left', _('Insert before (left)'), u'&#9650;'))
+        actions.append(action % (page.pk, 'right', _('Insert after (right)'), u'&#9660;'))
         actions.append(u'&nbsp;&nbsp;')
-        actions.append(action % (page.pk, 'first-child', _('Insert as first child'), u'&#x2198;')
-        actions.append(action % (page.pk, 'last-child', _('Insert as last child'), u'&#x21d8;')
+        actions.append(action % (page.pk, 'first-child', _('Insert as first child'), u'&#x2198;'))
+        actions.append(action % (page.pk, 'last-child', _('Insert as last child'), u'&#x21d8;'))
         actions.append(u'</nobr>')
 
         return actions

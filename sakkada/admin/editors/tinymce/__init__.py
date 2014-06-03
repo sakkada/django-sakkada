@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+from django.forms.widgets import Media
+from django.contrib.admin.templatetags.admin_static import static
 from django.contrib import admin
 from django.conf import settings
-from django.forms.widgets import Media
+
 
 class EditorAdmin(admin.ModelAdmin):
     @property
@@ -9,15 +11,16 @@ class EditorAdmin(admin.ModelAdmin):
         setup = '.%s' % self.tinymce_setup if self.tinymce_setup else ''
         setup = 'admin/tinymce/setup/activater%s.js' % setup
 
-        js = [
-            settings.STATIC_URL + 'admin/js/jquery.min.js',
-            settings.STATIC_URL + 'admin/js/jquery.init.js',
-            settings.STATIC_URL + 'admin/jquery/init.js',
-            settings.STATIC_URL + 'admin/jquery/jquery.cookie.js',
-            settings.STATIC_URL + 'admin/tinymce/jscripts/tiny_mce/tiny_mce.js',
-            settings.STATIC_URL + setup,
-        ]
-        css = {'all': [settings.STATIC_URL + 'admin/tinymce/setup/activater.css',]}
+        js = '' if settings.DEBUG else '.min'
+        js = (
+            static('admin/js/jquery%s.js' % js),
+            static('admin/js/jquery.init.js'),
+            static('admin/jquery/init.js'),
+            static('admin/jquery/jquery.cookie.js'),
+            static('admin/tinymce/jscripts/tiny_mce/tiny_mce.js'),
+            static(setup),
+        )
+        css = {'all': (static('admin/tinymce/setup/activater.css'),),}
 
         media = getattr(super(EditorAdmin, self), 'media', None) or Media()
         media.add_js(js)
@@ -38,4 +41,6 @@ class EditorAdmin(admin.ModelAdmin):
         if hasattr(self, 'tinymce_fields') and self.tinymce_fields:
             for name in self.tinymce_fields:
                 f = form.base_fields[name]
-                f.widget.attrs['class'] = ' '.join(([f.widget.attrs['class'].strip()] if f.widget.attrs.has_key('class') else []) + ['editor_tinymce'])
+                f.widget.attrs['class'] = ' '.join(([f.widget.attrs['class'].strip()]
+                                                    if f.widget.attrs.has_key('class')
+                                                    else []) + ['editor_tinymce'])

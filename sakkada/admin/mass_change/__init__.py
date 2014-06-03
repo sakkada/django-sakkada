@@ -1,22 +1,24 @@
-from django.contrib import admin
 from django.http import HttpResponseRedirect
 from django.views.decorators.csrf import csrf_protect
 from django.utils.decorators import method_decorator
-from django.contrib.admin import widgets
 from django.utils.functional import curry
-from django.forms.models import modelform_factory, modelformset_factory, inlineformset_factory
+from django.contrib.admin import widgets
+from django.contrib.admin.templatetags.admin_static import static
+from django.contrib import admin
 from django.conf import settings
+from django.forms.models import modelform_factory
 from django import forms
 
 class MassChangeAdmin(admin.ModelAdmin):
     list_editable_mass = None
 
     class Media:
-        js = [
-            settings.STATIC_URL + 'admin/js/jquery.min.js',
-            settings.STATIC_URL + 'admin/js/jquery.init.js',
-            settings.STATIC_URL + 'admin/jquery/init.js',
-        ]
+        js = '' if settings.DEBUG else '.min'
+        js = (
+            static('admin/js/jquery%s.js' % js),
+            static('admin/js/jquery.init.js'),
+            static('admin/jquery/init.js'),
+        )
 
     def __init__(self, *args, **kwargs):
         super(MassChangeAdmin, self).__init__(*args, **kwargs)

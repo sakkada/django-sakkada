@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
+from django.contrib.admin.templatetags.admin_static import static
 from django.contrib import admin
 from django.conf import settings
 
+
 class EditorAdmin(admin.ModelAdmin):
     class Media:
-        js = [
-            settings.STATIC_URL + 'admin/js/jquery.min.js',
-            settings.STATIC_URL + 'admin/js/jquery.init.js',
-            settings.STATIC_URL + 'admin/jquery/init.js',
-            settings.STATIC_URL + 'admin/simple_fb/activater.js',
-        ]
-
-        css = {'all': [settings.STATIC_URL + 'admin/simple_fb/activater.css',]}
+        js = '' if settings.DEBUG else '.min'
+        js = (
+            static('admin/js/jquery%s.js' % js),
+            static('admin/js/jquery.init.js'),
+            static('admin/jquery/init.js'),
+            static('admin/simple_fb/activater.js'),
+        )
+        css = {'all': (static('admin/simple_fb/activater.css'),),}
 
     simple_fb_fields = {}
 
@@ -26,4 +28,6 @@ class EditorAdmin(admin.ModelAdmin):
         if hasattr(self, 'simple_fb_fields') and self.simple_fb_fields:
             for name in self.simple_fb_fields:
                 f = form.base_fields[name]
-                f.widget.attrs['class'] = ' '.join(([f.widget.attrs['class'].strip()] if f.widget.attrs.has_key('class') else []) + ['editor_simple_fb'])
+                f.widget.attrs['class'] = ' '.join(([f.widget.attrs['class'].strip()]
+                                                    if f.widget.attrs.has_key('class')
+                                                    else []) + ['editor_simple_fb'])
