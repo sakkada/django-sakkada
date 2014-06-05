@@ -1,5 +1,20 @@
 {% extends "admin/change_list.html" %}
-{% load i18n %}{% load url from future %}
+{% load i18n admin_urls %}
+
+{% block breadcrumbs %}
+{% if not is_popup %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label=cl.opts.app_label %}">{{ app_label|capfirst|escape }}</a>
+    {% if request.FKEY_LIST %}
+    &rsaquo; <a href="{% url cl.opts|admin_urlname:'changelist' %}">{{ cl.opts.verbose_name_plural|capfirst }}</a>
+    &rsaquo; {{ cl.opts.verbose_name_plural|capfirst }} in {{ request.FKEY_LIST.fkey_name|capfirst }} #{{ request.FKEY_LIST.id }}</a>
+    {% else %}
+    &rsaquo; {{ cl.opts.verbose_name_plural|capfirst }}
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
 
 {% block content_title %}
 {{ block.super }}
@@ -7,27 +22,11 @@
 {% endblock %}
 
 {% block object-tools-items %}
-  {% if request.FKEY_LIST %}
-  <li><a href="{% url request.FKEY_LIST.link_name.add_fkeylist request.FKEY_LIST.fkey_name request.FKEY_LIST.id %}{% if is_popup %}?_popup=1{% endif %}" class="addlink">
-      {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}</a></li>
-  {% else %}
-  {{ block.super }}
-  {% endif %}
-{% endblock %}
-
-{% block breadcrumbs %}
-{% if not is_popup %}
-<div class="breadcrumbs">
-  {% if request.FKEY_LIST %}
-  <a href="../../../">{% trans "Home" %}</a> &rsaquo;
-  <a href="../../">{{ app_label|capfirst }}</a> &rsaquo;
-  <a href="../">{{ cl.opts.verbose_name_plural|capfirst }}</a> &rsaquo;
-  {{ cl.opts.verbose_name_plural|capfirst }} in {{ request.FKEY_LIST.fkey_name|capfirst }} #{{ request.FKEY_LIST.id }}</a>
-  {% else %}
-  <a href="../../">{% trans "Home" %}</a> &rsaquo;
-  <a href="../">{{ app_label|capfirst }}</a> &rsaquo;
-  {{ cl.opts.verbose_name_plural|capfirst }}
-  {% endif %}
-</div>
-{% endif %}
+{% if has_add_permission and request.FKEY_LIST %}
+<li>{% url request.FKEY_LIST.link_name.add_fkeylist request.FKEY_LIST.fkey_name request.FKEY_LIST.id as add_url %}
+    <a href="{% add_preserved_filters add_url is_popup %}" class="addlink">
+        {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}
+    </a>
+</li>
+{% else %}{{ block.super }}{% endif %}
 {% endblock %}
