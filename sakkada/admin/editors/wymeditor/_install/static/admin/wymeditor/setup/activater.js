@@ -19,8 +19,8 @@ $(function() {
         $(wym._box).find('.wym_containers h2 span').remove()
         // bind activator event
         $(wym._box).parent().find('input:checkbox').click(function(){
-            django_admin_editor_ex = $(this).attr('checked')
-            $('input:checkbox.editor_ex_checkbox').attr('checked', django_admin_editor_ex)
+            django_admin_editor_ex = $(this).prop('checked')
+            $('input:checkbox.editor_ex_checkbox').prop('checked', django_admin_editor_ex)
             if (django_admin_editor_ex) {
                 $('div.wym_box').each(function(){
                     container = $(this).parent()
@@ -120,7 +120,7 @@ $(function() {
         env.insertBefore($(this))
         env.prepend($("<div/>").addClass('editor_tools_bar'))
         env.find('div')
-           .prepend($("<input/>").attr('type', 'checkbox').addClass('editor_ex_checkbox').attr('checked', django_admin_editor_ex))
+           .prepend($("<input/>").attr('type', 'checkbox').addClass('editor_ex_checkbox').prop('checked', django_admin_editor_ex))
            .prepend($("<a/>").addClass('editor_tools_bar_browse').attr('href', '#').html('filemanager').css('color', '#0a0'))
            .prepend($("<a/>").addClass('editor_tools_bar_resize') .attr('href', '#').html('large'))
         env.append($(this))
@@ -143,7 +143,7 @@ $(function() {
         $('input:checkbox', env).one('click', function() {
             if ($('div.wym_box').length) return true
             django_admin_editor_ex = true
-            $('input:checkbox.editor_ex_checkbox').attr('checked', django_admin_editor_ex)
+            $('input:checkbox.editor_ex_checkbox').prop('checked', django_admin_editor_ex)
             editor_ex($('textarea.'+textarea_class))
         })
     })

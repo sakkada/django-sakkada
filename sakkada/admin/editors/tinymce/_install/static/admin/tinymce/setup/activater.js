@@ -10,7 +10,7 @@ var tinymce_activater = function (){
         theme : "advanced",
         plugins : "table,advimage,advlink,preview,paste,fullscreen,visualchars,nonbreaking",
         relative_urls : false,
-        content_css: '/media/admin/tinymce/setup/styles.css',
+        content_css: '/static/admin/tinymce/setup/styles.css',
         height: 350,
         extended_valid_elements: "style",
 
@@ -25,13 +25,13 @@ var tinymce_activater = function (){
         theme_advanced_toolbar_location : "top",
         theme_advanced_toolbar_align : "left",
         theme_advanced_statusbar_location : "bottom",
-        theme_advanced_resizing : true,
+        theme_advanced_resizing : true
 
         // Drop lists for link/image/media/template dialogs
-        template_external_list_url : "js/template_list.js",
-        external_link_list_url : "js/link_list.js",
-        external_image_list_url : "js/image_list.js",
-        media_external_list_url : "js/media_list.js",
+        // template_external_list_url : "js/template_list.js",
+        // external_link_list_url : "js/link_list.js",
+        // external_image_list_url : "js/image_list.js",
+        // media_external_list_url : "js/media_list.js",
     });
 }
 
@@ -91,9 +91,9 @@ $(function() {
         env.insertBefore($(this))
         env.prepend($("<div/>").addClass('editor_tools_bar'))
         env.find('div')
-        .prepend($("<input/>").attr('type', 'checkbox').addClass('editor_ex_checkbox').attr('checked', django_admin_editor_ex))
-        .prepend($("<a/>").addClass('editor_tools_bar_browse').attr('href', '#').html('filemanager').css('color', '#0a0'))
-        .prepend($("<a/>").addClass('editor_tools_bar_resize') .attr('href', '#').html('large'))
+           .prepend($("<input/>").attr('type', 'checkbox').addClass('editor_ex_checkbox').prop('checked', django_admin_editor_ex))
+           .prepend($("<a/>").addClass('editor_tools_bar_browse').attr('href', '#').html('filemanager').css('color', '#0a0'))
+           .prepend($("<a/>").addClass('editor_tools_bar_resize') .attr('href', '#').html('large'))
         env.append($(this))
 
         $('a.editor_tools_bar_browse', env).click(function() {
@@ -107,15 +107,15 @@ $(function() {
                 return false;
             }
             data = 'large' == $(this).text() ? {name: 'small', size: 450}
-                                            : {name: 'large', size: 200}
+                                             : {name: 'large', size: 200}
             $(this).text(data['name'])
             editor_resize($(this).parent().parent(), 'height', data['size'])
             return false
         })
 
         $('input:checkbox', env).bind('click', function() {
-            django_admin_editor_ex = $(this).attr('checked')
-            $('input:checkbox.editor_ex_checkbox').attr('checked', django_admin_editor_ex)
+            django_admin_editor_ex = $(this).prop('checked')
+            $('input:checkbox.editor_ex_checkbox').prop('checked', django_admin_editor_ex)
             tinyMCE.editors.length ? $(tinyMCE.editors).each(function(index, ed){ ed.remove() })
                                    : tinymce_activater()
         })

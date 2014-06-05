@@ -37,8 +37,8 @@ $(function() {
         env.insertBefore($(this))
         env.prepend($("<div/>").addClass('editor_tools_bar'))
         env.find('div')
-        .prepend($("<a/>").addClass('editor_tools_bar_browse').attr('href', '#').html('filemanager').css('color', '#0a0'))
-        .prepend($("<a/>").addClass('editor_tools_bar_resize') .attr('href', '#').html('large'))
+           .prepend($("<a/>").addClass('editor_tools_bar_browse').attr('href', '#').html('filemanager').css('color', '#0a0'))
+           .prepend($("<a/>").addClass('editor_tools_bar_resize').attr('href', '#').html('large'))
         env.append($(this))
 
         $('a.editor_tools_bar_browse', env).click(function() {
@@ -48,7 +48,7 @@ $(function() {
 
         $('a.editor_tools_bar_resize', env).click(function() {
             data = 'large' == $(this).text() ? {name: 'small', size: 450}
-                                            : {name: 'large', size: 200}
+                                             : {name: 'large', size: 200}
             $(this).text(data['name'])
             editor_resize($(this).parent().parent(), 'height', data['size'])
             return false
