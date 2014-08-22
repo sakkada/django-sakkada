@@ -3,11 +3,13 @@
 
 {% block extrahead %}{{ block.super }}
 <script type="text/javascript">
+(function($) {
+
     // This represents the current state of the page tree. Would need to be
     // refreshed if pages are moved or deleted, but for now that is not possible
-    var tree_structure = {{ tree_structure|default:"{}" }};
-    var tree_structure_sort = tree_structure.sort
-    delete tree_structure.sort
+    mptt_tree.tree_structure = {{ tree_structure|default:"{}" }};
+    mptt_tree.tree_structure_sort = mptt_tree.tree_structure.sort
+    delete mptt_tree.tree_structure.sort
 
     // After loading the page, show all root nodes
     $(function() {
@@ -18,12 +20,12 @@
 
         $('a.paste_target').hide();
 
-        empty_sym       = '<img alt="-" src="{{ TREE_ADMIN_MEDIA }}icon-empty.png">';
-        expand_sym      = '<img alt="+" src="{{ TREE_ADMIN_MEDIA }}icon-right.png">';
-        collapse_sym    = '<img alt="*" src="{{ TREE_ADMIN_MEDIA }}icon-down.png">';
+        mptt_tree.empty_symbol      = '<img alt="-" src="{{ TREE_ADMIN_MEDIA }}icon-empty.png">';
+        mptt_tree.expand_symbol     = '<img alt="+" src="{{ TREE_ADMIN_MEDIA }}icon-right.png">';
+        mptt_tree.collapse_symbol   = '<img alt="*" src="{{ TREE_ADMIN_MEDIA }}icon-down.png">';
 
         // reduce structure to actually present items
-        tree_structure_clean();
+        mptt_tree.tree_structure_clean();
 
         // yuck :-)
         $('table thead tr th:eq(1)').addClass('title-column');
@@ -32,13 +34,13 @@
         $('tr').keydown(function(event) {
             // 38 up, 40 down, 37 left, 39 right
             switch(event.keyCode) {
-                case 40:    changelist_tab($(this), event, 1); break;   // down
-                case 38:    changelist_tab($(this), event, -1); break;  // up
-                case 37:    changelist_openclose(this, 0); break;       // left
-                case 39:    changelist_openclose(this, 1); break;       // right
-                case 13:    
-                case 10:    item_id = changelist_itemid(this);
-                            document.location = document.location.pathname + item_id + '/'; 
+                case 40:    mptt_tree.changelist_tab($(this), event, 1); break;   // down
+                case 38:    mptt_tree.changelist_tab($(this), event, -1); break;  // up
+                case 37:    mptt_tree.changelist_openclose(this, 0); break;       // left
+                case 39:    mptt_tree.changelist_openclose(this, 1); break;       // right
+                case 13:
+                case 10:    item_id = mptt_tree.changelist_itemid(this);
+                            document.location = document.location.pathname + item_id + '/';
                             break; // return
                 default:    break;
             }
@@ -46,12 +48,14 @@
 
         $('tr').keypress(function(event) {
             switch(event.charCode) {
-                case 43:    open_entire_tree(); break;  // +
-                case 45:    close_entire_tree(); break; // -
+                case 43:    mptt_tree.open_entire_tree(); break;  // +
+                case 45:    mptt_tree.close_entire_tree(); break; // -
                 default:    break;
             }
         });
     });
+
+})(django.jQuery);
 </script>
 {% endblock %}
 
@@ -60,8 +64,8 @@
 <div id="changelist-filter">
 <h2>{% trans 'Shortcuts' %}</h2>
 <ul>
-    <li><a href="javascript: close_entire_tree();">{% trans 'Collapse tree' %}</a></li>
-    <li><a href="javascript: open_entire_tree();">{% trans 'Expand tree' %}</a></li>
+    <li><a href="javascript: mptt_tree.close_entire_tree();">{% trans 'Collapse tree' %}</a></li>
+    <li><a href="javascript: mptt_tree.open_entire_tree();">{% trans 'Expand tree' %}</a></li>
     <li><a href="javascript: void(0);" id="show_hide_ajax_bools">{% trans 'Show/Hide bools' %}</a></li>
 </ul>
 <h2>{% trans 'Filter' %}</h2>

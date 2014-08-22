@@ -16,7 +16,7 @@ def ajax_boolean_cell(item, attr, text=''):
     text = text and '&nbsp;(%s)' % unicode(text)
     cbox = getattr(item, attr) and ' checked="checked"' or ''
     cbox = (u'<div id="wrap_%s_%d">'
-            u'<input type="checkbox"%s onclick="return inplace_toggle_boolean(%d, \'%s\')"; />'
+            u'<input type="checkbox"%s onclick="return mptt_tree.inplace_toggle_boolean(%d, \'%s\')"; />'
             u'%s</div>' % (attr, item.id, cbox, item.id, attr, text))
     return cbox
 
@@ -242,7 +242,7 @@ class MpttTreeAdmin(AjaxBoolAdmin):
         Generate a short title for a page, indent it depending
         on the page's depth in the hierarchy.
         """
-        r = '<span onclick="return page_tree_handler(\'%d\');" id="page_marker-%d"' \
+        r = '<span onclick="return mptt_tree.page_tree_handler(\'%d\');" id="page_marker-%d"' \
             ' class="page_marker" style="width: 12px;" level="%d">&nbsp;</span>' \
             % (item.id, item.id, item.level)
         if hasattr(item, 'get_absolute_url'):
@@ -280,12 +280,12 @@ class MpttTreeAdmin(AjaxBoolAdmin):
 
     def _actions_column(self, page):
         action = (u'<a class="paste_target" href="#"'
-                  u' onclick="return paste_item(\'%s\', \'%s\')"'
+                  u' onclick="return mptt_tree.paste_item(\'%s\', \'%s\')"'
                   u' title="%s">%s</a>')
 
         actions = []
         actions.append(u'<nobr>')
-        actions.append(u'<a href="#" onclick="return cut_item(\'%s\', this)"'
+        actions.append(u'<a href="#" onclick="return mptt_tree.cut_item(\'%s\', this)"'
                        u' title="%s">move</a>' % (page.pk, _('Cut')))
         actions.append(u'&nbsp;&nbsp;&nbsp;')
         actions.append(action % (page.pk, 'left', _('Insert before (left)'), u'&#9650;'))
