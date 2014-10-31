@@ -10,7 +10,9 @@ from django.contrib import admin
 from django.conf import settings
 from mptt.exceptions import InvalidMove
 
+
 TREE_ADMIN_MEDIA = '%s%s' % (settings.STATIC_URL, 'admin/mptt_tree/')
+
 
 def ajax_boolean_cell(item, attr, text=''):
     text = text and '&nbsp;(%s)' % unicode(text)
@@ -36,7 +38,7 @@ def ajax_boolean(attr, short_description = ''):
     _fn.editable_boolean_field = attr
     return _fn
 
-def _build_tree_structure(cls):
+def _build_tree_structure(queryset):
     """
     Build an in-memory representation of the item tree, trying to keep
     database accesses down to a minimum. The returned dictionary looks like
@@ -53,10 +55,9 @@ def _build_tree_structure(cls):
         if n_parent_id:
             add_as_descendant(n_parent_id, p)
 
-    opts = cls._mptt_meta
-    for p_id, parent_id, level in cls.objects.order_by(opts.tree_id_attr, opts.left_attr) \
-                                             .values_list("pk", "%s_id" % opts.parent_attr,
-                                                          "level"):
+    opts = queryset.model._mptt_meta
+    for p_id, parent_id, level in queryset.values_list("pk", "%s_id" % opts.parent_attr,
+                                                       "level"):
         all_nodes['sort'].append(p_id)
         all_nodes[p_id] = {'id': p_id, 'parent': parent_id, 'level': level,
                            'children': [], 'descendants': [],}
@@ -66,13 +67,18 @@ def _build_tree_structure(cls):
 
     return all_nodes
 
+
 class TreeChangeList(ChangeList):
     """TreeEditor ChangeList always need to order by 'tree_id' and 'lft'."""
     def get_query_set(self, request):
         qs = super(TreeChangeList, self).get_query_set(request)
         if isinstance(self.model_admin, MpttTreeAdmin):
-            return qs.order_by('tree_id', 'lft')
+            # always order by (tree_id, left)
+            tree_id = qs.model._mptt_meta.tree_id_attr
+            left = qs.model._mptt_meta.left_attr
+            return qs.order_by(tree_id, left)
         return qs
+
 
 class AjaxBoolAdmin(admin.ModelAdmin):
     class Media:
@@ -177,6 +183,7 @@ class AjaxBoolAdmin(admin.ModelAdmin):
 
         return HttpResponse(simplejson.dumps(d), mimetype="application/json")
 
+
 class MpttTreeAdmin(AjaxBoolAdmin):
     list_per_page = 999
 
@@ -197,6 +204,13 @@ class MpttTreeAdmin(AjaxBoolAdmin):
             'admin/mptt_tree/%s/tree_change_list.html' % opts.app_label,
             'admin/mptt_tree/tree_change_list.html',
         ]
+
+    def get_queryset(self, request):
+        qs = super(MpttTreeAdmin, self).get_queryset(request)
+        # always order by (tree_id, left)
+        tree_id = qs.model._mptt_meta.tree_id_attr
+        left = qs.model._mptt_meta.left_attr
+        return qs.order_by(tree_id, left)
 
     def changelist_view(self, request, extra_context=None, *args, **kwargs):
         """
@@ -219,7 +233,8 @@ class MpttTreeAdmin(AjaxBoolAdmin):
         extra_context = extra_context or {}
         extra_context['TREE_ADMIN_MEDIA'] = TREE_ADMIN_MEDIA
         extra_context['tree_structure'] = mark_safe(simplejson.dumps(
-                                                    _build_tree_structure(self.model)))
+            _build_tree_structure(self.get_queryset(request))
+        ))
 
         return super(AjaxBoolAdmin, self).changelist_view(request, extra_context,
                                                           *args, **kwargs)
@@ -273,7 +288,9 @@ class MpttTreeAdmin(AjaxBoolAdmin):
             # Ensure that model save has been run
             source = self.model._tree_manager.get(pk=request.POST.get('cut_item'))
             self.save_moved_node(source)
-            tree_structure = mark_safe(simplejson.dumps(_build_tree_structure(self.model)))
+            tree_structure = mark_safe(simplejson.dumps(
+                _build_tree_structure(self.get_queryset(request))
+            ))
             return HttpResponse('OK' + tree_structure)
 
         return HttpResponse('FAIL: ' + position)
