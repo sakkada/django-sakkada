@@ -16,6 +16,7 @@ from .unique import UniqueNameFileSystemStorage
 
 class HashedNameFileSystemStorage(UniqueNameFileSystemStorage):
     segments = None
+    overwrite_existing = False
 
     def __init__(self, segments=None, *args, **kwargs):
         """
