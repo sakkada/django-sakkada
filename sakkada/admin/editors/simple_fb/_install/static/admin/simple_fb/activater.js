@@ -18,13 +18,14 @@ $(function() {
 
         dlg = jQuery(dialog.document.body)
         dlg.find('fieldset').append($('<a id="fb_link" title="Filebrowser" href="#">filemanager</a><br>'))
+        dlg.find('fieldset').append($('<span id="wrapper" style="float:right;"></span>'))
+        dlg.find('fieldset #wrapper').append($('<span id="preview_filebrowser_path"><a id="previewlink_filebrowser_path"><img id="previewimage_filebrowser_path" /></a></span>').hide())
         dlg.find('fieldset').append($('<textarea/>').attr({'id': 'filebrowser_path', 'cols': '52', 'rows': '3'}))
-        dlg.find('fieldset').append($('<a id="link_filebrowser_path"><img id="image_filebrowser_path" /></a><br /><span id="help_filebrowser_path"></span>'))
         dlg.find('fieldset').append($('<input id="fb_select" type="submit" value="select text">'))
         dlg.find('fieldset').append($('<input id="fb_close" type="submit" value="close">'))
         dlg.find('#fb_select').click(function() { dlg.find('#filebrowser_path').select(); })
         dlg.find('#fb_close').click(function() { dialog.close(); })
-        dlg.find('#fb_link').click(function() { dialog.window.open(fb_url + '?pop=1', 'filebrowser_path', 'height=600,width=900,resizable=yes,scrollbars=yes').focus(); return false; })
+        dlg.find('#fb_link').click(function() { dialog.window.open(fb_url + '?pop=1&geturl=1', 'filebrowser_path', 'height=600,width=900,resizable=yes,scrollbars=yes').focus(); return false; })
         dialog.focus()
     }
 

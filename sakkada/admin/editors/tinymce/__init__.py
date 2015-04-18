@@ -9,7 +9,7 @@ class EditorAdmin(admin.ModelAdmin):
     @property
     def media(self):
         setup = '.%s' % self.tinymce_setup if self.tinymce_setup else ''
-        setup = 'admin/tinymce/setup/activater%s.js' % setup
+        setup = 'admin/tiny_mce/setup/activater%s.js' % setup
 
         js = '' if settings.DEBUG else '.min'
         js = (
@@ -17,10 +17,10 @@ class EditorAdmin(admin.ModelAdmin):
             static('admin/js/jquery.init.js'),
             static('admin/jquery/init.js'),
             static('admin/jquery/jquery.cookie.js'),
-            static('admin/tinymce/jscripts/tiny_mce/tiny_mce.js'),
+            static('%s/tiny_mce.js' % self.tinymce_static_url.rstrip('/')),
             static(setup),
         )
-        css = {'all': (static('admin/tinymce/setup/activater.css'),),}
+        css = {'all': (static('admin/tiny_mce/setup/activater.css'),),}
 
         media = getattr(super(EditorAdmin, self), 'media', None) or Media()
         media.add_js(js)
@@ -29,6 +29,7 @@ class EditorAdmin(admin.ModelAdmin):
 
     tinymce_fields = {}
     tinymce_setup = None
+    tinymce_static_url = 'tiny_mce'
 
     def get_form(self, request, obj=None, **kwargs):
         form = super(EditorAdmin, self).get_form(request, obj=None, **kwargs)

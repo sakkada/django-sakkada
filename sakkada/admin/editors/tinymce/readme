@@ -1,0 +1,24 @@
+Tinymce editor with "django-filebrowser-no-grappelli" support.
+
+Usage:
+-----
+ * install django-sakkada
+ * install django-filebrowser-no-grappelli
+   (https://pypi.python.org/pypi/django-filebrowser-no-grappelli)
+ * unpack tinymce (3.x) tar/jscripts into "EditorAdmin.tinymce_static_url"
+   (default is static root)
+ * import sakkada.admin.editors.tinymce.EditorAdmin
+ * set EditorAdmin as class of admin model
+ * define tinymce_fields params for required fields
+ * define tinymce_static_url if required, default is "tiny_mce" ("/static/tiny_mce/")
+ * define tinymce_setup if required (alternative setup script)
+ * copy static (admin/tiny_mce/* and admin/jquery/*) to your app/project static folder
+ * copy static (filebrowser/js/FB_FileBrowseField.js) to your project static folder
+   (to override default FB_FileBrowseField.js)
+
+Example usage:
+-------------
+from sakkada.admin.editors.tinymce import EditorAdmin
+
+class SomeAdmin(EditorAdmin, admin.ModelAdmin):
+    tinymce_fields = ('text',)

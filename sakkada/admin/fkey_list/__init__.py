@@ -14,7 +14,7 @@ def fkey_list_link(name, model_set=None, fkey_name=None, with_add_link=False):
             raise Exception, (u'FkeyList link generater:'
                               u' "%s" does not exist' % modelset)
         modelset = getattr(item, modelset)
-        fkeyname = fkey_name if fkey_name else item._meta.module_name
+        fkeyname = fkey_name if fkey_name else item._meta.model_name
 
         link = AdminViewName(modelset.model._meta).changelist_fkeylist
         link = reverse(link, None, (fkeyname, item.pk), {})
@@ -42,7 +42,7 @@ class AdminViewName(object):
         self.opts = opts
 
     def __getattr__(self, name):
-        return 'admin:%s_%s_%s' % (self.opts.app_label, self.opts.module_name, name)
+        return 'admin:%s_%s_%s' % (self.opts.app_label, self.opts.model_name, name)
 
 class FkeyListChangeList(ChangeList):
     fkey_list_data = None
@@ -94,11 +94,11 @@ class FkeyListAdmin(admin.ModelAdmin):
         # check fkey instance
         if not hasattr(self.model, args[0]):
             raise Exception, ('FkeyList: field "%s" does not exist in model "%s"'
-                              % (args[0], self.model._meta.module_name))
+                              % (args[0], self.model._meta.model_name))
         parent = getattr(self.model, args[0]).field.rel.to.objects.filter(pk=args[1])
         if parent.count() != 1:
             raise Exception, ('FkeyList: fkey "%s" #%s for "%s" model does not exist'
-                              % (args[0], args[1], self.model._meta.module_name))
+                              % (args[0], args[1], self.model._meta.model_name))
         parent = parent[0]
 
         # default and fkey links dependencies

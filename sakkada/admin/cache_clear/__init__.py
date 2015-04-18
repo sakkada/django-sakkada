@@ -20,7 +20,7 @@ class CacheClearAdmin(admin.ModelAdmin):
 
     def get_urls(self):
         from django.conf.urls import patterns, url
-        info = self.opts.app_label, self.opts.module_name
+        info = self.opts.app_label, self.opts.model_name
         urls = patterns('', url(
             r'^cache_clear/$', self.admin_site.admin_view(self.cache_clear),
             name="%s_%s_cache_clear" % info

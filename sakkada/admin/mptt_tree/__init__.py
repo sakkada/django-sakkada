@@ -1,9 +1,9 @@
+import json
 from django.http import (HttpResponse, HttpResponseBadRequest,
                          HttpResponseServerError, HttpResponseForbidden,
                          HttpResponseNotFound)
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
-from django.utils import simplejson
 from django.contrib.admin.templatetags.admin_static import static
 from django.contrib.admin.views.main import ChangeList
 from django.contrib import admin
@@ -55,9 +55,9 @@ def _build_tree_structure(queryset):
         if n_parent_id:
             add_as_descendant(n_parent_id, p)
 
-    opts = queryset.model._mptt_meta
-    for p_id, parent_id, level in queryset.values_list("pk", "%s_id" % opts.parent_attr,
-                                                       "level"):
+    opts, qall = queryset.model._mptt_meta, queryset.model.objects.all()
+    for p_id, parent_id, level in qall.values_list("pk", "%s_id" % opts.parent_attr,
+                                                   "level"):
         all_nodes['sort'].append(p_id)
         all_nodes[p_id] = {'id': p_id, 'parent': parent_id, 'level': level,
                            'children': [], 'descendants': [],}
@@ -70,8 +70,8 @@ def _build_tree_structure(queryset):
 
 class TreeChangeList(ChangeList):
     """TreeEditor ChangeList always need to order by 'tree_id' and 'lft'."""
-    def get_query_set(self, request):
-        qs = super(TreeChangeList, self).get_query_set(request)
+    def get_queryset(self, request):
+        qs = super(TreeChangeList, self).get_queryset(request)
         if isinstance(self.model_admin, MpttTreeAdmin):
             # always order by (tree_id, left)
             tree_id = qs.model._mptt_meta.tree_id_attr
@@ -181,7 +181,7 @@ class AjaxBoolAdmin(admin.ModelAdmin):
             if a != b:
                 d.append(b)
 
-        return HttpResponse(simplejson.dumps(d), mimetype="application/json")
+        return HttpResponse(json.dumps(d), content_type="application/json")
 
 
 class MpttTreeAdmin(AjaxBoolAdmin):
@@ -232,7 +232,7 @@ class MpttTreeAdmin(AjaxBoolAdmin):
 
         extra_context = extra_context or {}
         extra_context['TREE_ADMIN_MEDIA'] = TREE_ADMIN_MEDIA
-        extra_context['tree_structure'] = mark_safe(simplejson.dumps(
+        extra_context['tree_structure'] = mark_safe(json.dumps(
             _build_tree_structure(self.get_queryset(request))
         ))
 
@@ -288,7 +288,7 @@ class MpttTreeAdmin(AjaxBoolAdmin):
             # Ensure that model save has been run
             source = self.model._tree_manager.get(pk=request.POST.get('cut_item'))
             self.save_moved_node(source)
-            tree_structure = mark_safe(simplejson.dumps(
+            tree_structure = mark_safe(json.dumps(
                 _build_tree_structure(self.get_queryset(request))
             ))
             return HttpResponse('OK' + tree_structure)

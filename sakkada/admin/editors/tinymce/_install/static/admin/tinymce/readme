@@ -1,9 +1,0 @@
-Unpack tinymce tar here.
-Result after unpack:
-static/
-    admin/
-        tinymce/
-            examples
-            jscripts
-            setup
-            changelog.txt
