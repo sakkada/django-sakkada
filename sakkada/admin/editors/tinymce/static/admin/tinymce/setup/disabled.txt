@@ -1,0 +1,23 @@
+disabled
+    style(styleprops)
+    spellchecker(spellchecker)
+    layer(insertlayer,moveforward,movebackward,absolute)
+    save(save)
+    pagebreak(pagebreak)
+    (newdocument)
+    iespell(iespell)
+    template(template)
+    advhr(advhr)
+    emotions(emotions)
+    insertdatetime(insertdate,inserttime)
+    media(media)
+    print(print)
+    (help)
+    searchreplace(search,replace)
+    contextmenu
+    paste(cut,copy,paste)
+    directionality(ltr,rtl)
+    noneditable
+    xhtmlxtras(cite,abbr,acronym,del,ins,attribs)
+    inlinepopups
+    ?(insertfile,insertimage)

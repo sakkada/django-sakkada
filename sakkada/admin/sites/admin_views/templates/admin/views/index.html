@@ -1,0 +1,24 @@
+{% extends custom_views_parent_template|default:"admin/index.html" %}
+{% load i18n %}
+
+{% block sidebar %}
+
+    {% if custom_views %}
+    <div id="content-related">
+        <div class="module" id="custom-views-module">
+            <h2>{% trans 'Dashboard' %}</h2>
+            <h3>{% trans 'Administration tools' %}</h3>
+            <ul class="actionlist">
+                {% for urlname, name, description in custom_views %}<li class="addlinka">
+                    <b><a href="{% url 'admin:'|add:urlname %}">{{ name }}</a></b>
+                    {% if description %}<br/><span class="mini quiet">{{ description }}</span>{% endif %}
+                </li>{% endfor %}
+            </ul>
+        </div>
+    </div>
+    <br clear="right" />
+    {% endif %}
+
+    {{ block.super }}
+
+{% endblock %}

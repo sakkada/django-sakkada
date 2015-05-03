@@ -1,0 +1,15 @@
+{% extends ajax_list_parent_template|default:"admin/change_list.html" %}
+
+{% load i18n %}
+
+{% block filters %}
+{{ block.super }}
+{% if cl.has_filters %}
+<div id="ajaxlist-changelist-filter">
+<h2>{% trans 'Shortcuts' %}</h2>
+<ul class="changelist-filter-shortcuts">
+    <li><a id="ajaxlist-showhide-fields" href="#">{% trans 'Show/Hide ajax fields' %}</a></li>
+</ul>
+</div>
+{% endif %}
+{% endblock %}

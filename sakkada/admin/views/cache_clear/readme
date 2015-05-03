@@ -1,0 +1,16 @@
+System cache data clearing page view. Usually usage with admin_views.
+
+Usage:
+ *  Install "django-sakkada"
+ *  Copy templates "admin/cache/*" to your project/application template folder
+    or add "sakkada.admin.views.cache_clear" to your INSTALLED_APPS.
+ *  Register "cache_clear_view" by AdminViews "register_view" method.
+
+Example usage:
+-------------------------------------------------------------------------------
+from django.contrib import admin
+from sakkada.admin.views.cache_clear import cache_clear_view
+
+admin.site.register_view('^cache_clear/$', view=cache_clear_view,
+                         name="Cache clear", urlname='cache_clear',
+                         help_text=cache_clear_view.__doc__)

@@ -1,0 +1,16 @@
+#result_list tr.mtree_cut { background-color: #5B80B2; }
+#result_list tr.mtree_cut a,
+#result_list tr.mtree_cut td { color: #fff; }
+#result_list tr:hover,
+#result_list tr:focus { background-color: #bcf !important; outline: 0px; }
+#result_list a.mtree_paste_target { display: none; }
+
+#mtree-changelist-filter { display: none; }
+
+.indented_short_title { overflow: hidden; display: block; padding-left: 4px; //zoom: 1; }
+
+.mtree_node_marker { float: left; width: 12px; height: 12px; }
+.mtree_node_indent { float: left; }
+.mtree_node_leaf { background-repeat: no-repeat; background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAABGdBTUEAANbY1E9YMgAAABh0RVh0U29mdHdhcmUAUGFpbnQuTkVUIHYzLjM2qefiJQAAAH9JREFUKFNjZICCnTt3ygOZDUAcAMQCUOEPQHoDSNzd3f0hTC0DULE+EL8H4v84MEhOH6wBZDKa4n94NMmDNMxHU4BLA8j2+SANMKeAFOJTDNLwHqQB5m5iNPwnSwPJToJ5mhgngT1NWrBC44L4iENOGtA4QY5xEBvkZFCyAQMAnx6DvPsOuv0AAAAASUVORK5CYII=); }
+.mtree_node_opened { background-repeat: no-repeat; background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAABGdBTUEAANbY1E9YMgAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAADLSURBVHjaYmSAguiGTfJAqgGIA4BYACr8AYg3gMSXNvg9BAkwQhXrA6kDSArRAUijA1DTRUaoyRfwKEbWZMAEdQYhxQxQNQ0sUDczaMoLM1QnWGFV2brgGMP1h29BzAAmmOkggTM3nmMoBolBFYNtYUKWXLLjKoYGdDEmqGfA4M3H7wzrDtyES4LYIDFkjzNBwxkOdpy4x/D1x28wBrHRwAYW9Mj69vMP0BlXGGBstGBtIDniwJ4GMUCRAsQLkP0EZYPEDKBqGAACDACoIFfHVXi2dwAAAABJRU5ErkJggg==); }
+.mtree_node_closed { background-repeat: no-repeat; background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAABGdBTUEAANbY1E9YMgAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAADJSURBVHjaYmSAguiGTfJAqgGIA4BYACr8AYg3gMSXNvg9BAkwQhXrA6kDSArRAUijA1DTRUaoyRdAiuXE+Ri4OVgZrj98i0uTARPUGWCTQYqrE6wYCsJNGET4OdE1gNQ0sEDdjAJMNCTBeN2Bmww7Ttxj+PbzD0wqgAmPuxmCHNQZ+gtcGGz1ZeC2MDGQCFignsFqCxYnfWCBhnMCssIzN54zLNlxleHNx+/oZmwgOVhJjjiwp0EMkG4gXgCVRFYIEjOAqmEACDAADjFKfEtZcsQAAAAASUVORK5CYII=); }

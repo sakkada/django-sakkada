@@ -1,0 +1,102 @@
+AdminViews lets you add admin views that are not tied to models.
+
+Usage:
+ *  Install "django-sakkada".
+ *  Replace "django.contrib.admin" with "django.contrib.admin.apps.SimpleAdminConfig"
+    in your installed apps to disable the automatic auto-discovery.
+ *  In your root urls.py patch admin module with AdminViewsSite instance
+    and run autodiscover manually:
+        ...
+        admin.site = AdminViewsSite()
+        admin.autodiscover()
+        ...
+ *  Copy templates "admin/views/*" to your project/application template folder
+    or add "sakkada.admin.sites.admin_views" to your INSTALLED_APPS.
+ *  Register custom views anywhere in your project with register_view.
+    Function call:
+        ...
+        def admin_view(request, *args, **kwargs):
+            pass
+        admin.site.register_view('^somepath$', view=my_view)
+        ...
+    Decorator:
+        ...
+        @admin.site.register_view('^somepath$')
+        def admin_view(request):
+            pass
+        ...
+
+Note:
+    Views with URLs that match auto-discovered URLs (e.g. those created via
+    ModelAdmins) will override the auto-discovered URL.
+
+Module contains:
+    "AdminViewsMixin" - mixin for AdminSite to add register_view functionality,
+    also "AdminViewsSite" class to replace default "admin.site".
+    Class updates:
+        - "index_template" changed to 'admin/views/index.html',
+        - add "custom_views_parent_template" variable to allow specify index
+          template parent template name,
+        - "index" view takes two new variables in the context ("custom_views"
+          and "custom_views_parent_template").
+        - new "register_view" method, add custom view to admin site,
+          takes several arguments:
+            * "regex" is the regex pattern for the url(),
+            * "view" is any view function you can imagine,
+            * "urlname" is an optional parameter to be able to call the view with a
+                redirect() or reverse(),
+            * "kwargs" is an optional parameter, kwargs for the url(),
+            * "wrap_view" is a boolean to allow wrap view with admin_view,
+            * "name" is an optional pretty name for the list of custom views. If
+                empty, we'll guess based on view.__name__,
+            * "help_text" is an optional short description of what view do,
+            * "visible" is a boolean to set if the custom view should be visible in
+                the admin dashboard or not.
+
+Example usage:
+-------------------------------------------------------------------------------
+urls.py (root):
+-------------------------------------------------------------------------------
+from django.conf import settings
+from django.conf.urls import patterns, include, url
+from django.conf.urls.static import static
+from django.contrib import admin
+from sakkada.admin.sites.admin_views import AdminViewsSite
+
+admin.site = AdminViewsSite()
+admin.autodiscover()
+
+urlpatterns = patterns('',
+    url(r'^admin/', include(admin.site.urls)),
+) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+-------------------------------------------------------------------------------
+
+settings.py:
+-------------------------------------------------------------------------------
+# ...
+INSTALLED_APPS = (
+    # ...
+    'django.contrib.admin.apps.SimpleAdminConfig',
+    # ...
+    'sakkada.admin.sites.admin_views', # or copy template to your project dir
+    # ...
+)
+# ...
+-------------------------------------------------------------------------------
+
+anywhere in project:
+-------------------------------------------------------------------------------
+from django.contrib import admin
+
+def custom_admin_view(request, *args, **kwargs):
+    "Some custom admin view."
+    return render(request, 'template.html', {})
+
+admin.site.register_view('^somepath$', view=custom_admin_view,
+                         help_text=custom_admin_view.__doc__)
+
+@admin.site.register_view('^anotherpath$', help_text='Some help text')
+def another_admin_view(request, *args, **kwargs):
+    "Some custom admin view."
+    return render(request, 'template.html', {}))
+-------------------------------------------------------------------------------

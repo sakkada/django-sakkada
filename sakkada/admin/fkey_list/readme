@@ -1,39 +1,132 @@
+ModelAdmin for manage objects, filtered by foreign key value.
+
+
 Installation:
 ------------
- * install templates to your app:
-   copy files from _install dir to your app templates,
-   change app_name with current application name, or
-   change app_name with appname/modelname (create subdir)
- * extends admin model with FkeyListAdmin (FkeyMpttAdmin) between admin.ModelAdmin, 
-   for example, class SomeAdmin(FkeyListAdmin, admin.ModelAdmin): pass
- * set links to related changelist_view with fkey_list_link (see below)
-   item_link = fkey_list_link('item')
+ *  Install "django-sakkada"
+ *  Import "FkeyListAdmin" ("FkeyMpttAdmin") and "fkey_list_link" from
+    "sakkada.admin.fkey_list"
+ *  Set "FkeyListAdmin" ("FkeyMpttAdmin") as class of admin model
+ *  Define "fkey_list_link" properties for required foreign keys
+ *  Set extended template names in followed (
+        "fkey_list_parent_change_list_template",
+        "fkey_list_parent_change_form_template",
+        "fkey_list_parent_delete_confirmation_template",
+        "fkey_list_parent_delete_selected_confirmation_template",
+        "fkey_list_parent_object_history_template",
+    ) properties if required
+ *  Copy templates "admin/fkey_list/*" to your project/application template folder
+    or add "sakkada.admin.fkey_list" to your INSTALLED_APPS.
+
 
 Usage:
 -----
-def fkey_list_link(name, model_set=None, fkey_name=None, with_add_link=False)
-    - name:             name of child model
-    - model_set:        required, if related_name value in child model is not default
-    - fkey_name:        required, if foreign key field name is not equal parent model name
-    - with_add_link:    append second link "add" to main
+fkey_list_link:
+    Definition:
+        def fkey_list_link(name, model_set=None, fkey_name=None, with_add_link=False)
+            ...
+    Arguments:
+        - name: name of child model and link (also name of model set by default)
+        - model_set: name of foreign key reverse field (usually {name}_set)
+                     required, if related_name value in child model is not default
+        - fkey_name: foreign key field name (model_name by default)
+                     required, if foreign key field name is not equal to parent model name
+        - with_add_link: add link to add new item (+ icon)
 
-!   init FkeyListAdmin instance update admin urls with _fkeyin postfix, that's why
-    for use fkey_list_link('model_name') you have to register admin, extended with FkeyListAdmin
-    for model with name 'model_name', else catch:
-        Caught NoReverseMatch while rendering: Reverse for '[app_name]_[model_name]_changelist_fkeyin'
-        
-Usage example:
+Note:
+    FkeyListAdmin.__init__ appends admin with _fkeylist views and urls, that's why
+    for using fkey_list_link('model_name') you have to register admin, extended
+    with FkeyListAdmin for model with name 'model_name', else:
+        Caught NoReverseMatch while rendering:
+            Reverse for '[app_name]_[model_name]_changelist_fkeylist'
+
+    Full changes list:
+        Views/URLs appended:
+            "{app_label}_{model_name}_changelist_fkeylist",
+            "{app_label}_{model_name}_add_fkeylist",
+            "{app_label}_{model_name}_history_fkeylist",
+            "{app_label}_{model_name}_delete_fkeylist",
+            "{app_label}_{model_name}_change_fkeylist"
+
+        Templates defined:
+            change_list_template = [
+                'admin/fkey_list/{app_label}/{model_name}/change_list.html',
+                'admin/fkey_list/{app_label}/change_list.html',
+                'admin/fkey_list/change_list.html',
+            ]
+            change_form_template = [
+                "admin/fkey_list/{app_label}/{model_name}/change_form.html",
+                "admin/fkey_list/{app_label}/change_form.html",
+                "admin/fkey_list/change_form.html"
+            ]
+            delete_confirmation_template = [
+                "admin/fkey_list/{app_label}/{model_name}/delete_confirmation.html",
+                "admin/fkey_list/{app_label}/delete_confirmation.html",
+                "admin/fkey_list/delete_confirmation.html"
+            ]
+            delete_selected_confirmation_template = [
+                "admin/fkey_list/{app_label}/{model_name}/delete_selected_confirmation.html",
+                "admin/fkey_list/{app_label}/delete_selected_confirmation.html",
+                "admin/fkey_list/delete_selected_confirmation.html"
+            ]
+            object_history_template = [
+                "admin/fkey_list/{app_label}/{model_name}/object_history.html",
+                "admin/fkey_list/{app_label}/object_history.html",
+                "admin/fkey_list/object_history.html"
+            ]
+
+
+Example usage:
 -------------
+
+models.py:
+-------------------------------------------------------------------------------
+from mptt.models import TreeManager, MPTTModel
+
+
+class NodeMain(MPTTModel, Node):
+    parent  = models.ForeignKey('self', null=True, blank=True,
+                                related_name='children')
+    class Meta:
+        ordering = ('tree_id', 'lft',)
+
+
+class ItemMain(Item):
+    node = models.ForeignKey(NodeMain, related_name='item_set')
+-------------------------------------------------------------------------------
+
+admin.py:
+-------------------------------------------------------------------------------
 from sakkada.admin.fkey_list import FkeyListAdmin, FkeyMpttAdmin, fkey_list_link
-from nodes.admin import NodeAdmin, ItemAdmin
 
-class NodeNiceAdmin(FkeyMpttAdmin, NodeAdmin):
+
+# add FkeyMpttAdmin to filteting by parent Node
+# (FkeyMpttAdmin to support Mptt Models)
+class SomeNodeAdmin(FkeyMpttAdmin, admin.ModelAdmin):
+    list_display = (
+        'name', 'item_link', 'node_link', 'level',
+    )
+
+    # parent templates
+    fkey_list_parent_change_list_template = 'admin/fkey_list_parent_change_list.html'
+
     # fkey_list links
-    item_link = fkey_list_link('item', model_set='item_set',  fkey_name='node',   with_add_link=True)
-    node_link = fkey_list_link('node', model_set='children',  fkey_name='parent', with_add_link=True)
+    # links to items in node
+    item_link = fkey_list_link('item', model_set='item_set',
+                               fkey_name='node', with_add_link=True)
+    # links to child nodes in node
+    node_link = fkey_list_link('node', model_set='children',
+                               fkey_name='parent', with_add_link=True)
 
-class ItemNiceAdmin(FkeyListAdmin, ItemAdmin):
-    pass
+
+# add FkeyListAdmin to filteting by related Node
+class SomeItemAdmin(FkeyListAdmin, admin.ModelAdmin):
+    fkey_list_parent_change_list_template = 'admin/fkey_list_parent_change_list.html'
+
+admin.site.register(SomeNode, SomeNodeAdmin)
+admin.site.register(SomeItem, SomeItemAdmin)
+-------------------------------------------------------------------------------
+
 
 History:
 -------
@@ -42,3 +135,5 @@ History:
 0.0.3 - reverse fixed ((args[1]) -> (args[1],))
 0.0.4 - added FkeyMpttAdmin for MpttTree models
 0.0.5 - refactor fkey_list_link (change add link to image and show verbose names)
+0.0.6 - allow adding app to INSTALLED_APPS for template loading
+        add custom templates definition and allow parent templates definition

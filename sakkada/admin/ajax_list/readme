@@ -1,0 +1,29 @@
+ModelAdmin for ajax editable fields support. (Original idea from FEINCMS
+tree editor, http://www.feinheit.ch/, https://github.com/matthiask/feincms)
+
+Usage:
+-----
+ *  Install "django-sakkada"
+ *  Import "sakkada.admin.ajax_list.AjaxListAdmin" and "ajax_list_field"
+ *  Set "AjaxListAdmin" as class of admin model
+ *  Define "ajax_list_field" properties for required fields
+ *  Set extended template name in "ajax_list_parent_template" property if required
+ *  Copy static "admin/*" to your project static folder
+    or add "sakkada.admin.ajax_list" to your INSTALLED_APPS.
+ *  Copy templates "admin/ajax_list/*" to your project/application template folder
+    or add "sakkada.admin.ajax_list" to your INSTALLED_APPS.
+
+Example usage:
+-------------
+from django.contrib import admin
+from sakkada.admin.ajax_list import AjaxListAdmin
+
+
+class SomeAjaxListAdmin(AjaxListAdmin, admin.ModelAdmin):
+    ajax_active = ajax_list_field('active', _('is active?'))
+    ajax_name = ajax_list_field('name', _('name'))
+    ajax_site = ajax_list_field('site', _('site'))
+
+    ajax_list_parent_template = 'admin/ajax_list_parent_template.html'
+
+admin.site.register(Some, SomeAjaxListAdmin)

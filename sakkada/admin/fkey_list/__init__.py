@@ -2,39 +2,52 @@
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.utils.http import urlencode
-from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin.views.main import ChangeList
-from django.contrib.admin.util import quote
+from django.contrib.admin.utils import quote
+from django.contrib.admin.templatetags.admin_static import static
+
 
 def fkey_list_link(name, model_set=None, fkey_name=None, with_add_link=False):
     def link(self, item, url_only=None):
+        """
+        Arguments:
+        - name: name of child model and link (also name of model set by default)
+        - model_set: name of foreign key reverse field (usually {name}_set);
+                     required, if related_name value in child model is not default
+        - fkey_name: foreign key field name (model_name by default); required,
+                     if foreign key field name is not equal to parent model name
+        - with_add_link: add link to add new item (+ icon)
+        """
         modelset = model_set if model_set else '%s_set' % name
         if not hasattr(item, modelset):
-            raise Exception, (u'FkeyList link generater:'
-                              u' "%s" does not exist' % modelset)
+            raise Exception(u'FkeyList link generater:'
+                            u' "%s" does not exist' % modelset)
         modelset = getattr(item, modelset)
         fkeyname = fkey_name if fkey_name else item._meta.model_name
 
-        link = AdminViewName(modelset.model._meta).changelist_fkeylist
-        link = reverse(link, None, (fkeyname, item.pk), {})
-        if url_only in ['list', 'add']:
-            result = '%s%s' % (link, 'add/' if url_only == 'add' else '')
+        view = AdminViewName(modelset.model._meta)
+        link_list = reverse(view.changelist_fkeylist, None, (fkeyname, item.pk), {})
+        link_add = reverse(view.add_fkeylist, None, (fkeyname, item.pk), {})
+
+        if url_only in ('list', 'add',):
+            result = link_add if url_only == 'add' else link_list
         else:
-            vernames = (modelset.model._meta.verbose_name,
-                        modelset.model._meta.verbose_name_plural)
-            addicon = u'%sadmin/img/icon_addlink.gif' % settings.STATIC_URL
+            vernames = (modelset.model._meta.verbose_name.capitalize(),
+                        modelset.model._meta.verbose_name_plural.capitalize(),)
+            addicon = static(u'admin/img/icon_addlink.gif')
             result = (u'<a href="%s" title="Show related «%s»">%s</a> (%d)'
-                      % (link, vernames[1], vernames[1], modelset.count()))
+                      % (link_list, vernames[1], vernames[1], modelset.count()))
             result = (u'<nobr>%s&nbsp;'
-                      u'<a href="%sadd/" title="create related «%s»"><img src="%s"></a>'
-                      u'</nobr>' % (result, link, vernames[0], addicon)
+                      u'<a href="%s" title="Create related «%s»"><img src="%s"></a>'
+                      u'</nobr>' % (result, link_add, vernames[0], addicon)
                       if with_add_link else result)
         return result
     link.short_description = '%s list' % name
     link.allow_tags = True
 
     return link
+
 
 class AdminViewName(object):
     """Object return full revers urlname by postfix only"""
@@ -43,6 +56,7 @@ class AdminViewName(object):
 
     def __getattr__(self, name):
         return 'admin:%s_%s_%s' % (self.opts.app_label, self.opts.model_name, name)
+
 
 class FkeyListChangeList(ChangeList):
     fkey_list_data = None
@@ -63,21 +77,61 @@ class FkeyListChangeList(ChangeList):
 
         return super(FkeyListChangeList, self).url_for_result(result)
 
+
 class FkeyListAdmin(admin.ModelAdmin):
     """
     Added fkey_list functionality.
-    Note: get_urls extended and ChangeList extended and all views.
+    Note: get_urls extended, ChangeList extended,
+          all views and template also extended.
     """
+    fkey_list_parent_change_list_template = None
+    fkey_list_parent_change_form_template = None
+    fkey_list_parent_delete_confirmation_template = None
+    fkey_list_parent_delete_selected_confirmation_template = None
+    fkey_list_parent_object_history_template = None
+
+    def __init__(self, *args, **kwargs):
+        super(FkeyListAdmin, self).__init__(*args, **kwargs)
+        opts = self.model._meta
+        appl, applmodn = opts.app_label, (opts.app_label, opts.model_name,)
+
+        self.change_list_template = [
+            'admin/fkey_list/%s/%s/change_list.html' % applmodn,
+            'admin/fkey_list/%s/change_list.html' % appl,
+            'admin/fkey_list/change_list.html',
+        ]
+        self.change_form_template = [
+            'admin/fkey_list/%s/%s/change_form.html' % applmodn,
+            'admin/fkey_list/%s/change_form.html' % appl,
+            'admin/fkey_list/change_form.html'
+        ]
+        self.delete_confirmation_template = [
+            'admin/fkey_list/%s/%s/delete_confirmation.html' % applmodn,
+            'admin/fkey_list/%s/delete_confirmation.html' % appl,
+            'admin/fkey_list/delete_confirmation.html'
+        ]
+        self.delete_selected_confirmation_template = [
+            'admin/fkey_list/%s/%s/delete_selected_confirmation.html' % applmodn,
+            'admin/fkey_list/%s/delete_selected_confirmation.html' % appl,
+            'admin/fkey_list/delete_selected_confirmation.html'
+        ]
+        self.object_history_template = [
+            'admin/fkey_list/%s/%s/object_history.html' % applmodn,
+            'admin/fkey_list/%s/object_history.html' % appl,
+            'admin/fkey_list/object_history.html'
+        ]
+
     def get_queryset(self, request):
         """Add fkey id filter from request if exists"""
         qs = super(FkeyListAdmin, self).get_queryset(request)
         if hasattr(request, 'FKEY_LIST'):
-            qs = qs.filter(**{request.FKEY_LIST['fkey_name']: request.FKEY_LIST['id']})
+            qs = qs.filter(**{request.FKEY_LIST['fkey_name']: request.FKEY_LIST['id'],})
         return qs
 
     def fkey_view(self, request, *args, **kwargs):
         """Common method for all fkey_list views"""
         view_name = kwargs.pop('view_name')
+        fkey_name, fkey_id = args[0], args[1]
 
         # try to rescue custom views except change_view
         if view_name == 'change_view':
@@ -89,57 +143,63 @@ class FkeyListAdmin(admin.ModelAdmin):
                     return HttpResponseRedirect('../../%s' % value)
 
         if not hasattr(self, view_name):
-            raise Exception, 'FkeyList view "%s" does not exist' % view_name
+            raise Exception('FkeyList: view "%s" does not exist' % view_name)
 
         # check fkey instance
-        if not hasattr(self.model, args[0]):
-            raise Exception, ('FkeyList: field "%s" does not exist in model "%s"'
-                              % (args[0], self.model._meta.model_name))
-        parent = getattr(self.model, args[0]).field.rel.to.objects.filter(pk=args[1])
-        if parent.count() != 1:
-            raise Exception, ('FkeyList: fkey "%s" #%s for "%s" model does not exist'
-                              % (args[0], args[1], self.model._meta.model_name))
+        if not hasattr(self.model, fkey_name):
+            raise Exception('FkeyList: field "%s" does not exist in model "%s"'
+                            % (fkey_name, self.model._meta.model_name))
+        parent = getattr(self.model, fkey_name).field.rel.to.objects.filter(pk=fkey_id)
+        if not parent.exists():
+            raise Exception('FkeyList: fkey "%s" #%s for "%s" does not exist'
+                            % (fkey_name, fkey_id, self.model._meta.model_name))
         parent = parent[0]
 
         # default and fkey links dependencies
         link_name_parent = AdminViewName(parent.__class__._meta)
         link_name, link_args = AdminViewName(self.model._meta), args[:2]
         link_deps = {
-            reverse(link_name.add): reverse(link_name.add_fkeylist, None, args[:2]),
+            reverse(link_name.add): reverse(link_name.add_fkeylist, None, link_args),
             reverse(link_name.changelist): reverse(link_name.changelist_fkeylist,
-                                                   None, args[:2]),
+                                                   None, link_args),
         }
 
         request.FKEY_LIST = {
-            'fkey_name': args[0],
-            'id': args[1],
+            'fkey_name': fkey_name,
+            'id': fkey_id,
             'item': parent,
             'item_link': reverse(link_name_parent.change, None, (args[1],), {}),
             'list_link': reverse(link_name_parent.changelist, None, (), {}),
             'link_name': link_name,
         }
 
+        # update context of any view
+        extra_context = kwargs.get('extra_context', {})
+        extra_context.update(dict([(i, getattr(self, i),) for i in (
+            'fkey_list_parent_change_list_template',
+            'fkey_list_parent_change_form_template',
+            'fkey_list_parent_delete_confirmation_template',
+            'fkey_list_parent_delete_selected_confirmation_template',
+            'fkey_list_parent_object_history_template',
+        )]))
+        kwargs['extra_context'] = extra_context
+
         # get response
         args = tuple(args[2:])
         response = getattr(self, view_name)(request, *args, **kwargs)
 
         # try to return fkey location in HttpResponseRedirect instead original
+        # todo: parse url for clean processing
         location = (isinstance(response, HttpResponseRedirect)
                     and response['Location'].split('?', 1))
         if location and location[0] in link_deps:
-            response['Location'] = link_deps[location[0]] + ('?%s' % location[1]
-                                                             if location.__len__() > 1
-                                                             else '')
+            response['Location'] = '?'.join([link_deps[location[0]]]+location[1:])
         return response
 
     def get_urls(self):
-        """Extends urls by nodein routes to nodein_view with view_name param"""
+        """Extends urls by fkey routes to fkey_view with view_name param"""
         from django.conf.urls import patterns, url
-        try:
-            from functools import update_wrapper
-        except ImportError:
-            # deprecated: django <=1.6
-            from django.utils.functional import update_wrapper
+        from functools import update_wrapper
 
         def wrap(view):
             def wrapper(*args, **kwargs):
@@ -187,7 +247,7 @@ class FkeyListAdmin(admin.ModelAdmin):
         return form
 
     def get_changelist(self, request, **kwargs):
-        """Extent ChangeList class."""
+        """Extend ChangeList class"""
         if not getattr(self, '_changelist_class', None):
             cls = super(FkeyListAdmin, self).get_changelist(request, **kwargs)
             if cls is not ChangeList:
@@ -198,6 +258,7 @@ class FkeyListAdmin(admin.ModelAdmin):
                 self._changelist_class = FkeyListChangeList
 
         return self._changelist_class
+
 
 class FkeyMpttAdmin(FkeyListAdmin):
     def get_queryset(self, request):
