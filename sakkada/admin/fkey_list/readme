@@ -8,6 +8,8 @@ Installation:
     "sakkada.admin.fkey_list"
  *  Set "FkeyListAdmin" ("FkeyMpttAdmin") as class of admin model
  *  Define "fkey_list_link" properties for required foreign keys
+ *  Set "fkey_list_annotate_counts" to reduce count of db queries if use
+    "fkey_list_link" with "with_count" param (True by default)
  *  Set extended template names in followed (
         "fkey_list_parent_change_list_template",
         "fkey_list_parent_change_form_template",
@@ -23,7 +25,8 @@ Usage:
 -----
 fkey_list_link:
     Definition:
-        def fkey_list_link(name, model_set=None, fkey_name=None, with_add_link=False)
+        def fkey_list_link(name, model_set=None, fkey_name=None,
+                           with_count=True, with_add_link=False):
             ...
     Arguments:
         - name: name of child model and link (also name of model set by default)
@@ -31,7 +34,24 @@ fkey_list_link:
                      required, if related_name value in child model is not default
         - fkey_name: foreign key field name (model_name by default)
                      required, if foreign key field name is not equal to parent model name
-        - with_add_link: add link to add new item (+ icon)
+        - with_count: show count of related objects, default True (try to get
+                      value from "{model_set}__count" attribute first (see
+                      fkey_list_annotate_counts), else call "count" method
+                      on model_set queryset)
+        - with_add_link: add link to add new item (+ icon), default False
+
+FkeyListAdmin:
+    Properties:
+        Parent template name for each supported admin view:
+        - fkey_list_parent_change_list_template
+        - fkey_list_parent_change_form_template
+        - fkey_list_parent_delete_confirmation_template
+        - fkey_list_parent_delete_selected_confirmatin_template
+        - fkey_list_parent_object_history_template
+
+        List of foreign key reverse model_set names for count annotation
+        to reduce db queries count:
+        - fkey_list_annotate_counts
 
 Note:
     FkeyListAdmin.__init__ appends admin with _fkeylist views and urls, that's why
@@ -110,6 +130,9 @@ class SomeNodeAdmin(FkeyMpttAdmin, admin.ModelAdmin):
     # parent templates
     fkey_list_parent_change_list_template = 'admin/fkey_list_parent_change_list.html'
 
+    # queryset count annotations
+    fkey_list_annotate_counts = ('item_set', 'children',)
+
     # fkey_list links
     # links to items in node
     item_link = fkey_list_link('item', model_set='item_set',
@@ -135,5 +158,7 @@ History:
 0.0.3 - reverse fixed ((args[1]) -> (args[1],))
 0.0.4 - added FkeyMpttAdmin for MpttTree models
 0.0.5 - refactor fkey_list_link (change add link to image and show verbose names)
-0.0.6 - allow adding app to INSTALLED_APPS for template loading
-        add custom templates definition and allow parent templates definition
+0.0.6 - allow adding app to INSTALLED_APPS for template loading,
+        add custom templates definition and allow parent templates definition,
+        add fkey_list_annotate_counts to reduce db queries count,
+        add with_count argument into fkey_list_link function

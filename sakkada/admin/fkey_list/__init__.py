@@ -2,13 +2,15 @@
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.utils.http import urlencode
+from django.db.models import Count
 from django.contrib import admin
 from django.contrib.admin.views.main import ChangeList
 from django.contrib.admin.utils import quote
 from django.contrib.admin.templatetags.admin_static import static
 
 
-def fkey_list_link(name, model_set=None, fkey_name=None, with_add_link=False):
+def fkey_list_link(name, model_set=None, fkey_name=None,
+                   with_count=True, with_add_link=False):
     def link(self, item, url_only=None):
         """
         Arguments:
@@ -17,30 +19,40 @@ def fkey_list_link(name, model_set=None, fkey_name=None, with_add_link=False):
                      required, if related_name value in child model is not default
         - fkey_name: foreign key field name (model_name by default); required,
                      if foreign key field name is not equal to parent model name
-        - with_add_link: add link to add new item (+ icon)
+        - with_count: show count of related objects, default True (try to get
+                      value from "{model_set}__count" attribute first (see
+                      fkey_list_annotate_counts), else call "count" method
+                      on model_set queryset)
+        - with_add_link: add link to add new item (+ icon), default False
         """
-        modelset = model_set if model_set else '%s_set' % name
-        if not hasattr(item, modelset):
+        msetname = model_set if model_set else '%s_set' % name
+        if not hasattr(item, msetname):
             raise Exception(u'FkeyList link generater:'
-                            u' "%s" does not exist' % modelset)
-        modelset = getattr(item, modelset)
+                            u' "%s" does not exist' % msetname)
+        modelset = getattr(item, msetname)
         fkeyname = fkey_name if fkey_name else item._meta.model_name
 
         view = AdminViewName(modelset.model._meta)
-        link_list = reverse(view.changelist_fkeylist, None, (fkeyname, item.pk), {})
-        link_add = reverse(view.add_fkeylist, None, (fkeyname, item.pk), {})
+        link_add = (view.add_fkeylist, None, (fkeyname, item.pk), {},)
+        link_list = (view.changelist_fkeylist, None, (fkeyname, item.pk), {},)
 
         if url_only in ('list', 'add',):
             result = link_add if url_only == 'add' else link_list
+            result = reverse(*result)
         else:
             vernames = (modelset.model._meta.verbose_name.capitalize(),
                         modelset.model._meta.verbose_name_plural.capitalize(),)
+            count = ''
+            if with_count:
+                count = getattr(item, '%s__count' % msetname, None)
+                count = ' (%s)' % (modelset.count() if count is None else count)
+
             addicon = static(u'admin/img/icon_addlink.gif')
-            result = (u'<a href="%s" title="Show related «%s»">%s</a> (%d)'
-                      % (link_list, vernames[1], vernames[1], modelset.count()))
+            result = (u'<a href="%s" title="Show related «%s»">%s</a>%s'
+                      % (reverse(*link_list), vernames[1], vernames[1], count))
             result = (u'<nobr>%s&nbsp;'
                       u'<a href="%s" title="Create related «%s»"><img src="%s"></a>'
-                      u'</nobr>' % (result, link_add, vernames[0], addicon)
+                      u'</nobr>' % (result, reverse(*link_add), vernames[0], addicon)
                       if with_add_link else result)
         return result
     link.short_description = '%s list' % name
@@ -66,6 +78,14 @@ class FkeyListChangeList(ChangeList):
         if hasattr(request, 'FKEY_LIST'):
             self.fkey_list_data = request.FKEY_LIST
 
+    def get_queryset(self, request):
+        # add annotate counts if fkey_list_annotate_counts defined
+        qs = super(FkeyListChangeList, self).get_queryset(request)
+        annotations = self.model_admin.fkey_list_annotate_counts
+        if annotations and isinstance(annotations, (list, tuple,)):
+            qs = qs.annotate(*[Count(i, distinct=True) for i in annotations])
+        return qs
+
     def url_for_result(self, result):
         if self.fkey_list_data:
             view = getattr(self.fkey_list_data['link_name'], 'change_fkeylist')
@@ -84,11 +104,15 @@ class FkeyListAdmin(admin.ModelAdmin):
     Note: get_urls extended, ChangeList extended,
           all views and template also extended.
     """
+    # alternative parent template names
     fkey_list_parent_change_list_template = None
     fkey_list_parent_change_form_template = None
     fkey_list_parent_delete_confirmation_template = None
     fkey_list_parent_delete_selected_confirmation_template = None
     fkey_list_parent_object_history_template = None
+
+    # if defined list of names - annotate counts by names
+    fkey_list_annotate_counts = None
 
     def __init__(self, *args, **kwargs):
         super(FkeyListAdmin, self).__init__(*args, **kwargs)
