@@ -1,6 +1,6 @@
-Metadata-Version: 0.1
+Metadata-Version: 1.8.0
 Name: django-sakkada
-Version: 0.1
+Version: 1.8.0
 Summary: Collection of custom extensions for the Django Framework.
 Home-page: https://bitbucket.org/sakkada/django-sakkada/
 Author: Guchetl Murat

@@ -1,11 +1,11 @@
 from django.contrib import messages
 from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import render, redirect
-from django.core.cache import get_cache
+from django.core.cache import InvalidCacheBackendError, caches
 
 def cache_clear_view(request, template_name=None, extra_context=None):
     """Clear system cache data."""
-    cache = get_cache('default')
+    cache = caches['default']
     if request.POST.get('post', None):
         cache.clear()
         messages.success(request, _('Cache data has been successfully cleared.'))

@@ -12,7 +12,7 @@ reload(sys).setdefaultencoding("UTF-8")
 
 setup(
     name='django-sakkada',
-    version='0.1',
+    version='1.8.0',
 
     description = (u'Collection of custom extensions'
                    u' for the Django Framework'.encode('utf8')),
