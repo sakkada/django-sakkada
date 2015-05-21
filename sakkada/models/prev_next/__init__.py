@@ -1,85 +1,99 @@
 from django.db import models
 
-class PrevNextModel(object):
+
+class PrevNextModel(models.Model):
     def _get_current_ordering(self, queryset):
         """Get current ordering fields with directions"""
-        pk = self._meta.pk.name
-        query = queryset.query
+        query, pk = queryset.query, self._meta.pk.name
 
-        # get order_by declaration (django/models/sql/compiler-get_ordering)
+        # note: taken from django source
+        # get order_by declaration for current queryset:
+        #   taken from django/models/sql/compiler.SQLCompiler:get_order_by
+        #   at begining of method (there is no standalone method
+        #   to get order_by field names for queryset instance),
+        #   added order by "pk" by default for uniqueness (in else section)
         if query.extra_order_by:
             ordering = query.extra_order_by
         elif not query.default_ordering:
             ordering = query.order_by
         else:
-            ordering = query.order_by or query.model._meta.ordering or [pk]
+            ordering = query.order_by or query.get_meta().ordering or [pk]
 
-        # add pk ordering for uniqueness
-        ordering = [i.replace('pk', pk) if i in ['pk', '-pk'] else i for i in ordering]
-        if pk in ordering or '-%s' % pk in ordering:
-            ordering = ordering[0:[i.lstrip('-') for i in ordering].index(pk)+1]
+        # append pk ordering for uniqueness if not exists,
+        # else cut any fields after pk (because pk is unique)
+        ordering = [i.replace('pk', pk) if i in ['pk', '-pk'] else i
+                    for i in ordering]
+        nodirect = [i.lstrip('-') for i in ordering]
+        if pk in nodirect:
+            ordering = ordering[0:nodirect.index(pk)+1]
         else:
             ordering.append(pk)
 
         return ordering
 
-    def _get_next_or_previous_by_order(self, is_next=True, order_by=[],
-                                              queryset=False, cachename=False,
-                                               force=False, as_queryset=False):
-        """Get next or previous element according current order_by settings"""
-        cachename = "__%s%s_in_nextprev_order_cache" % ('next' if is_next else 'prev',
-                                                        '_' + cachename if cachename else '')
+    def _get_next_or_previous_by_order(self, order_by=None, queryset=None,
+                                       cachename=None, is_next=True,
+                                       force=False, as_queryset=False):
+        """Get next or previous element according current queryset ordering"""
+        cachename = '_%s' % cachename if cachename else ''
+        cachename = '__%s%s_nextprev_cache' % ('next' if is_next else 'prev',
+                                               cachename)
+
         if force or not hasattr(self, cachename):
             # get queryset and current ordering data
-            queryset    = queryset if isinstance(queryset, models.query.QuerySet) \
-                                   else self._default_manager.get_query_set()
-            queryset    = queryset.order_by(*order_by) if len(order_by) else queryset
-            ordering    = self._get_current_ordering(queryset)
-            order       = {'name': [i.lstrip('-') for i in ordering],
-                           'dir': [not i.startswith('-') if is_next else i.startswith('-') \
-                                   for i in ordering]}
-            ordering    = ordering if is_next else [i.lstrip('-') if i[0]=='-' else '-%s' % i \
-                                                    for i in ordering]
+            queryset = (self._default_manager.get_queryset()
+                        if not isinstance(queryset, models.query.QuerySet)
+                        else queryset)
+            queryset = queryset.order_by(*order_by) if order_by else queryset
+            ordering = self._get_current_ordering(queryset)
+            nodirect = [i.lstrip('-') for i in ordering]
+
+            if is_next:
+                directions = [not i.startswith('-') for i in ordering]
+            else:
+                directions = [i.startswith('-') for i in ordering]
+                ordering = [i.lstrip('-') if b else '-%s' % i
+                            for i, b in zip(ordering, directions)]
 
             # generate filter list
             filter = []
-            for name in order['name']:
-                index   = order['name'].index(name)
-                direc   = order['dir'][index]
-                value   = getattr(self, name)
-                equals  = dict([(i, getattr(self, i)) for i in order['name'][0:index]])
+            for i, (name, direction,) in enumerate(zip(nodirect, directions)):
+                value = getattr(self, name)
+                equals = dict([(i, getattr(self, i)) for i in nodirect[0:i]])
 
-                # null values specific processing: if direction is reverse - ignore
+                # null values processing: if direction is reverse - ignore,
+                # generate filter according each ordering fields and direction
                 if value is None:
-                    # ignore for not loop by null values
-                    if not direc: continue
+                    # ignore to disable loop by null values
+                    if not direction:
+                        continue
                     key, value = '%s__isnull' % name, False
                     cmps = models.Q(**{key: value,})
                 else:
-                    key = '%s__%s' % (name, direc and 'gt' or 'lt')
+                    key = '%s__%s' % (name, direction and 'gt' or 'lt')
                     cmps = models.Q(**{key: value,})
 
                     # add isnull filter for reverse direction on nullable fields
-                    isnull = self.__class__._meta.get_field_by_name(name)[0].null
-                    if not direc and isnull:
+                    null = self.__class__._meta.get_field_by_name(name)[0].null
+                    if not direction and null:
                         cmps = cmps | models.Q(**{'%s__isnull' % name: True,})
 
                 filter.append((models.Q(**equals) & cmps))
 
-            # get filter and exclude self.pk for strict filtering
+            # compile filter and exclude self.pk for strict filtering
             filter = reduce(lambda x, y: y | x, filter) & ~models.Q(pk=self.pk)
+            queryset = queryset.filter(filter).order_by(*ordering)
 
-            # return as queryset, filter and ordering params if True
+            # return as (queryset, filter and ordering params) if as_queryset
             if as_queryset:
-                return queryset.filter(filter).order_by(*ordering), filter, ordering
-
-            queryset = queryset.filter(filter).order_by(*ordering)[0:1]
-            queryset = list(queryset) # preventing count call
-            queryset = queryset[0] if len(queryset) else None
-            # disable cache once if 'nocache'
+                return queryset, filter, ordering
+            queryset = list(queryset[0:1]) # preventing count call
+            queryset = queryset[0] if queryset else None
+            # do not save to cache if 'nocache'
             if force == 'nocache':
                 return queryset
             setattr(self, cachename, queryset)
+
         return getattr(self, cachename)
 
     def get_next_by_order(self, **kwargs):
