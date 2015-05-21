@@ -2,6 +2,9 @@ from django.db import models
 
 
 class PrevNextModel(models.Model):
+    class Meta:
+        abstract = True
+
     def _get_current_ordering(self, queryset):
         """Get current ordering fields with directions"""
         query, pk = queryset.query, self._meta.pk.name
