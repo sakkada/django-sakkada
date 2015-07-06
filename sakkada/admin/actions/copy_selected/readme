@@ -1,0 +1,18 @@
+Action which copies the selected objects.
+
+Usage:
+ *  Install "django-sakkada"
+ *  Copy templates "admin/*" to your project/application template folder
+    or add "sakkada.admin.actions.copy_selected" to your INSTALLED_APPS.
+ *  Add "copy_selected" action to your ModelAdmin "actions".
+
+Example usage:
+-------------------------------------------------------------------------------
+from django.contrib import admin
+from sakkada.admin.actions.copy_selected import copy_selected
+
+
+class SomeAdmin(admin.ModelAdmin):
+    actions = (copy_selected,)
+
+admin.site.register(Some, SomeAdmin)
