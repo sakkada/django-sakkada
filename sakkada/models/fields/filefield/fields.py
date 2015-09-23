@@ -1,8 +1,9 @@
-from django.db.models import signals
-from django.db.models.fields.files import FieldFile, ImageFieldFile, \
-                                          FileField, ImageField
-from forms import ClearableFormFileField, ClearableFormImageField
 import os
+from django.db.models import signals
+from django.db.models.fields.files import (FieldFile, ImageFieldFile,
+                                           FileField, ImageField)
+from .forms import ClearableFormFileField, ClearableFormImageField
+
 
 # field files
 class AdvancedFieldFile(FieldFile):
@@ -11,15 +12,22 @@ class AdvancedFieldFile(FieldFile):
         file = getattr(self.instance, self.field.name)
         return file and os.path.splitext(file.name)[1]
 
+
 class AdvancedImageFieldFile(AdvancedFieldFile, ImageFieldFile):
-    pass
+    @property
+    def image_tag(self):
+        return (u'<img src="%s" alt="%s" width="%s" height="%s">'
+                % (self.url, self.name, self.width, self.height))
+
 
 # file fields
 class AdvancedFileField(FileField):
     attr_class = AdvancedFieldFile
 
-    def __init__(self, verbose_name=None, clearable=False, erasable=False, **kwargs):
-        super(AdvancedFileField, self).__init__(verbose_name=verbose_name, **kwargs)
+    def __init__(self, verbose_name=None, clearable=False, erasable=False,
+                 **kwargs):
+        super(AdvancedFileField, self).__init__(verbose_name=verbose_name,
+                                                **kwargs)
         self.clearable, self.erasable = clearable, erasable
 
         if not self.blank and self.clearable:
@@ -72,7 +80,8 @@ class AdvancedFileField(FileField):
 
     def _safe_erase(self, file, instance, save=True):
         # safe file storage real erase
-        if not file: return
+        if not file:
+            return
         count = instance.__class__._default_manager
         count = count.filter(**{self.name: file.name,}) \
                      .exclude(pk=instance.pk).count()
@@ -86,12 +95,19 @@ class AdvancedFileField(FileField):
         # try to close the file, so it doesn't tie up resources.
         file.closed or file.close()
 
+
 class AdvancedImageField(AdvancedFileField, ImageField):
     attr_class = AdvancedImageFieldFile
+
+    def __init__(self, verbose_name=None, show_image=True, **kwargs):
+        super(AdvancedImageField, self).__init__(verbose_name=verbose_name,
+                                                 **kwargs)
+        self.show_image = show_image
 
     def formfield(self, **kwargs):
         kwargs['form_class'] = ClearableFormImageField
         kwargs['clearable'] = self.clearable
+        kwargs['show_image'] = self.show_image
         return super(AdvancedFileField, self).formfield(**kwargs)
 
     def south_field_triple(self):
