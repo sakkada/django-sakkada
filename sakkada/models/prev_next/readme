@@ -35,7 +35,7 @@ Example usage:
 -------------
 
 model code:
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 from django.db import models
 from sakkada.models.prev_next import PrevNextModel
 
@@ -45,7 +45,7 @@ class SomeModel(PrevNextModel, models.Model)
     date = models.DateTimeField(blank=True, null=True)
 
 view code:
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 queryset = SomeModel.objects.filter(some_filter).order_by(*some_order_by)[0:1]
 object = get_object_or_404(queryset)
 
@@ -68,14 +68,55 @@ queryset = object.get_prev_by_order(queryset=qs, as_queryset=True)
 prev = object.get_prev_by_order(force=True)
 
 # get next on default ordering and filtering, no cache
-next = object.get_next_by_order(force=True)
+next = object.get_next_by_order(force='nocache')
 
 # get next on default ordering and filtering, alternative cachename
 next = object.get_next_by_order(cachename='some_other_name')
 
 template code:
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 {% if object.get_prev_by_order %}
-<a class="previous-link" href="{{ object.get_prev_by_order.get_absolute_url }}">Previous article</a>
+<a href="{{ object.get_prev_by_order.get_absolute_url }}">Previous article</a>
 {% endif %}
-{# note: second call of get_prev_by_order is cached by default, also you can use "with" tag #}
+{# note: second call is cached by default, also you can use "with" tag #}
+
+sql queries help:
+-------------------------------------------------------------------------------
+ordering: "-weight id" (weight field is null=True)
+
+connection.features.nulls_order_largest=False (mysql, sqlite)
+=============================================================
+weight=500, id=7
+----------------
+next:   (("weight" = 500 AND "id" > 7) OR
+         ("weight" < 500) OR
+         ("weight" IS NULL)) AND NOT ("id" = 7)
+
+prev:   (("weight" = 500 AND "id" < 7) OR
+         ("weight" > 500)) AND NOT ("id" = 7)
+
+weight=None, id=7
+-----------------
+next:   (("weight" IS NULL AND "id" > 7)) AND NOT ("id" = 7)
+
+prev:   (("weight" IS NULL AND "id" < 7) OR
+         ("weight" IS NOT NULL)) AND NOT ("id" = 7))
+
+connection.features.nulls_order_largest=True (postgresql, oracle)
+=================================================================
+weight=500, id=7
+----------------
+next:   (("weight" = 500 AND "id" > 7) OR
+         ("weight" < 500)) AND NOT ("id" = 7)
+
+prev:   (("weight" = 500 AND "id" < 7) OR
+         ("weight" > 500) OR
+         ("weight" IS NULL)) AND NOT ("id" = 7)
+
+weight=None, id=7
+-----------------
+next:   (("weight" IS NULL AND "id" > 7) OR
+         ("weight" IS NOT NULL)) AND NOT ("id" = 7)
+
+prev:   (("weight" IS NULL AND "id" < 7)) AND NOT ("id" = 7))
+

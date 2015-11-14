@@ -1,4 +1,5 @@
 from django.db import models
+from django.db import connections
 
 
 class PrevNextModel(models.Model):
@@ -36,7 +37,8 @@ class PrevNextModel(models.Model):
 
     def _get_next_or_previous_by_order(self, order_by=None, queryset=None,
                                        cachename=None, is_next=True,
-                                       force=False, as_queryset=False):
+                                       force=False, as_queryset=False,
+                                       nullsfirst=None):
         """Get next or previous element according current queryset ordering"""
         cachename = '_%s' % cachename if cachename else ''
         cachename = '__%s%s_nextprev_cache' % ('next' if is_next else 'prev',
@@ -50,6 +52,8 @@ class PrevNextModel(models.Model):
             queryset = queryset.order_by(*order_by) if order_by else queryset
             ordering = self._get_current_ordering(queryset)
             nodirect = [i.lstrip('-') for i in ordering]
+            nullsfirst = (connections[queryset.db].features.nulls_order_largest
+                          if nullsfirst is None else bool(nullsfirst))
 
             if is_next:
                 directions = [not i.startswith('-') for i in ordering]
@@ -68,7 +72,7 @@ class PrevNextModel(models.Model):
                 # generate filter according each ordering fields and direction
                 if value is None:
                     # ignore to disable loop by null values
-                    if not direction:
+                    if not nullsfirst ^ direction:
                         continue
                     key, value = '%s__isnull' % name, False
                     cmps = models.Q(**{key: value,})
@@ -78,7 +82,7 @@ class PrevNextModel(models.Model):
 
                     # add isnull filter for reverse direction on nullable fields
                     null = self.__class__._meta.get_field_by_name(name)[0].null
-                    if not direction and null:
+                    if not direction ^ nullsfirst and null:
                         cmps = cmps | models.Q(**{'%s__isnull' % name: True,})
 
                 filter.append((models.Q(**equals) & cmps))
