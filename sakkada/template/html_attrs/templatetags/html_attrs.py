@@ -1,14 +1,16 @@
+import re
 from django.template import Library
 from django.template.defaultfilters import stringfilter
 from django.forms.forms import BoundField
-from django.forms.util import flatatt
+from django.forms.utils import flatatt
 from django.utils.safestring import mark_safe
-import re
+
 
 REGEX = re.compile(r"""([a-z0-9_]+) \s*=\s* ("|')? (?(2) (?:(.+?)(?<!\\)\2) | ([^\s'"]+))""", re.I | re.X)
 RECLS = re.compile(r"""(?:^|\s+)([+-=]?)(-?[_a-z]{1}[a-z0-9-_]*)""", re.I)
 RETAG = r"""<(?!/)(%s[^>?]*)/?>"""
 NONE  = 'None'
+
 
 register = Library()
 
