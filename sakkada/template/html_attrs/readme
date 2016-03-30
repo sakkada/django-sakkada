@@ -1,7 +1,9 @@
-Template filters, which allows you change some widget attrs in you template without code change.
+Template filters, which allows you change some widget attrs in your template
+without python code (forms code) change.
 
 Installation:
-    Copy templatetags folder into any app directory.
+    Copy templatetags folder into any app directory or add
+    "sakkada.template.html_attrs" to your "INSTALLED_APPS".
 
 Usage:
     {% load html_attrs %}
@@ -17,37 +19,70 @@ Usage:
             {{ form.field|attrs:'class="foo -bar" font=red size=25' }}
             ---
             <input class="foo" font="red" size="25">
-            (Add css class "foo", remove css class "bar", add param font="red" and change size to "25".)
+            (Add css class "foo", remove css class "bar", add param font="red"
+             and change size param to "25")
 
-        If you want to remove all previous css classes, and set new one, just use equal ('=') with first class:
+        If you want to remove all previous css classes, and set new one,
+        just use equal sign ('=') with first class:
             {{ form.field|attrs:'class="=foo new" font=red size=25' }}
             ---
             <input class="foo new" font="red" size="25">
 
-        To remove any param, just set it value to None:
+        To remove any param, just set it value to None without quotes:
             {{ form.field|attrs:'class="foo new" font=red size=None' }}
             ---
             <input class="bar foo new" font="red">
 
-        Each filter below return string object with rendered widget, if you need real field object, use 'as field' at the end:
+        Each filter below return string object with rendered widget,
+        if you need real field object, use 'as field' or 'as realfield'
+        at the end:
             {{ form.field|attrs:'class="foo new" font=red size=None as field'|some_another_filter_working_with_field_objects }}
+            {{ form.field|attrs:'class="foo new" font=red size=None as realfield'|some_another_filter_working_with_field_objects }}
+            or
+            {% with field=form.field|attrs:'size=None as field' %}{% do_something_with field %}{% endwith %}
+            {% with field=form.field|attrs:'size=None as realfield' %}{% do_something_with field %}{% endwith %}
 
-        !!! Caution: Using 'as field' param changes original attrs dict of field's widget, because we need return changed object.
-            So:
-                {{ form.field|attrs:'class="foo -bar" font=red size=None' }}
-                {{ form.field }}
-                {{ form.field|attrs:'class="foo -bar" font=red size=None as field' }}
-                {{ form.field }}
-            Will return:
-                <input class="foo" font="red">
-                <input class="bar" size="10">
-                <input class="foo" font="red">
-                <input class="foo" font="red">
-            Fourth field equals to third, because 'as field' param change original attrs dict in field widget, but second is original after first.
+        Note: The difference between 'as field' and 'as realfield' is that
+        'as realfield' returns a link to real form's BoundField object
+        with changed attrs dictionary (attrs value really changed in form,
+        as it will be changed in python code directly:
+            # similar python code
+            def template_filter(boundfield, new_attrs)
+                boundfield.field.widget.attrs = new_attrs
+                return boundfield
+        so, if you use it, original attrs value will be lost). Look at the
+        samples to understand the difference:
+
+        Using 'as field' deeply copies original field with all related data:
+            {{ form.field|attrs:'class="foo -bar" font=red size=None' }}
+            {{ form.field }}
+            {{ form.field|attrs:'class="foo -bar" font=red size=None as field' }}
+            {{ form.field }}
+            ---
+            <input class="foo" font="red">
+            <input class="bar" size="10">
+            <input class="foo" font="red">
+            <input class="bar" size="10">
+
+        But using 'as realfield' returns just link on real BoundFfield object:
+            {{ form.field|attrs:'class="foo -bar" font=red size=None' }}
+            {{ form.field }}
+            {{ form.field|attrs:'class="foo -bar" font=red size=None as realfield' }}
+            {{ form.field }}
+            ---
+            <input class="foo" font="red">
+            <input class="bar" size="10">
+            <input class="foo" font="red">
+            <input class="foo" font="red">
+        Fourth line equals to third, because 'as realfield' changes original
+        attrs dict in field's widget. If you don't need to changed real object,
+        use 'as field' instead.
 
     Filter "html_attrs":
-        Receive String object with html text, search tags by received regex pattern and replace some params in finded tags.
-        Params processing is like in 'attrs' filter, but added regex pattern and python like slice argument.
+        Receive String object with html tags, search tags by received regex
+        pattern and replace some params in finded tags.
+        Params processing is like in 'attrs' filter, also added regex pattern
+        definition and python-like slice argument at the left side.
 
         If text is:
             {{ text }}
@@ -56,11 +91,27 @@ Usage:
 
         You can do this:
             {{ text|html_attrs:'input[:-1]|class="new" size=50' }}
+            {{ text|html_attrs:'input[0]|class="new" size=50' }}
+            {{ text|html_attrs:'input[1:]|class="new" size=50' }}
+            {{ text|html_attrs:'input|class="new" size=50' }}
+            {{ text|html_attrs:'input\s{1}type="pass[^"]+"[0]|class="new" size=50' }}
             ---
             <input class="bar new" size="50"><input class="foo new" size="50"><input type="password">
+            <input class="bar new" size="50"><input class="foo"><input type="password">
+            <input class="bar"><input class="foo new" size="50"><input type="password" class="new" size="50">
+            <input class="bar new" size="50"><input class="foo new" size="50"><input type="password" class="new" size="50">
+            <input class="bar"><input class="foo"><input type="password" class="new" size="50">
 
-        First param is regex pattern, in example 'input'.
-        Real regex pattern will be like r"""<(?!/)(%s[^>?]*)/?>""" where '%s' change by received regex.
-        In example below it will be r"""<(?!/)(input[^>?]*)/?>""".
-        If after regex param received slice param ('[:-1]'), result will sliced by it.
-        If you need squre bracket in you regex and no need slice, just use '[:]' after regex ('su[b|p][:]|class="new"').
+        First param is regex pattern, in first example it is 'input',
+        in last — 'input\s{1}type="pass[^"]+"'.
+
+        Real regex pattern will be like r"""<(?!/)(%s[^>?]*)/?>""" where '%s'
+        replaces by received regex value.
+        In first example below it will be r"""<(?!/)(input[^>?]*)/?>""",
+        in last — r"""<(?!/)(input\s{1}type="pass[^"]+"[^>?]*)/?>""".
+
+        If it is a slice param after regex value ('[:-1]'), result will
+        sliced by it. If you need squre bracket in you regex without slicing,
+        just use '[:]' after regex ('su[b|p][:]|class="new"').
+
+        Note: at this monent you can't use vertical line sign "|" in your attrs.

@@ -1,9 +1,11 @@
 import re
+import copy
 from django.template import Library
 from django.template.defaultfilters import stringfilter
 from django.forms.forms import BoundField
 from django.forms.utils import flatatt
 from django.utils.safestring import mark_safe
+from django.utils import six
 
 
 REGEX = re.compile(r"""([a-z0-9_]+) \s*=\s* ("|')? (?(2) (?:(.+?)(?<!\\)\2) | ([^\s'"]+))""", re.I | re.X)
@@ -11,14 +13,15 @@ RECLS = re.compile(r"""(?:^|\s+)([+-=]?)(-?[_a-z]{1}[a-z0-9-_]*)""", re.I)
 RETAG = r"""<(?!/)(%s[^>?]*)/?>"""
 NONE  = 'None'
 
-
 register = Library()
+
 
 @register.filter
 @stringfilter
 def html_attrs(field, extra=None):
     """Html attrs filter"""
-    if not extra: return field
+    if not extra:
+        return field
     extra, regex, sl_ob = regex_parser(extra)
     tags = re.finditer(RETAG % regex, field, re.I|re.X)
     tags = list(tags).__getitem__(sl_ob)
@@ -35,7 +38,8 @@ def html_attrs(field, extra=None):
             csscl = cssclass_processor(excls, attrs.get('class', ''))
             csscl and attrs.__setitem__('class', csscl)
             attrs = params_processor(attrs, extra) or attrs
-            html += field[index:i.start()] + ("<%s%s%s>" % (name, flatatt(attrs), slash))
+            html += (field[index:i.start()] +
+                     ("<%s%s%s>" % (name, flatatt(attrs), slash)))
             index = i.end()
         html += field[index:]
     return mark_safe(html)
@@ -46,19 +50,25 @@ def attrs(field, extra):
     if not isinstance(field, BoundField):
         return field
 
-    as_fi = False
+    result, as_field, copy_field = None, False, True
     if extra[-9:] == ' as field':
-        extra, as_fi = extra[:-9], True
+        extra, as_field, copy_field = extra[:-9], True, True
+    elif extra[-13:] == ' as realfield':
+        extra, as_field, copy_field = extra[:-13], True, False
     attrs = params_processor(field.field.widget.attrs, extra)
 
-    if attrs and as_fi:
-        field.field.widget.attrs = attrs
+    if attrs and as_field:
+        # deep copy if it should be returned as realfield
+        result = copy.deepcopy(field) if copy_field else field
+        result.field.widget.attrs = attrs
     elif attrs:
-        bound, wattr = field, field.field.widget.attrs
-        bound.field.widget.attrs = attrs
-        field = bound.as_widget()
-        bound.field.widget.attrs = wattr
-    return field
+        # do not deep copy, just replace attrs for a moment
+        original = field.field.widget.attrs
+        field.field.widget.attrs = attrs
+        result = six.text_type(field)
+        field.field.widget.attrs = original
+
+    return result
 
 def regex_parser(extra):
     """Get extra attrs and tag regex"""
@@ -71,8 +81,9 @@ def regex_parser(extra):
                 # try to get slice object from string
                 slices = slices[:-1].split(':')[:3]
                 slices = [int(i) if i else None for i in slices]
-                # imitate direct indexing if no ":" char exist because of stop param in slice
-                # is default, see also http://docs.python.org/library/functions.html#slice
+                # imitate direct indexing if no ":" char exist because
+                # stop param in slice is default, see also
+                # http://docs.python.org/library/functions.html#slice
                 slices.__len__() == 1 and slices.append(None)
             except ValueError, e:
                 slices = (None,)
@@ -91,14 +102,20 @@ def params_parser(extra):
 
 def params_processor(attrs, extra):
     """Process html tag params"""
-    extra = extra and (params_parser(extra) if isinstance(extra, basestring) else dict(extra)) or None
-    attrs = attrs and (params_parser(attrs) if isinstance(attrs, basestring) else dict(attrs)) or {}
+    # get copy of extra and attrs by call dict(value)
+    extra = extra and (params_parser(extra)
+                       if isinstance(extra, basestring) else
+                       dict(extra)) or None
+    attrs = attrs and (params_parser(attrs)
+                       if isinstance(attrs, basestring) else
+                       dict(attrs)) or {}
     if not extra: return None
 
     extra['class'] = cssclass_parser(extra.get('class'))
     extra['class'] = cssclass_processor(extra['class'], attrs.get('class'))
     for i in extra.items():
-        if not i[1]: continue
+        if not i[1]:
+            continue
         attrs.__setitem__(*i) if i[1] != NONE else attrs.pop(i[0], None)
     return attrs
 
@@ -110,7 +127,8 @@ def cssclass_parser(extra):
 
 def cssclass_processor(extra, cattr):
     """Process class param with some rules"""
-    if not extra: return cattr
+    if not extra:
+        return cattr
     cattr = set(cattr and cattr.split() or [])
 
     if extra[0][0] == '=':
@@ -120,4 +138,5 @@ def cssclass_processor(extra, cattr):
         mdict = {'+': 'add', '=': 'add', '-': 'discard'}
         for i in extra:
             getattr(cattr, mdict[i[0]])(i[1])
-    return ' '.join(sorted(cattr)).strip()
+
+    return u' '.join(sorted(cattr)).strip()
