@@ -222,7 +222,7 @@ class FkeyListAdmin(admin.ModelAdmin):
 
     def get_urls(self):
         """Extends urls by fkey routes to fkey_view with view_name param"""
-        from django.conf.urls import patterns, url
+        from django.conf.urls import url
         from functools import update_wrapper
 
         def wrap(view):
@@ -231,7 +231,7 @@ class FkeyListAdmin(admin.ModelAdmin):
             return update_wrapper(wrapper, view)
 
         info = '%s_%s' % (self.model._meta.app_label, self.model._meta.model_name,)
-        urlpatterns = patterns('',
+        urlpatterns = [
             url(r'^([\w\d\_]+)-(\d+)/$', wrap(self.fkey_view),
                 {'view_name': 'changelist_view'}, name='%s_changelist_fkeylist' % info),
             url(r'^([\w\d\_]+)-(\d+)/add/$', wrap(self.fkey_view),
@@ -242,7 +242,7 @@ class FkeyListAdmin(admin.ModelAdmin):
                 {'view_name': 'delete_view'}, name='%s_delete_fkeylist' % info),
             url(r'^([\w\d\_]+)-(\d+)/(.+)/$', wrap(self.fkey_view),
                 {'view_name': 'change_view'}, name='%s_change_fkeylist' % info),
-        )
+        ]
 
         return urlpatterns + super(FkeyListAdmin, self).get_urls()
 

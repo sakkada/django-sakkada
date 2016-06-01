@@ -58,7 +58,7 @@ Example usage:
 urls.py (root):
 -------------------------------------------------------------------------------
 from django.conf import settings
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
 from django.conf.urls.static import static
 from django.contrib import admin
 from sakkada.admin.sites.admin_views import AdminViewsSite
@@ -66,9 +66,9 @@ from sakkada.admin.sites.admin_views import AdminViewsSite
 admin.site = AdminViewsSite()
 admin.autodiscover()
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
-) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 -------------------------------------------------------------------------------
 
 settings.py:

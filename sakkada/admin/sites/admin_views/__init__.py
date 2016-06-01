@@ -57,7 +57,7 @@ class AdminViewsMixin(object):
 
     def get_urls(self):
         """Add our custom views to the admin urlconf."""
-        from django.conf.urls import patterns, url
+        from django.conf.urls import url
 
         customs_views_urls = []
         for regex, _ in self.custom_views:
@@ -65,8 +65,7 @@ class AdminViewsMixin(object):
             customs_views_urls.append(url(regex[0], aview,
                                           name=regex[2], kwargs=regex[3]))
 
-        return patterns('', *customs_views_urls) + super(AdminViewsMixin,
-                                                         self).get_urls()
+        return customs_views_urls + super(AdminViewsMixin, self).get_urls()
 
     def index(self, request, extra_context=None):
         """Insert a custom views list into index page's context."""
