@@ -47,7 +47,7 @@ def fkey_list_link(name, model_set=None, fkey_name=None,
                 count = getattr(item, '%s__count' % msetname, None)
                 count = ' (%s)' % (modelset.count() if count is None else count)
 
-            addicon = static(u'admin/img/icon_addlink.gif')
+            addicon = static(u'admin/img/icon-addlink.svg')
             result = (u'<a href="%s" title="Show related «%s»">%s</a>%s'
                       % (reverse(*link_list), vernames[1], vernames[1], count))
             result = (u'<nobr>%s&nbsp;'
