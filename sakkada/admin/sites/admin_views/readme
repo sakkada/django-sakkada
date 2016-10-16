@@ -8,6 +8,7 @@ Usage:
     and run autodiscover manually:
         ...
         admin.site = AdminViewsSite()
+        admin.sites.site = admin.site
         admin.autodiscover()
         ...
  *  Copy templates "admin/views/*" to your project/application template folder
@@ -52,6 +53,13 @@ Module contains:
             * "help_text" is an optional short description of what view do,
             * "visible" is a boolean to set if the custom view should be visible in
                 the admin dashboard or not.
+            * "provide_admin_site" is an optional, that allow providing AdminSite
+                instance to the view throw "admin_site" argument, True by default.
+            * "dashboard_extra_context" is an optional parameter, that will be
+                stored in corresponding custom_views item in dashboard template,
+                if "link_icon" key specified, it will be used as css class
+                name of <li> container in index template (default is empty,
+                provided by django: "addlink", "changelink" and "deletelink").
 
 Example usage:
 -------------------------------------------------------------------------------
@@ -64,6 +72,7 @@ from django.contrib import admin
 from sakkada.admin.sites.admin_views import AdminViewsSite
 
 admin.site = AdminViewsSite()
+admin.sites.site = admin.site
 admin.autodiscover()
 
 urlpatterns = [
@@ -93,7 +102,8 @@ def custom_admin_view(request, *args, **kwargs):
     return render(request, 'template.html', {})
 
 admin.site.register_view('^somepath$', view=custom_admin_view,
-                         help_text=custom_admin_view.__doc__)
+                         help_text=custom_admin_view.__doc__,
+                         dashboard_extra_context={'link_icon': 'deletelink',})
 
 @admin.site.register_view('^anotherpath$', help_text='Some help text')
 def another_admin_view(request, *args, **kwargs):

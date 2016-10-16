@@ -22,7 +22,8 @@ class AdminViewsMixin(object):
         return super(AdminViewsMixin, self).__init__(*args, **kwargs)
 
     def register_view(self, regex, view=None, urlname=None, kwargs=None,
-                      wrap_view=True, name=None, help_text=None, visible=True):
+                      wrap_view=True, name=None, help_text=None, visible=True,
+                      provide_admin_site=True, dashboard_extra_context=None):
         """
         Add a custom admin view. Can be used as a function or a decorator.
 
@@ -37,21 +38,32 @@ class AdminViewsMixin(object):
         * `help_text` is an optional short description of what view do.
         * `visible` is a boolean to set if the custom view should be visible in
             the admin dashboard or not.
+        * `provide_admin_site` is an optional, that allow providing AdminSite
+            instance to the view throw "admin_site" argument, True by default.
+        * `dashboard_extra_context` is an optional parameter, that will be
+            stored in corresponding custom_views item in dashboard template,
+            if "link_icon" key specified, it will be used as css class
+                name of <li> container in index template (default is empty,
+                provided by django: "addlink", "changelink" and "deletelink").
         """
         urlname = urlname or uuid.uuid4().hex
 
         if view is not None:
             if inspect.isclass(view) and issubclass(view, View):
                 view = view.as_view()
-            self.custom_views.append(((regex, view, urlname, kwargs, wrap_view),
-                                      (name, help_text, visible, urlname,),))
+            self.custom_views.append((
+                (regex, view, urlname, kwargs, wrap_view, provide_admin_site,),
+                (name, help_text, visible, urlname, dashboard_extra_context,),
+            ))
             return
 
         def decorator(fn):
             if inspect.isclass(fn) and issubclass(fn, View):
                 fn = fn.as_view()
-            self.custom_views.append(((regex, fn, urlname, kwargs, wrap_view),
-                                      (name, help_text, visible, urlname,),))
+            self.custom_views.append((
+                (regex, fn, urlname, kwargs, wrap_view, provide_admin_site),
+                (name, help_text, visible, urlname, dashboard_extra_context,),
+            ))
             return fn
         return decorator
 
@@ -60,10 +72,14 @@ class AdminViewsMixin(object):
         from django.conf.urls import url
 
         customs_views_urls = []
-        for regex, _ in self.custom_views:
-            aview = self.admin_view(regex[1]) if regex[4] else regex[1]
-            customs_views_urls.append(url(regex[0], aview,
-                                          name=regex[2], kwargs=regex[3]))
+        for (regex, fn, urlname, kwargs, wrap_view,
+             provide_admin_site), _ in self.custom_views:
+            aview = self.admin_view(fn) if wrap_view else fn
+            if provide_admin_site:
+                kwargs = kwargs or {}
+                kwargs.update(admin_site=self)
+            customs_views_urls.append(url(regex, aview,
+                                          name=urlname, kwargs=kwargs))
 
         return customs_views_urls + super(AdminViewsMixin, self).get_urls()
 
@@ -74,10 +90,11 @@ class AdminViewsMixin(object):
 
         custom_views = []
         if self.custom_views_show_dashboard:
-            for i, (name, help_text, visible, urlname,) in self.custom_views:
+            for i, (name, help_text, visible, urlname,
+                    dashboard_extra_context) in self.custom_views:
                 if visible is True:
                     custom_views.append((urlname, name or capfirst(i[1].__name__),
-                                         help_text))
+                                         help_text, dashboard_extra_context))
 
         # Sort views alphabetically.
         custom_views.sort(key=lambda x: x[1])

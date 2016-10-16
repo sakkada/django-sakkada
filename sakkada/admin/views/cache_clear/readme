@@ -13,4 +13,5 @@ from sakkada.admin.views.cache_clear import cache_clear_view
 
 admin.site.register_view('^cache_clear/$', view=cache_clear_view,
                          name="Cache clear", urlname='cache_clear',
-                         help_text=cache_clear_view.__doc__)
+                         help_text=cache_clear_view.__doc__,
+                         dashboard_extra_context={'link_icon': 'deletelink',})

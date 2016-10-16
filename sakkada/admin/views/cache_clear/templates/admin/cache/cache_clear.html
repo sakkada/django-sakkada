@@ -1,7 +1,7 @@
 {% extends "admin/base_site.html" %}
 {% load i18n %}
 
-{% block bodyclass %}{{ block.super }} cache-clear{% endblock %}
+{% block bodyclass %}{{ block.super }} cache-clear delete-confirmation{% endblock %}
 
 {% block breadcrumbs %}
 <div class="breadcrumbs">
@@ -16,6 +16,7 @@
 
     <form action="" method="post">{% csrf_token %}
     <div>
+        {% if is_popup %}<input type="hidden" name="{{ is_popup_var }}" value="1" />{% endif %}
         <input type="hidden" name="post" value="yes" />
         <input type="submit" value="{% trans "Yes, I'm sure" %}" />
         <a href="#" onclick="window.history.back(); return false;" class="button cancel-link">{% trans "No, take me back" %}</a>

@@ -9,7 +9,7 @@
             <h2>{% trans 'Dashboard' %}</h2>
             <h3>{% trans 'Administration tools' %}</h3>
             <ul class="actionlist">
-                {% for urlname, name, description in custom_views %}<li class="addlinka">
+                {% for urlname, name, description, extra_context in custom_views %}<li{% if extra_context.link_icon %} class="{{ extra_context.link_icon }}"{% endif %}>
                     <b><a href="{% url 'admin:'|add:urlname %}">{{ name }}</a></b>
                     {% if description %}<br/><span class="mini quiet">{{ description }}</span>{% endif %}
                 </li>{% endfor %}
