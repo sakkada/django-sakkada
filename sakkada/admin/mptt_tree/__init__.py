@@ -3,7 +3,6 @@ from django.http import HttpResponse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import PermissionDenied
-from django.contrib.admin.templatetags.admin_static import static
 from django.contrib.admin.views.main import ChangeList
 from django.contrib import admin
 from django.conf import settings
@@ -57,17 +56,14 @@ class MpttTreeAdmin(admin.ModelAdmin):
 
     @property
     def media(self):
-        # media as a propery, because if this module used as an app,
-        # call of function "static" in __init__.py (class Media definition)
-        # cause an "django.core.AppRegistryNotReady: Apps aren't loaded yet".
         js = '' if settings.DEBUG else '.min'
         js = (
-            static('admin/js/jquery%s.js' % js),
-            static('admin/js/jquery.init.js'),
-            static('admin/js/cookies.js'),
-            static('admin/mptt_tree/scripts.js',),
+            'admin/js/vendor/jquery/jquery%s.js' % js,
+            'admin/js/jquery.init.js',
+            'admin/js/cookies.js',
+            'admin/mptt_tree/scripts.js',
         )
-        css = {'all': (static('admin/mptt_tree/styles.css'),)}
+        css = {'all': ('admin/mptt_tree/styles.css',),}
 
         base = getattr(super(MpttTreeAdmin, self), 'media', Media())
         return base + Media(js=js, css=css)

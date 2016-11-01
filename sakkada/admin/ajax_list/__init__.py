@@ -3,7 +3,6 @@ from django.http import (HttpResponse, HttpResponseBadRequest,
                          HttpResponseServerError, HttpResponseForbidden,
                          HttpResponseNotFound)
 from django.core.exceptions import PermissionDenied
-from django.contrib.admin.templatetags.admin_static import static
 from django.contrib import admin
 from django.conf import settings
 from django.forms.widgets import Media
@@ -11,7 +10,7 @@ from django.forms.widgets import Media
 
 def ajax_field_cell(item, attr, text=''):
     attrs = {'data-item': item.pk, 'data-attr': attr,}
-    text = item._meta.get_field_by_name(attr)[0].formfield() \
+    text = item._meta.get_field(attr).formfield() \
                .widget.render(attr, getattr(item, attr), attrs=attrs)
     text = (u'<div class="ajax_field" id="wrap_%s_%d">%s</div>'
             % (attr, item.id, text,))
@@ -20,7 +19,7 @@ def ajax_field_cell(item, attr, text=''):
 
 def ajax_field_value(item, attr, value):
     attrs = {'data-item': item.pk, 'data-attr': attr,}
-    return item._meta.get_field_by_name(attr)[0].formfield().to_python(value)
+    return item._meta.get_field(attr).formfield().to_python(value)
 
 def ajax_list_field(attr, short_description=u''):
     """
@@ -44,17 +43,14 @@ class AjaxListAdmin(admin.ModelAdmin):
 
     @property
     def media(self):
-        # media as a propery, because if this module used as an app,
-        # call of function "static" in __init__.py (class Media definition)
-        # cause an "django.core.AppRegistryNotReady: Apps aren't loaded yet".
         js = '' if settings.DEBUG else '.min'
         js = (
-            static('admin/js/jquery%s.js' % js),
-            static('admin/js/jquery.init.js'),
-            static('admin/js/cookies.js'),
-            static('admin/ajax_list/scripts.js',),
+            'admin/js/vendor/jquery/jquery%s.js' % js,
+            'admin/js/jquery.init.js',
+            'admin/js/cookies.js',
+            'admin/ajax_list/scripts.js',
         )
-        css = {'all': (static('admin/ajax_list/styles.css'),)}
+        css = {'all': ('admin/ajax_list/styles.css',),}
 
         base = getattr(super(AjaxListAdmin, self), 'media', Media())
         return base + Media(js=js, css=css)

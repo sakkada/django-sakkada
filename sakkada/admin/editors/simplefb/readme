@@ -1,0 +1,35 @@
+Textarea/TextInput field with "django-filebrowser-no-grappelli" support.
+
+Usage:
+-----
+ *  Install "django-sakkada"
+ *  Install "django-filebrowser-no-grappelli"
+    (https://pypi.python.org/pypi/django-filebrowser-no-grappelli)
+ *  Import "sakkada.admin.editors.simplefb.SimpleFBTextarea"
+ *  Set "SimpleFBTextarea" ("SimpleFBInput") as widget of desired fields
+ *  Copy static "admin/*" and "filebrowser/js/FB_FileBrowseField.js"
+    (to override default "FB_FileBrowseField.js") to your project static folder
+    or add "sakkada.admin.editors.simplefb" to your INSTALLED_APPS before
+    "filebrowser".
+ *  Look at "jquery.resizable-field.js" source for some customization of
+    resizable textarea behaviour (providing "data-*" attrs to widget)
+
+Example usage:
+-------------------------------------------------------------------------------
+from django import forms
+from django.contrib import admin
+from sakkada.admin.editors.simplefb import SimpleFBTextarea
+
+
+class SomeAdminForm(forms.ModelForm):
+    class Meta:
+        model = Some
+        fields = '__all__'
+        widgets = {'text': SimpleFBTextarea,}
+
+
+class SomeAdmin(admin.ModelAdmin):
+    form = SomeAdminForm
+
+
+admin.site.register(Some, SomeAdmin)

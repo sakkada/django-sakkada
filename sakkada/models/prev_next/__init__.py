@@ -81,7 +81,7 @@ class PrevNextModel(models.Model):
                     cmps = models.Q(**{key: value,})
 
                     # add isnull filter for reverse direction on nullable fields
-                    null = self.__class__._meta.get_field_by_name(name)[0].null
+                    null = self.__class__._meta.get_field(name).null
                     if not direction ^ nullsfirst and null:
                         cmps = cmps | models.Q(**{'%s__isnull' % name: True,})
 

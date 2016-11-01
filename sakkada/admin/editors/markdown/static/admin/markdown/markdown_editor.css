@@ -1,0 +1,22 @@
+.editor-markdown-field-container {
+  margin-right: 15px;
+  float: left;
+}
+.editor-markdown-field-container textarea {
+  font-family: monospace;
+  min-width: 300px;
+  min-height: 200px;
+}
+
+.editor-markdown-preview-container {
+  float: left;
+}
+.editor-markdown,
+.editor-markdown-preview-container .editor-markdown-preview {
+  overflow: auto;
+}
+
+.editor-markdown-preview-oneline p {
+  padding: 0;
+  margin: 0;
+}

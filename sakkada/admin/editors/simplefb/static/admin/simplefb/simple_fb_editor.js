@@ -1,6 +1,6 @@
 (function($){
     $(function() {
-        var textarea_class = 'editor_simple_fb'
+        var field_class = 'editor_simple_fb'
         var filebrowser_url = '/admin/filebrowser/browse/'; // the URL to the Django filebrowser, depends on your URLconf
         var filebrowser_handler = function() {
             var dialog, dlg;
@@ -11,9 +11,9 @@
             var head = ''
                 + '<title>Filebrowser link</title>'
                 + '<style>'
-                + '    body { font-family: sans-serif; font-size: 14px; }'
+                + '    body { font-family: sans-serif; font-size: 13px; }'
                 + '    #filebrowser_wrapper { margin: 5px 0 0 0; }'
-                + '    #filebrowser_path { width: 480px; margin: 0 0 6px 0; }'
+                + '    #filebrowser_path { width: 485px; margin: 0 0 6px 0; }'
                 + '    #preview_filebrowser_path { float: right; display: none; }'
                 + '    #filebrowser_close { margin: 0 0 0 5px; }'
                 + '</style>';
@@ -26,7 +26,7 @@
                 + '        <span id="preview_filebrowser_path">'
                 + '            <a id="previewlink_filebrowser_path"><img id="previewimage_filebrowser_path" /></a>'
                 + '        </span>'
-                + '        <textarea id="filebrowser_path" rows="3"></textarea>'
+                + '        <textarea id="filebrowser_path" rows="4"></textarea>'
                 + '        <input id="filebrowser_text_select" type="submit" value="select text">'
                 + '        <input id="filebrowser_close" type="submit" value="close">'
                 + '    </div>'
@@ -47,8 +47,8 @@
             dialog.focus();
         }
 
-        // Update each textarea marked as textarea_class
-        $('textarea.' + textarea_class).each(function(){
+        // Update each textarea/input marked as field_class
+        $('textarea.' + field_class + ', input[type=text].' + field_class).each(function(){
             var env;
             env = $("<div/>").addClass('simple_fb_tools');
             env.prepend(
@@ -57,12 +57,14 @@
                 + '</div>'
             );
             env.insertBefore($(this));
-            env.append($(this));
+            env.prepend($(this));
 
             $('a.simple_fb_tools_bar_browse', env).click(function() {
                 filebrowser_handler();
                 return false;
             });
+
+            $(this).resizableField();
         });
     });
 })(django.jQuery);

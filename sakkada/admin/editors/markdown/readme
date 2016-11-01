@@ -1,0 +1,40 @@
+Textarea/TextInput field with interactive markdown rendering preview.
+
+Usage:
+-----
+ *  Install "django-sakkada"
+ *  Import "sakkada.admin.editors.markdown.MarkdownTextarea"
+ *  Set "MarkdownTextarea" ("MarkdownInput") as widget of desired fields
+ *  Copy static "admin/*" to your project static folder
+    or add "sakkada.admin.editors.markdown" to your INSTALLED_APPS
+ *  For some customization, extend any of included classes ("MarkdownWidget",
+    "MarkdownInput", "MarkdownTextarea") and change the following properties:
+    - "markdown_editor_use_cdnjs" - use cdn ("cloudflare") url for "marked"
+      library if True or local url otherwise, True by default
+    - "markdown_editor_use_in_admin" - prepend widget.media property value with
+      django.admin jQuery urls (jQuery itself and "jquery.init.js"), set False
+      to use widget outside of django.admin, True by default
+    - "markdown_editor_marked_urls" - urls for cdn and local "marked" library
+      loading (see source for more details).
+ *  Look at "jquery.resizable-field.js" source for some customization of
+    resizable textarea behaviour (providing "data-*" attrs to widget)
+
+Example usage:
+-------------------------------------------------------------------------------
+from django import forms
+from django.contrib import admin
+from sakkada.admin.editors.simplefb import MarkdownTextarea
+
+
+class SomeAdminForm(forms.ModelForm):
+    class Meta:
+        model = Some
+        fields = '__all__'
+        widgets = {'text': MarkdownTextarea,}
+
+
+class SomeAdmin(admin.ModelAdmin):
+    form = SomeAdminForm
+
+
+admin.site.register(Some, SomeAdmin)
