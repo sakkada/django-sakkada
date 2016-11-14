@@ -43,7 +43,9 @@ def copy_selected(modeladmin, request, queryset):
         n = queryset.count()
         if n:
             for obj in queryset:
-                modeladmin.log_addition(request, obj)
+                change_message = modeladmin.construct_change_message(
+                    request, None, None, True)
+                modeladmin.log_addition(request, obj, change_message)
             # copy all objects with related objects
             collector.copy()
             modeladmin.message_user(request, _("Successfully created %(count)d %(items)s.") % {
@@ -81,6 +83,6 @@ def copy_selected(modeladmin, request, queryset):
         "admin/%s/%s/copy_selected_confirmation.html" % (app_label, opts.model_name),
         "admin/%s/copy_selected_confirmation.html" % app_label,
         "admin/copy_selected_confirmation.html"
-    ], context, current_app=modeladmin.admin_site.name)
+    ], context)
 
 copy_selected.short_description = ugettext_lazy("Copy selected %(verbose_name_plural)s")

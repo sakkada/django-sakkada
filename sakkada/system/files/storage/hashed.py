@@ -33,7 +33,8 @@ class HashedNameFileSystemStorage(UniqueNameFileSystemStorage):
 
         super(HashedNameFileSystemStorage, self).__init__(*args, **kwargs)
 
-    def get_unique_available_name(self, name, content=None, chunk_size=None):
+    def get_unique_available_name(self, name, max_length=None,
+                                  content=None, chunk_size=None):
         dirname, basename = os.path.split(name)
         ext = os.path.splitext(basename)[1].lower()
         root = (self._compute_hash_by_name(name) if self.uniquify_names

@@ -1,5 +1,5 @@
-from django import get_version
+from django import VERSION
 from .fields import AdvancedFileField, AdvancedImageField
 
-if get_version() < '1.2.5':
+if VERSION < (1, 2, 5,):
     raise Exception('Extended FileField require Django 1.2.5 or greater.')

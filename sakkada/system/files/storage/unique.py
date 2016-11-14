@@ -36,7 +36,7 @@ class UniqueNameFileSystemStorage(FileSystemStorage):
 
         super(UniqueNameFileSystemStorage, self).__init__(*args, **kwargs)
 
-    def get_available_name(self, name):
+    def get_available_name(self, name, max_length=None):
         # Execute only in _save method for regenerate filename
         # so raise NoAvailableName if not uniquify_names
         if not self.uniquify_names and not self.overwrite_existing:
@@ -45,16 +45,17 @@ class UniqueNameFileSystemStorage(FileSystemStorage):
         if not self.uniquify_names and self.overwrite_existing:
             self.delete(name)
 
-        return self.get_unique_available_name(name)
+        return self.get_unique_available_name(name, max_length=max_length)
 
-    def get_unique_available_name(self, name, content=None):
+    def get_unique_available_name(self, name, max_length=None,
+                                  content=None, chunk_size=None):
         # Real method to generate new filename, it may be overwritten
         if self.uniquify_names:
             name = super(UniqueNameFileSystemStorage,
-                         self).get_available_name(name)
+                         self).get_available_name(name, max_length=max_length)
         return name
 
-    def save(self, name, content):
+    def save(self, name, content, max_length=None):
         # Default behaviour except calling get_unique_available_name
         # instead get_available_name and pass content argument
         if name is None:
@@ -63,7 +64,8 @@ class UniqueNameFileSystemStorage(FileSystemStorage):
         if not hasattr(content, 'chunks'):
             content = File(content)
 
-        name = self.get_unique_available_name(name, content=content)
+        name = self.get_unique_available_name(name, content=content,
+                                              max_length=max_length)
         name = self._save(name, content)
 
         # Store filenames with forward slashes, even on Windows

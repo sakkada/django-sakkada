@@ -2,14 +2,17 @@ import os
 from django.utils.translation import ugettext_lazy as _
 from django.utils.deconstruct import deconstructible
 from django.core.exceptions import ValidationError
+from django.db.models.fields.files import FieldFile
 from django.core.files.uploadedfile import UploadedFile
 from django.template.defaultfilters import filesizeformat
 
+
 def isuploaded(value):
-    # note: check for _file first, because UploadedFile must be already cached
-    # just uploaded file should be UploadedFile instance with _size and
-    # content_type attributes
-    return getattr(value, '_file', False) and isinstance(value._file, UploadedFile)
+    # note: value may be FieldFile or UploadedFile (model field or form field
+    #       validation respectively), if FieldFile - get _file attr as value
+    if isinstance(value, FieldFile):
+        value = getattr(value, '_file', None)
+    return isinstance(value, UploadedFile)
 
 
 class BaseValidator(object):

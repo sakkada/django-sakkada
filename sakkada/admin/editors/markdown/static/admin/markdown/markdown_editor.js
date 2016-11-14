@@ -95,4 +95,4 @@
     $('.editor_markdown').resizableField();
     $('.editor_markdown').markdownPreview();
   });
-})(django && django.jQuery ? django.jQuery : jQuery) // django.jQuery also support
+})(django && django.jQuery ? django.jQuery : jQuery); // django.jQuery also support
