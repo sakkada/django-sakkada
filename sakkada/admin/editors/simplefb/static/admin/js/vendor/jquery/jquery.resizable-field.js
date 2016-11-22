@@ -52,7 +52,7 @@
 
         // get dimensions from localStorage or dataset, default none
         state = localStorage.getItem(uniqueName) || this.dataset['dimensions'];
-        state = state && state.match(/^\d+:\d+$/)
+        state = state && state.match(/^\d+(\.\d+)?:\d+(\.\d+)?$/)
                 ? state.split(':') : [self.width(), self.height()];
         state = {width: state[0]*1, height: state[1]*1,
                  active: false, changed: false, uniqueName: uniqueName};
