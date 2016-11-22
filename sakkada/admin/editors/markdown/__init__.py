@@ -9,10 +9,10 @@ __all__ = ('MarkdownWidget', 'MarkdownInput', 'MarkdownTextarea',)
 class MarkdownWidget(Widget):
     markdown_editor_use_cdnjs = True
     markdown_editor_use_in_admin = True
-    markdown_editor_marked_urls = {
-        'cdnjs': '//cdnjs.cloudflare.com/ajax/libs/marked/0.3.6/marked.min.js',
-        'local': 'admin/markdown/marked.min.js',
-    }
+    markdown_editor_marked_local = 'admin/markdown/marked.min.js'
+    markdown_editor_marked_cdnjs = (
+        '//cdnjs.cloudflare.com/ajax/libs/marked/0.3.6/marked.min.js'
+    )
 
     def __init__(self, attrs=None):
         attrs = dict({'data-dimensions': '330:270'}, **(attrs or {}))
@@ -29,9 +29,10 @@ class MarkdownWidget(Widget):
                   'admin/js/jquery.init.js',)
         js += (
             'admin/js/vendor/jquery/jquery.resizable-field.js',
-            self.markdown_editor_marked_urls[
-                'cdnjs' if self.markdown_editor_use_cdnjs else 'local'
-            ],
+            'admin/js/vendor/jquery/jquery.markdown-field.js',
+            (self.markdown_editor_marked_cdnjs
+             if self.markdown_editor_use_cdnjs else
+             self.markdown_editor_marked_local),
             'admin/markdown/markdown_editor.js',
         )
 
