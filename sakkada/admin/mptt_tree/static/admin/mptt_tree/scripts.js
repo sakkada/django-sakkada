@@ -11,6 +11,15 @@
         return mptt_tree.tree_structure.nodes[item_id];
     }
 
+    // get ancestor tag by tag name
+    var get_parent_by_tag_name = function (marker, tagName) {
+        while (true) {
+            marker = marker.parentElement;
+            if (!marker || marker.tagName == tagName) break;
+        }
+        return marker;
+    }
+
     // show all immediate children, then open all children that are marked as open
     var open_subtree = function(item_id) {
         // vanilla js for speedup
@@ -98,7 +107,7 @@
             var marker = document.getElementById('mtree_node_marker-' + i);
             if(marker) {
                 node.ptr = marker;
-                node.row = marker.parentElement.parentElement;
+                node.row = get_parent_by_tag_name(marker, 'TR') || marker;
             } else {
                 mptt_tree.tree_structure.nodes[i] = null;
             }
