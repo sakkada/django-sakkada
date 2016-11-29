@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import re
+from urllib2 import urlparse
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.utils.http import urlencode
@@ -173,11 +175,11 @@ class FkeyListAdmin(admin.ModelAdmin):
         if not hasattr(self.model, fkey_name):
             raise Exception('FkeyList: field "%s" does not exist in model "%s"'
                             % (fkey_name, self.model._meta.model_name))
-        parent = getattr(self.model, fkey_name).field.rel.to.objects.filter(pk=fkey_id)
-        if not parent.exists():
+        parent = getattr(self.model, fkey_name).field.rel.to.objects.filter(
+            pk=fkey_id).first()
+        if not parent:
             raise Exception('FkeyList: fkey "%s" #%s for "%s" does not exist'
                             % (fkey_name, fkey_id, self.model._meta.model_name))
-        parent = parent[0]
 
         # default and fkey links dependencies
         link_name_parent = AdminViewName(parent.__class__._meta)
@@ -190,6 +192,7 @@ class FkeyListAdmin(admin.ModelAdmin):
 
         request.FKEY_LIST = {
             'fkey_name': fkey_name,
+            'fkey_opts': getattr(self.model, fkey_name).field.rel.to._meta,
             'id': fkey_id,
             'item': parent,
             'item_link': reverse(link_name_parent.change, None, (args[1],), {}),
@@ -209,15 +212,39 @@ class FkeyListAdmin(admin.ModelAdmin):
         kwargs['extra_context'] = extra_context
 
         # get response
-        args = tuple(args[2:])
-        response = getattr(self, view_name)(request, *args, **kwargs)
+        fkeyargs, clearargs = tuple(args[:2]), tuple(args[2:])
+        response = getattr(self, view_name)(request, *clearargs, **kwargs)
 
         # try to return fkey location in HttpResponseRedirect instead original
-        # todo: parse url for clean processing
-        location = (isinstance(response, HttpResponseRedirect)
-                    and response['Location'].split('?', 1))
-        if location and location[0] in link_deps:
-            response['Location'] = '?'.join([link_deps[location[0]]]+location[1:])
+        location, newlocation = (isinstance(response, HttpResponseRedirect)
+                                 and response['Location']), None
+        while True:
+            if not location:
+                break
+
+            parsed = list(urlparse.urlparse(location))
+
+            # 1 - try to rescue "add new one" and "changelist" redirects
+            if parsed[2] in link_deps:
+                parsed[2] = link_deps[parsed[2]] # path
+                newlocation = urlparse.urlunparse(parsed)
+                break
+
+            # 2 - try to rescue "continue" redirects after new object adding
+            # get reversed regex and try to get new obj primary key
+            regex = '^%s$' % reverse(link_name.change, None, ('(.+)',))
+            pkval = re.match(regex, parsed[2]) # url.path value checking
+            pkval = pkval and pkval.groups()[0]
+            if pkval:
+                parsed[2] = reverse(link_name.change_fkeylist,
+                                    None, fkeyargs + (pkval,)) # path
+                newlocation = urlparse.urlunparse(parsed)
+                break
+
+            break
+
+        if newlocation:
+            response['Location'] = newlocation
         return response
 
     def get_urls(self):

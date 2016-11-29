@@ -3,19 +3,21 @@
 
 {% block breadcrumbs %}
 <div class="breadcrumbs">
-    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
-    &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
-    &rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
-    {% if request.FKEY_LIST %}
-    &rsaquo; <a href="{% url request.FKEY_LIST.link_name.changelist_fkeylist request.FKEY_LIST.fkey_name request.FKEY_LIST.id|admin_urlquote %}">{{ opts.verbose_name_plural|capfirst }} in {{ request.FKEY_LIST.fkey_name|capfirst }} #{{ request.FKEY_LIST.id }}</a>
-    {% endif %}
-    &rsaquo; {% trans 'Delete multiple objects' %}
+  <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+  &rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+  {% if request.FKEY_LIST %}
+  &rsaquo; <a href="{% url request.FKEY_LIST.link_name.changelist_fkeylist request.FKEY_LIST.fkey_name request.FKEY_LIST.id|admin_urlquote %}">{{ opts.verbose_name_plural|capfirst }} in {{ request.FKEY_LIST.fkey_opts.verbose_name|capfirst }} #{{ request.FKEY_LIST.id }} «{{ request.FKEY_LIST.item }}»</a>
+  {% endif %}
+  &rsaquo; {% trans 'Delete multiple objects' %}
 </div>
 {% endblock %}
 
 {% block content_title %}
-{{ block.super }}
-{% if request.FKEY_LIST %}<h2 style="margin: 0 0 8px 0;">
-    <a href="{{ request.FKEY_LIST.list_link }}">{{ request.FKEY_LIST.fkey_name|capfirst }} list</a> / <a href="{{ request.FKEY_LIST.item_link }}">#{{ request.FKEY_LIST.id }}: {{ request.FKEY_LIST.item }}</a>
+{% if request.FKEY_LIST %}<h2 style="font-weight: 300; font-size: 18px; margin: 0 0 12px 0;">
+  All <a href="{{ request.FKEY_LIST.list_link }}">{{ request.FKEY_LIST.fkey_opts.verbose_name_plural|capfirst }}</a>
+  / <a href="{% url request.FKEY_LIST.link_name.changelist_fkeylist request.FKEY_LIST.fkey_name request.FKEY_LIST.id|admin_urlquote %}">{{ opts.verbose_name_plural|capfirst }}</a>
+  in {{ request.FKEY_LIST.fkey_opts.verbose_name|capfirst }} <span style="font-weight: 400;">«</span><a href="{{ request.FKEY_LIST.item_link }}">{{ request.FKEY_LIST.item }}</a><span style="font-weight: 400;">»</span>
 </h2>{% endif %}
+{{ block.super }}
 {% endblock %}

@@ -4,31 +4,33 @@
 {% block breadcrumbs %}
 {% if not is_popup %}
 <div class="breadcrumbs">
-    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
-    &rsaquo; <a href="{% url 'admin:app_list' app_label=cl.opts.app_label %}">{{ cl.opts.app_config.verbose_name }}</a>
-    {% if request.FKEY_LIST %}
-    &rsaquo; <a href="{% url cl.opts|admin_urlname:'changelist' %}">{{ cl.opts.verbose_name_plural|capfirst }}</a>
-    &rsaquo; {{ cl.opts.verbose_name_plural|capfirst }} in {{ request.FKEY_LIST.fkey_name|capfirst }} #{{ request.FKEY_LIST.id }}
-    {% else %}
-    &rsaquo; {{ cl.opts.verbose_name_plural|capfirst }}
-    {% endif %}
+  <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label=cl.opts.app_label %}">{{ cl.opts.app_config.verbose_name }}</a>
+  {% if request.FKEY_LIST %}
+  &rsaquo; <a href="{% url cl.opts|admin_urlname:'changelist' %}">{{ cl.opts.verbose_name_plural|capfirst }}</a>
+  &rsaquo; {{ cl.opts.verbose_name_plural|capfirst }} in {{ request.FKEY_LIST.fkey_opts.verbose_name|capfirst }} #{{ request.FKEY_LIST.id }} «{{ request.FKEY_LIST.item }}»
+  {% else %}
+  &rsaquo; {{ cl.opts.verbose_name_plural|capfirst }}
+  {% endif %}
 </div>
 {% endif %}
 {% endblock %}
 
 {% block content_title %}
-{{ block.super }}
-{% if request.FKEY_LIST %}<h2 style="margin: 0 0 8px 0;">
-    <a href="{{ request.FKEY_LIST.list_link }}">{{ request.FKEY_LIST.fkey_name|capfirst }} list</a> / <a href="{{ request.FKEY_LIST.item_link }}">#{{ request.FKEY_LIST.id }}: {{ request.FKEY_LIST.item }}</a>
+{% if request.FKEY_LIST %}<h2 style="font-weight: 300; font-size: 18px; margin: 0 0 12px 0;">
+  All <a href="{{ request.FKEY_LIST.list_link }}">{{ request.FKEY_LIST.fkey_opts.verbose_name_plural|capfirst }}</a>
+  / {{ opts.verbose_name_plural|capfirst }}
+  in {{ request.FKEY_LIST.fkey_opts.verbose_name|capfirst }} <span style="font-weight: 400;">«</span><a href="{{ request.FKEY_LIST.item_link }}">{{ request.FKEY_LIST.item }}</a><span style="font-weight: 400;">»</span>
 </h2>{% endif %}
+{{ block.super }}
 {% endblock %}
 
 {% block object-tools-items %}
 {% if has_add_permission and request.FKEY_LIST %}
 <li>{% url request.FKEY_LIST.link_name.add_fkeylist request.FKEY_LIST.fkey_name request.FKEY_LIST.id as add_url %}
-    <a href="{% add_preserved_filters add_url is_popup to_field %}" class="addlink">
-        {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}
-    </a>
+  <a href="{% add_preserved_filters add_url is_popup to_field %}" class="addlink">
+    {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}
+  </a>
 </li>
 {% else %}{{ block.super }}{% endif %}
 {% endblock %}

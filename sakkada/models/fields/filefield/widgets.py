@@ -13,9 +13,9 @@ class ClearableFileInput(forms.widgets.FileInput):
 
     def get_html_tpls(self, input, name, value, attrs):
         return {
-            'link':     u'%s&nbsp;<a target="_blank" href="%s">%s</a>',
-            'field':    u'<br>%s&nbsp;%s',
-            'delete':   (
+            'link': u'%s&nbsp;<a target="_blank" href="%s">%s</a>',
+            'field': u'<br>%s&nbsp;%s',
+            'delete': (
                 u' <nobr><input type="checkbox" id="id_%s_delete"'
                 u' name="%s_delete"/> &mdash; <label for="id_%s_delete"'
                 u' style="display: inline; float: none;">%s</label></nobr>'

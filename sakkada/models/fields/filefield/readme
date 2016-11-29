@@ -28,17 +28,21 @@ from sakkada.models.fields.filefield import fields
 from sakkada.system import validators
 
 class MyModel(models.Model)
-    attach  = fields.AdvancedFileField(
-                _('Attach'), blank=True, null=False, upload_to="upload/files/%Y/%m/",
-                clearable=True, erasable=True,
-                validators=[validators.extension(['.zip', '.tar.gz', '.gz',]),
-                            validators.mimetype(['application/x-gzip', 'application/zip',]),
-                            validators.filesize(max=1024*1024*10),]
-              )
+    attach = fields.AdvancedFileField(
+        _('Attach'), blank=True, null=False, upload_to="upload/files/%Y/%m/",
+        clearable=True, erasable=True,
+        validators=[
+            validators.ExtensionValidator(['.zip', '.tar.gz', '.gz',]),
+            validators.MimetypeValidator(['application/x-gzip', 'application/zip',]),
+            validators.FilesizeValidator(max=1024*1024*10),
+        ]
+    )
 
     attach  = fields.AdvancedImageField(
-                _('Attach'), blank=False, null=False, upload_to="upload/images/%Y/%m/",
-                clearable=False, erasable=True,
-                validators=[validators.mimetype(['image/jpeg', 'image/png',]),
-                            validators.filesize(max=1024*1024*5),]
-              )
+        _('Attach'), blank=False, null=False, upload_to="upload/images/%Y/%m/",
+        clearable=False, erasable=True,
+        validators=[
+            validators.MimetypeValidator(['image/jpeg', 'image/png',]),
+            validators.FilesizeValidator(max=1024*1024*5),
+        ]
+    )

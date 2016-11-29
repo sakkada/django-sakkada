@@ -162,3 +162,4 @@ History:
         add custom templates definition and allow parent templates definition,
         add fkey_list_annotate_counts to reduce db queries count,
         add with_count argument into fkey_list_link function
+0.0.7 - added rescue for continue-editing redirects
