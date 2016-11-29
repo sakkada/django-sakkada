@@ -4,21 +4,24 @@ ModelAdmin for manage objects, filtered by foreign key value.
 Installation:
 ------------
  *  Install "django-sakkada"
- *  Import "FkeyListAdmin" ("FkeyMpttAdmin") and "fkey_list_link" from
-    "sakkada.admin.fkey_list"
- *  Set "FkeyListAdmin" ("FkeyMpttAdmin") as class of admin model
- *  Define "fkey_list_link" properties for required foreign keys
+ *  Import "FkeyListAdmin" ("FkeyMpttAdmin") and "FkeyListParentAdmin",
+    "fkey_list_link" from "sakkada.admin.fkey_list"
+ *  Set "FkeyListAdmin" ("FkeyMpttAdmin") as class of admin for child model
+    and "FkeyListParentAdmin" as class for admin for parent model
+ *  Define "fkey_list_link" properties for required foreign keys in parent
+    model admin
  *  Set "fkey_list_annotate_counts" to reduce count of db queries if use
-    "fkey_list_link" with "with_count" param (True by default)
+    "fkey_list_link" with "with_count" param (True by default) in parent model
+    admin
  *  Set extended template names in followed (
         "fkey_list_parent_change_list_template",
         "fkey_list_parent_change_form_template",
         "fkey_list_parent_delete_confirmation_template",
         "fkey_list_parent_delete_selected_confirmation_template",
         "fkey_list_parent_object_history_template",
-    ) properties if required
- *  Copy templates "admin/fkey_list/*" to your project/application template folder
-    or add "sakkada.admin.fkey_list" to your INSTALLED_APPS.
+    ) properties if required in child model admin
+ *  Copy templates "admin/fkey_list/*" to your project/application template
+    folder or add "sakkada.admin.fkey_list" to your INSTALLED_APPS.
 
 
 Usage:
@@ -29,16 +32,27 @@ fkey_list_link:
                            with_count=True, with_add_link=False):
             ...
     Arguments:
-        - name: name of child model and link (also name of model set by default)
-        - model_set: name of foreign key reverse field (usually {name}_set)
-                     required, if related_name value in child model is not default
-        - fkey_name: foreign key field name (model_name by default)
-                     required, if foreign key field name is not equal to parent model name
-        - with_count: show count of related objects, default True (try to get
-                      value from "{model_set}__count" attribute first (see
-                      fkey_list_annotate_counts), else call "count" method
-                      on model_set queryset)
-        - with_add_link: add link to add new item (+ icon), default False
+    - name: name of child model and name of the link (this value used to
+        generate field's related_name by appending suffix "_set"
+        if model_set value is empty)
+    - model_set: name of foreign key reverse field (usually {model}_set);
+        required, if related_name value of foreign key field in child model
+        is not default
+    - fkey_name: foreign key field name (foreign model name by default);
+        required, if foreign key field name is not equal to foreign model
+        name
+    - with_count: show count of related objects, default True;
+        try to get value from "{model_set.field.related_query_name}__count"
+        attribute first (see fkey_list_annotate_counts), if attribute not
+        exists - call "count" method on model_set queryset;
+        if value of with_count is non-empty string, it will be used as
+        count attribute name instead related_query_name with suffix
+    - with_add_link: add link to add new item (+ icon), default False
+
+FkeyListParentAdmin:
+    Properties:
+        List of foreign key reverse model_set names for count annotation:
+        - fkey_list_annotate_counts
 
 FkeyListAdmin:
     Properties:
@@ -49,14 +63,13 @@ FkeyListAdmin:
         - fkey_list_parent_delete_selected_confirmatin_template
         - fkey_list_parent_object_history_template
 
-        List of foreign key reverse model_set names for count annotation
-        to reduce db queries count:
+        List of foreign key reverse model_set names for count annotation:
         - fkey_list_annotate_counts
 
 Note:
-    FkeyListAdmin.__init__ appends admin with _fkeylist views and urls, that's why
-    for using fkey_list_link('model_name') you have to register admin, extended
-    with FkeyListAdmin for model with name 'model_name', else:
+    FkeyListAdmin.__init__ appends admin with _fkeylist views and urls, that's
+    why for using fkey_list_link('model_name') you have to register admin,
+    extended with FkeyListAdmin for model with name 'model_name', else:
         Caught NoReverseMatch while rendering:
             Reverse for '[app_name]_[model_name]_changelist_fkeylist'
 
@@ -112,12 +125,13 @@ class NodeMain(MPTTModel, Node):
 
 
 class ItemMain(Item):
-    node = models.ForeignKey(NodeMain, related_name='item_set')
+    node = models.ForeignKey(NodeMain)
 -------------------------------------------------------------------------------
 
 admin.py:
 -------------------------------------------------------------------------------
-from sakkada.admin.fkey_list import FkeyListAdmin, FkeyMpttAdmin, fkey_list_link
+from sakkada.admin.fkey_list import (FkeyListAdmin, FkeyMpttAdmin,
+                                     FkeyListParentAdmin, fkey_list_link)
 
 
 # add FkeyMpttAdmin to filteting by parent Node
@@ -131,20 +145,37 @@ class SomeNodeAdmin(FkeyMpttAdmin, admin.ModelAdmin):
     fkey_list_parent_change_list_template = 'admin/fkey_list_parent_change_list.html'
 
     # queryset count annotations
-    fkey_list_annotate_counts = ('item_set', 'children',)
+    fkey_list_annotate_counts = ('item', 'children',)
 
     # fkey_list links
     # links to items in node
-    item_link = fkey_list_link('item', model_set='item_set',
-                               fkey_name='node', with_add_link=True)
-    # links to child nodes in node
+    item_link = fkey_list_link('item', fkey_name='node', with_add_link=True)
+
+    # links to child nodes (model_set and with_count specified directly,
+    #                       although there are default values for this params)
     node_link = fkey_list_link('node', model_set='children',
+                               fkey_name='parent', with_add_link=True,
+                               with_count='children__count')
+
+
+# or add only FkeyListParentAdmin to allow annotations in parent admin
+class SomeNodeAdmin(FkeyListParentAdmin, admin.ModelAdmin):
+    list_display = (
+        'name', 'item_link', 'level',
+    )
+
+    # queryset count annotations
+    fkey_list_annotate_counts = ('item',)
+
+    # links to child nodes in node
+    node_link = fkey_list_link('item', model_set='item_set',
                                fkey_name='parent', with_add_link=True)
 
 
 # add FkeyListAdmin to filteting by related Node
 class SomeItemAdmin(FkeyListAdmin, admin.ModelAdmin):
     fkey_list_parent_change_list_template = 'admin/fkey_list_parent_change_list.html'
+
 
 admin.site.register(SomeNode, SomeNodeAdmin)
 admin.site.register(SomeItem, SomeItemAdmin)
@@ -157,9 +188,14 @@ History:
 0.0.2 - added different applications support
 0.0.3 - reverse fixed ((args[1]) -> (args[1],))
 0.0.4 - added FkeyMpttAdmin for MpttTree models
-0.0.5 - refactor fkey_list_link (change add link to image and show verbose names)
-0.0.6 - allow adding app to INSTALLED_APPS for template loading,
-        add custom templates definition and allow parent templates definition,
-        add fkey_list_annotate_counts to reduce db queries count,
-        add with_count argument into fkey_list_link function
-0.0.7 - added rescue for continue-editing redirects
+0.0.5 - refactored fkey_list_link (change add link to image and
+                                   show verbose names)
+0.0.6 - added adding app to INSTALLED_APPS for template loading,
+        added custom templates definition and parent templates definition,
+        added fkey_list_annotate_counts to reduce db queries count,
+        added with_count argument into fkey_list_link function
+0.0.7 - added rescue for continue-editing redirects,
+0.0.8 - fixed with_count argument (string value is count value attribute)
+        separated parent model admin functionality in FkeyListParentAdmin,
+            FkeyListAdmin (FkeyMpttAdmin) still contains both parent
+            and child functionality

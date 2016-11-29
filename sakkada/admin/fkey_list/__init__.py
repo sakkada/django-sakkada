@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 from urllib2 import urlparse
+from functools import update_wrapper
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.utils.http import urlencode
@@ -11,65 +12,16 @@ from django.contrib.admin.utils import quote
 from django.contrib.admin.templatetags.admin_static import static
 
 
-def fkey_list_link(name, model_set=None, fkey_name=None,
-                   with_count=True, with_add_link=False):
-    def link(self, item, url_only=None):
-        """
-        Arguments:
-        - name: name of child model and link (also name of model set by default)
-        - model_set: name of foreign key reverse field (usually {name}_set);
-                     required, if related_name value in child model is not default
-        - fkey_name: foreign key field name (model_name by default); required,
-                     if foreign key field name is not equal to parent model name
-        - with_count: show count of related objects, default True (try to get
-                      value from "{model_set}__count" attribute first (see
-                      fkey_list_annotate_counts), else call "count" method
-                      on model_set queryset)
-        - with_add_link: add link to add new item (+ icon), default False
-        """
-        msetname = model_set if model_set else '%s_set' % name
-        if not hasattr(item, msetname):
-            raise Exception(u'FkeyList link generater:'
-                            u' "%s" does not exist' % msetname)
-        modelset = getattr(item, msetname)
-        fkeyname = fkey_name if fkey_name else item._meta.model_name
-
-        view = AdminViewName(modelset.model._meta)
-        link_add = (view.add_fkeylist, None, (fkeyname, item.pk), {},)
-        link_list = (view.changelist_fkeylist, None, (fkeyname, item.pk), {},)
-
-        if url_only in ('list', 'add',):
-            result = link_add if url_only == 'add' else link_list
-            result = reverse(*result)
-        else:
-            vernames = (modelset.model._meta.verbose_name.capitalize(),
-                        modelset.model._meta.verbose_name_plural.capitalize(),)
-            count = ''
-            if with_count:
-                count = getattr(item, '%s__count' % msetname, None)
-                count = ' (%s)' % (modelset.count() if count is None else count)
-
-            addicon = static(u'admin/img/icon-addlink.svg')
-            result = (u'<a href="%s" title="Show related «%s»">%s</a>%s'
-                      % (reverse(*link_list), vernames[1], vernames[1], count))
-            result = (u'<nobr>%s&nbsp;'
-                      u'<a href="%s" title="Create related «%s»"><img src="%s"></a>'
-                      u'</nobr>' % (result, reverse(*link_add), vernames[0], addicon)
-                      if with_add_link else result)
-        return result
-    link.short_description = '%s list' % name
-    link.allow_tags = True
-
-    return link
-
-
+# Common Classes
+# --------------
 class AdminViewName(object):
     """Object return full revers urlname by postfix only"""
     def __init__(self, opts):
         self.opts = opts
 
     def __getattr__(self, name):
-        return 'admin:%s_%s_%s' % (self.opts.app_label, self.opts.model_name, name)
+        return 'admin:%s_%s_%s' % (self.opts.app_label,
+                                   self.opts.model_name, name)
 
 
 class FkeyListChangeList(ChangeList):
@@ -80,15 +32,7 @@ class FkeyListChangeList(ChangeList):
         if hasattr(request, 'FKEY_LIST'):
             self.fkey_list_data = request.FKEY_LIST
 
-    def get_queryset(self, request):
-        # add annotate counts if fkey_list_annotate_counts defined
-        qs = super(FkeyListChangeList, self).get_queryset(request)
-        annotations = self.model_admin.fkey_list_annotate_counts
-        if annotations and isinstance(annotations, (list, tuple,)):
-            qs = qs.annotate(*[Count(i, distinct=True) for i in annotations])
-        return qs
-
-    def url_for_result(self, result):
+    def url_for_result(self, result): # (child fkey_list)
         if self.fkey_list_data:
             view = getattr(self.fkey_list_data['link_name'], 'change_fkeylist')
             args = (self.fkey_list_data['fkey_name'],
@@ -99,10 +43,111 @@ class FkeyListChangeList(ChangeList):
 
         return super(FkeyListChangeList, self).url_for_result(result)
 
+    def get_queryset(self, request): # (parent fkey_list)
+        # add count annotations if fkey_list_annotate_counts defined
+        qs = super(FkeyListChangeList, self).get_queryset(request)
+        annotations = self.model_admin.fkey_list_annotate_counts
+        if annotations and isinstance(annotations, (list, tuple,)):
+            qs = qs.annotate(*[Count(i, distinct=True) for i in annotations])
+        return qs
 
-class FkeyListAdmin(admin.ModelAdmin):
+
+# Parent FkeyList Admin section
+# ------------------------------
+def fkey_list_link(name, model_set=None, fkey_name=None,
+                   with_count=True, with_add_link=False):
     """
-    Added fkey_list functionality.
+    Arguments:
+    - name: name of child model and name of the link (this value used to
+        generate field's related_name by appending suffix "_set"
+        if model_set value is empty)
+    - model_set: name of foreign key reverse field (usually {model}_set);
+        required, if related_name value of foreign key field in child model
+        is not default
+    - fkey_name: foreign key field name (foreign model name by default);
+        required, if foreign key field name is not equal to foreign model
+        name
+    - with_count: show count of related objects, default True;
+        try to get value from "{model_set.field.related_query_name}__count"
+        attribute first (see fkey_list_annotate_counts), if attribute not
+        exists - call "count" method on model_set queryset;
+        if value of with_count is non-empty string, it will be used as
+        count attribute name instead related_query_name with suffix
+    - with_add_link: add link to add new item (+ icon), default False
+    """
+    def link(self, item, url_only=None):
+        """
+        Arguments:
+        - item: model instance fkey field is related to
+        - url_only: if "add" or "list" - return just requested URL
+        """
+        # modelset and fkeyname names used because model_set and fkey_name
+        # are closured variables in "link" function
+        modelset = model_set if model_set else '%s_set' % name
+        fkeyname = fkey_name if fkey_name else item._meta.model_name
+        if not hasattr(item, modelset):
+            raise Exception(u'FkeyList link generater:'
+                            u' "%s" does not exist' % modelset)
+        modelset = getattr(item, modelset)
+        viewname = AdminViewName(modelset.model._meta)
+
+        link_add = reverse(
+            viewname.add_fkeylist, None, (fkeyname, item.pk),)
+        link_list = reverse(
+            viewname.changelist_fkeylist, None, (fkeyname, item.pk),)
+
+        if url_only in ('list', 'add',):
+            result = link_add if url_only == 'add' else link_list
+        else:
+            names = (modelset.model._meta.verbose_name.capitalize(),
+                     modelset.model._meta.verbose_name_plural.capitalize(),)
+            count = ''
+            if with_count:
+                count = (with_count if isinstance(with_count, basestring) else
+                         '%s__count' % modelset.field.related_query_name())
+                count = (getattr(item, count) if hasattr(item, count) else
+                         modelset.count())
+                count = ' (%s)' % (count)
+            result = (u'<a href="%s" title="Show related «%s»">%s</a>%s'
+                      % (link_list, names[1], names[1], count))
+            result = (u'<nobr>%s <a href="%s" title="Create related «%s»">'
+                      u'<img src="%s"></a></nobr>' % (result, link_add, names[0],
+                      static(u'admin/img/icon-addlink.svg'))
+                      if with_add_link else result)
+
+        return result
+    link.short_description = '%s list' % name
+    link.allow_tags = True
+
+    return link
+
+
+class FkeyListParentAdmin(admin.ModelAdmin):
+    """Added fkey_list parent only functionality."""
+
+    # if defined list of names - annotate counts by names
+    fkey_list_annotate_counts = None
+
+    def get_changelist(self, request, **kwargs):
+        """Extend ChangeList class"""
+        if not hasattr(self, '_changelist_class'):
+            cls = super(FkeyListParentAdmin, self).get_changelist(request,
+                                                                  **kwargs)
+            if cls is not ChangeList:
+                class FkeyListChangeListMixed(FkeyListChangeList, cls):
+                    pass
+                self._changelist_class = FkeyListChangeListMixed
+            else:
+                self._changelist_class = FkeyListChangeList
+
+        return self._changelist_class
+
+
+# Child and parent FkeyList Admin section
+# ---------------------------------------
+class FkeyListAdmin(FkeyListParentAdmin, admin.ModelAdmin):
+    """
+    Added fkey_list parent and child functionality.
     Note: get_urls extended, ChangeList extended,
           all views and template also extended.
     """
@@ -112,9 +157,6 @@ class FkeyListAdmin(admin.ModelAdmin):
     fkey_list_parent_delete_confirmation_template = None
     fkey_list_parent_delete_selected_confirmation_template = None
     fkey_list_parent_object_history_template = None
-
-    # if defined list of names - annotate counts by names
-    fkey_list_annotate_counts = None
 
     def __init__(self, *args, **kwargs):
         super(FkeyListAdmin, self).__init__(*args, **kwargs)
@@ -147,13 +189,6 @@ class FkeyListAdmin(admin.ModelAdmin):
             'admin/fkey_list/object_history.html'
         ]
 
-    def get_queryset(self, request):
-        """Add fkey id filter from request if exists"""
-        qs = super(FkeyListAdmin, self).get_queryset(request)
-        if hasattr(request, 'FKEY_LIST'):
-            qs = qs.filter(**{request.FKEY_LIST['fkey_name']: request.FKEY_LIST['id'],})
-        return qs
-
     def fkey_view(self, request, *args, **kwargs):
         """Common method for all fkey_list views"""
         view_name = kwargs.pop('view_name')
@@ -185,9 +220,10 @@ class FkeyListAdmin(admin.ModelAdmin):
         link_name_parent = AdminViewName(parent.__class__._meta)
         link_name, link_args = AdminViewName(self.model._meta), args[:2]
         link_deps = {
-            reverse(link_name.add): reverse(link_name.add_fkeylist, None, link_args),
-            reverse(link_name.changelist): reverse(link_name.changelist_fkeylist,
-                                                   None, link_args),
+            reverse(link_name.add): reverse(
+                link_name.add_fkeylist, None, link_args),
+            reverse(link_name.changelist): reverse(
+                link_name.changelist_fkeylist, None, link_args),
         }
 
         request.FKEY_LIST = {
@@ -195,8 +231,8 @@ class FkeyListAdmin(admin.ModelAdmin):
             'fkey_opts': getattr(self.model, fkey_name).field.rel.to._meta,
             'id': fkey_id,
             'item': parent,
-            'item_link': reverse(link_name_parent.change, None, (args[1],), {}),
-            'list_link': reverse(link_name_parent.changelist, None, (), {}),
+            'item_link': reverse(link_name_parent.change, None, (args[1],)),
+            'list_link': reverse(link_name_parent.changelist, None, ()),
             'link_name': link_name,
         }
 
@@ -250,25 +286,31 @@ class FkeyListAdmin(admin.ModelAdmin):
     def get_urls(self):
         """Extends urls by fkey routes to fkey_view with view_name param"""
         from django.conf.urls import url
-        from functools import update_wrapper
 
         def wrap(view):
             def wrapper(*args, **kwargs):
                 return self.admin_site.admin_view(view)(*args, **kwargs)
+            wrapper.model_admin = self
             return update_wrapper(wrapper, view)
 
-        info = '%s_%s' % (self.model._meta.app_label, self.model._meta.model_name,)
+        info = '%s_%s' % (self.model._meta.app_label,
+                          self.model._meta.model_name,)
         urlpatterns = [
-            url(r'^([\w\d\_]+)-(\d+)/$', wrap(self.fkey_view),
-                {'view_name': 'changelist_view'}, name='%s_changelist_fkeylist' % info),
-            url(r'^([\w\d\_]+)-(\d+)/add/$', wrap(self.fkey_view),
-                {'view_name': 'add_view'}, name='%s_add_fkeylist' % info),
-            url(r'^([\w\d\_]+)-(\d+)/(.+)/history/$', wrap(self.fkey_view),
-                {'view_name': 'history_view'}, name='%s_history_fkeylist' % info),
-            url(r'^([\w\d\_]+)-(\d+)/(.+)/delete/$', wrap(self.fkey_view),
-                {'view_name': 'delete_view'}, name='%s_delete_fkeylist' % info),
-            url(r'^([\w\d\_]+)-(\d+)/(.+)/$', wrap(self.fkey_view),
-                {'view_name': 'change_view'}, name='%s_change_fkeylist' % info),
+            url(r'^(\w+)-(\d+)/$', wrap(self.fkey_view),
+                {'view_name': 'changelist_view'},
+                name='%s_changelist_fkeylist' % info),
+            url(r'^(\w+)-(\d+)/add/$', wrap(self.fkey_view),
+                {'view_name': 'add_view'},
+                name='%s_add_fkeylist' % info),
+            url(r'^(\w+)-(\d+)/(.+)/history/$', wrap(self.fkey_view),
+                {'view_name': 'history_view'},
+                name='%s_history_fkeylist' % info),
+            url(r'^(\w+)-(\d+)/(.+)/delete/$', wrap(self.fkey_view),
+                {'view_name': 'delete_view'},
+                name='%s_delete_fkeylist' % info),
+            url(r'^(\w+)-(\d+)/(.+)/change/$', wrap(self.fkey_view),
+                {'view_name': 'change_view'},
+                name='%s_change_fkeylist' % info),
         ]
 
         return urlpatterns + super(FkeyListAdmin, self).get_urls()
@@ -278,12 +320,13 @@ class FkeyListAdmin(admin.ModelAdmin):
         match = request.resolver_match
         if self.preserve_filters and match:
             # same as default if changelist_fkeylist
-            view_name = AdminViewName(self.model._meta)
             current_url = '%s:%s' % (match.app_name, match.url_name)
+            view_name = AdminViewName(self.model._meta)
             if current_url == view_name.changelist_fkeylist:
                 preserved_filters = request.GET.urlencode()
             else:
                 preserved_filters = None
+
             if preserved_filters:
                 return urlencode({'_changelist_filters': preserved_filters,})
         return super(FkeyListAdmin, self).get_preserved_filters(request)
@@ -297,18 +340,14 @@ class FkeyListAdmin(admin.ModelAdmin):
 
         return form
 
-    def get_changelist(self, request, **kwargs):
-        """Extend ChangeList class"""
-        if not getattr(self, '_changelist_class', None):
-            cls = super(FkeyListAdmin, self).get_changelist(request, **kwargs)
-            if cls is not ChangeList:
-                class FkeyListChangeListMixed(FkeyListChangeList, cls):
-                    pass
-                self._changelist_class = FkeyListChangeListMixed
-            else:
-                self._changelist_class = FkeyListChangeList
-
-        return self._changelist_class
+    def get_queryset(self, request):
+        """Add fkey id filter from request if exists"""
+        qs = super(FkeyListAdmin, self).get_queryset(request)
+        if hasattr(request, 'FKEY_LIST'):
+            qs = qs.filter(**{
+                request.FKEY_LIST['fkey_name']: request.FKEY_LIST['id'],
+            })
+        return qs
 
 
 class FkeyMpttAdmin(FkeyListAdmin):
@@ -318,9 +357,10 @@ class FkeyMpttAdmin(FkeyListAdmin):
         if hasattr(request, 'FKEY_LIST'):
             item = request.FKEY_LIST['item']
             opts = item._mptt_meta
-            filters = {opts.tree_id_attr: getattr(item, opts.tree_id_attr),}
-            filters['%s__gt' % opts.left_attr] = getattr(item, opts.left_attr)
-            filters['%s__lt' % opts.left_attr] = getattr(item, opts.right_attr)
-            qs = qs.filter(**filters)
+            qs = qs.filter(**{
+                opts.tree_id_attr: getattr(item, opts.tree_id_attr),
+                '%s__gt' % opts.left_attr: getattr(item, opts.left_attr),
+                '%s__lt' % opts.left_attr: getattr(item, opts.right_attr),
+            })
 
         return qs
