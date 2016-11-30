@@ -2,7 +2,7 @@
 import re
 from urllib2 import urlparse
 from functools import update_wrapper
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, resolve, Resolver404
 from django.http import HttpResponseRedirect
 from django.utils.http import urlencode
 from django.db.models import Count
@@ -220,10 +220,11 @@ class FkeyListAdmin(FkeyListParentAdmin, admin.ModelAdmin):
         link_name_parent = AdminViewName(parent.__class__._meta)
         link_name, link_args = AdminViewName(self.model._meta), args[:2]
         link_deps = {
-            reverse(link_name.add): reverse(
+            link_name.add: reverse(
                 link_name.add_fkeylist, None, link_args),
-            reverse(link_name.changelist): reverse(
+            link_name.changelist: reverse(
                 link_name.changelist_fkeylist, None, link_args),
+            link_name.change: True,
         }
 
         request.FKEY_LIST = {
@@ -254,33 +255,37 @@ class FkeyListAdmin(FkeyListParentAdmin, admin.ModelAdmin):
         # try to return fkey location in HttpResponseRedirect instead original
         location, newlocation = (isinstance(response, HttpResponseRedirect)
                                  and response['Location']), None
-        while True:
-            if not location:
+        while location:
+            # parse redirect url to save GET querystring, etc
+            parsed = urlparse.urlparse(location)
+
+            # resolve redirect location
+            try:
+                match = resolve(parsed.path)
+            except Resolver404:
                 break
 
-            parsed = list(urlparse.urlparse(location))
-
-            # 1 - try to rescue "add new one" and "changelist" redirects
-            if parsed[2] in link_deps:
-                parsed[2] = link_deps[parsed[2]] # path
-                newlocation = urlparse.urlunparse(parsed)
+            newlocation = link_deps.get(match.view_name, None)
+            if not newlocation:
                 break
 
-            # 2 - try to rescue "continue" redirects after new object adding
-            # get reversed regex and try to get new obj primary key
-            regex = '^%s$' % reverse(link_name.change, None, ('(.+)',))
-            pkval = re.match(regex, parsed[2]) # url.path value checking
-            pkval = pkval and pkval.groups()[0]
-            if pkval:
-                parsed[2] = reverse(link_name.change_fkeylist,
-                                    None, fkeyargs + (pkval,)) # path
-                newlocation = urlparse.urlunparse(parsed)
+            # 1 - if link_deps value contains non-empty string (url), redirect
+            # rescue "add new after saving" and "return to changelist" redirects
+            if isinstance(newlocation, basestring):
                 break
 
+            # 2 - if link_deps value is True, process each case directly
+            # rescue "continue editing" redirects after new object adding
+            if match.view_name == link_name.change:
+                newlocation = reverse(link_name.change_fkeylist,
+                                      None, fkeyargs + (match.args[0],))
+                break
             break
 
         if newlocation:
-            response['Location'] = newlocation
+            response['Location'] = urlparse.urlunparse(
+                parsed[:2] + (newlocation,) + parsed[3:]
+            )
         return response
 
     def get_urls(self):

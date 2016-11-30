@@ -12,7 +12,7 @@ reload(sys).setdefaultencoding("UTF-8")
 
 setup(
     name='django-sakkada',
-    version='1.8.0',
+    version='1.10.0',
 
     description = (u'Collection of custom extensions'
                    u' for the Django Framework'.encode('utf8')),
@@ -27,7 +27,7 @@ setup(
     packages=['sakkada',],
     license = 'MIT license',
 
-    requires=['django (>= 1.3)'],
+    requires=['django (>= 1.10)'],
 
     classifiers=(
         'Development Status :: 4 - Beta',
