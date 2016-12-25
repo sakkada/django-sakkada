@@ -1,0 +1,67 @@
+MarkListAdmin mixin.
+
+ModelAdmin for showing object attributes values as leds-like mark symbols,
+with highlighting marks and lines (table.tr if special value defined) and
+also showing summary information about object on hover/click on mark panels.
+
+Usage:
+-----
+ *  Install "django-sakkada"
+ *  Import "sakkada.admin.mark_list.MarkListAdmin"
+ *  Set "MarkListAdmin" as class of admin model
+ *  Define "marks_config" value (list of dicts) for required attributes.
+    Available keys for "marks_config" are:
+      "on"          - css color in active state (required),
+      "off"         - css color in inactive state (required),
+      "condition"   - obj.attr name to check or callable(obj) (required),
+      "title"       - title of mark element (required),
+      "row_on"      - if defined and mark is active, css background-color
+                      of line (table.tr), containing this mark (optional),
+      "row_off"     - if defined and mark is inactive, css background-color
+                      of line (table.tr), containing this mark (optional),
+      "weight"      - if several marks active+row_on or inactive+row_off
+                      at the same time, most heavy weighted will be chosen,
+                      firstly looks for active+row_on marks, if no one,
+                      secondary look for inactive+row_off
+                      (optional, default is 500).
+ *  Copy static "admin/*" to your project static folder
+    or add "sakkada.admin.mark_list" to your INSTALLED_APPS.
+ *  Define "marks_info" method, if required, which should return preformatted
+    marks information string, which will be shown on each marks bar mouse
+    hover/click.
+
+Example usage:
+-------------
+from django.contrib import admin
+from sakkada.admin.mark_list import MarkListAdmin
+
+
+class SomeMarkListAdmin(MarkListAdmin, admin.ModelAdmin):
+    marks_config = (
+        {'on': '#70bf2b', 'off': '#eeeeee', 'condition': 'active',
+         'title': 'Node is active', 'row_on': '#efd', 'row_off': '#ccc',},
+        {'on': '#ff1744', 'off': '#e0e0e0', 'condition': 'menu_only',
+         'title': 'Node use in menu only', 'row_on': '#ffe', 'weight': 600,},
+        {'on': '#4fc3f7', 'off': '#dddddd', 'condition': 'view',
+         'title': 'Alternative view defined'},
+        {'on': '#ffa800', 'off': '#d0d0d0', 'condition': 'template',
+         'title': 'Alternative template defined',},
+        {'on': '#0094ff', 'off': '#cccccc', 'condition': 'link',
+         'title': 'Node link defined directly'},
+    )
+
+    def marks_info(self, obj):
+        info = (
+            'active', str(obj.menu_only).lower(),
+            'menu_only', str(obj.menu_only).lower(),
+            'link', obj.link or u'—',
+            'view', obj.view or u'—',
+            'template', obj.template or u'—',
+            'behaviour', obj.behaviour or u'—',
+            'filter_date', 'set' if obj.filter_date else u'—',
+            'filter', 'set' if obj.filter else u'—',
+            'order_by', obj.order_by or u'—',
+            'onpage', obj.onpage or 10,
+        )
+        return '\n'.join(['{:<15} {}'.format(*i)
+                          for i in zip(info[::2], info[1::2])])
