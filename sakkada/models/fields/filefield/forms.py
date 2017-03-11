@@ -8,14 +8,12 @@ class ClearableFormFileField(FileField):
     def __init__(self, *args, **kwargs):
         self.clearable = kwargs.pop('clearable', None)
 
-        widget = kwargs.get('widget', None)
-        widget = (isinstance(widget, type) and
-                  issubclass(widget, ClearableFileInput) and
-                  widget or self.default_widget)
-        kwargs["widget"] = widget(
-            show_delete_checkbox=self.clearable and not kwargs.get(
-                "required", True)
-        )
+        widget = kwargs.get('widget', self.default_widget)
+        if issubclass(widget, ClearableFileInput):
+            kwargs["widget"] = widget(
+                show_delete_checkbox=self.clearable and not kwargs.get(
+                    "required", True)
+            )
 
         super(ClearableFormFileField, self).__init__(*args, **kwargs)
 
@@ -31,15 +29,12 @@ class ClearableFormImageField(ClearableFormFileField, ImageField):
         self.clearable = kwargs.pop('clearable', None)
         self.show_image = kwargs.pop('show_image', None)
 
-        widget = kwargs.get('widget', None)
-        widget = (isinstance(widget, type) and
-                  issubclass(widget, ClearableFileInput) and
-                  widget or self.default_widget)
-
-        kwargs["widget"] = widget(
-            show_image=self.show_image,
-            show_delete_checkbox=self.clearable and not kwargs.get(
-                "required", True)
-        )
+        widget = kwargs.get('widget', self.default_widget)
+        if issubclass(widget, ClearableFileInput):
+            kwargs["widget"] = widget(
+                show_image=self.show_image,
+                show_delete_checkbox=self.clearable and not kwargs.get(
+                    "required", True)
+            )
 
         super(ImageField, self).__init__(*args, **kwargs)
