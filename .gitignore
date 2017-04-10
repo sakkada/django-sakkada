@@ -1,0 +1,4 @@
+# ignore temporary
+*.swp
+*.py[co]
+*.orig
