@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='django-sakkada',
-    version='1.10.0',
+    version='1.11.0',
 
     description = (u'Collection of custom extensions'
                    u' for the Django Framework'.encode('utf8')),
@@ -19,7 +19,7 @@ setup(
     packages=['sakkada',],
     license = 'MIT license',
 
-    requires=['django (>= 1.10)'],
+    requires=['django (>= 1.11)'],
 
     classifiers=(
         'Development Status :: 4 - Beta',
