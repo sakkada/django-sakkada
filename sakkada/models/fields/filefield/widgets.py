@@ -13,7 +13,8 @@ class ClearableFileInput(forms.widgets.FileInput):
 
     def get_html_tpls(self, input, name, value, attrs):
         return {
-            'link': u'%s&nbsp;<a target="_blank" href="%s">%s</a>',
+            'link': (u'%s&nbsp;'
+                     '<a id="id_%s_link" href="%s" target="_blank">%s</a>'),
             'field': u'<br>%s&nbsp;%s',
             'delete': (
                 u' <nobr><input type="checkbox" id="id_%s_delete"'
@@ -23,15 +24,11 @@ class ClearableFileInput(forms.widgets.FileInput):
         }
 
     def get_html_tags(self, html_tpls, input, name, value, attrs):
-        delete_tag = u''
-
-        # generate checkboxes
-        if self.show_delete_checkbox:
-            delete_tag = html_tpls['delete'] % (name, name, name, _('Delete'))
-
-        # input and link to current file
         field_tag = html_tpls['field'] % (_('Change:'), input)
-        link_tag  = html_tpls['link'] % (_('Currently:'), value.url, value)
+        link_tag  = html_tpls['link'] % (_('Currently:'),
+                                         name, value.url, value)
+        delete_tag = (html_tpls['delete'] % (name, name, name, _('Delete'))
+                      if self.show_delete_checkbox else u'')
 
         return [u'<div>', link_tag, field_tag, delete_tag, u'</div>']
 
@@ -64,7 +61,8 @@ class ClearableImageFileInput(ClearableFileInput):
         tpls = super(ClearableImageFileInput, self).get_html_tpls(*args)
         if self.show_image:
             tpls.update({
-                'image': u'<img src="%s" alt="%s" width="%s" height="%s"'
+                'image': u'<img id="id_%s_image" src="%s" alt="%s"'
+                         u' width="%s" height="%s"'
                          u' style="float: left; margin: 0 10px 5px 0;">',
             })
         return tpls
@@ -75,6 +73,6 @@ class ClearableImageFileInput(ClearableFileInput):
 
         if self.show_image:
             tags[0] = u'<div style="overflow: auto;">'
-            tags.insert(1, html_tpls['image'] % (value.url, value.name,
+            tags.insert(1, html_tpls['image'] % (name, value.url, value.name,
                                                  value.width, value.height))
         return tags

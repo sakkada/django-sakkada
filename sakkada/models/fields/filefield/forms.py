@@ -30,7 +30,7 @@ class ClearableFormImageField(ClearableFormFileField, ImageField):
         self.show_image = kwargs.pop('show_image', None)
 
         widget = kwargs.get('widget', self.default_widget)
-        if issubclass(widget, ClearableFileInput):
+        if issubclass(widget, ClearableImageFileInput):
             kwargs["widget"] = widget(
                 show_image=self.show_image,
                 show_delete_checkbox=self.clearable and not kwargs.get(
