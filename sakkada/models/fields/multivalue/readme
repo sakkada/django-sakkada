@@ -1,0 +1,48 @@
+Multiple values supporting model fields
+"CharMultipleValuesField" and "TextMultipleValuesField".
+
+Multiple values supporting form fields
+"CharMultipleValuesFormField" and "TextMultipleValuesFormField".
+
+
+Contains:
+--------
+    BaseMultipleValuesFormField - base multi value form field
+    CharMultipleValuesFormField - multi value form field with TextInput widget
+                                  and comma delimiter by default (',')
+    TextMultipleValuesFormField - multi value form field with Textarea widget
+                                  and newline char delimiter by default ('\n')
+    BaseMultipleValuesField - base multi value model field
+    CharMultipleValuesField - multi value model field with
+                              CharMultipleValuesFormField as form field
+                              (if no choices defined)
+    TextMultipleValuesField - multi value model field with
+                              TextMultipleValuesFormField as form field (if no
+                              choices defined)
+    MultipleValuesDeferredAttribute - multi value deffered attribte class
+
+
+Usage:
+-----
+ *  Import desired model field to your models module and use as usual field
+ *  Optionally set 'delimiter' to control string, by which values in the
+    result string will be joined.
+ *  Optionally set 'coerce' to set each value required type.
+
+
+Simple example of usage in model:
+--------------------------------
+from sakkada.models.fields.multivalue import TextMultipleValuesField
+from sakkada.models.fields.multivalue import CharMultipleValuesField
+
+
+class MyModel(models.Model)
+    comma_separated = CharMultipleValuesField(max_length=1024)
+    slash_separated = CharMultipleValuesField(max_length=1024, delimiter='/')
+
+    newline_separated = TextMultipleValuesField()
+    integer_values = TextMultipleValuesField(coerce=int)
+
+    float_with_choices = CharMultipleValuesFormField(
+        coerce=float, delimiter='|', default=[1.0, 2.0,],
+        choices=((1.0, 'One',), (1.5, 'One and half',), (2.0, 'Two',),))
