@@ -27,8 +27,8 @@ class HashedNameFileSystemStorage(UniqueNameFileSystemStorage):
                      (1,2) => 1234567890... -> 1/2/341234567890.
         """
 
-        if (segments and segments.__len__() == 2
-                     and segments[0] * segments[1] <= 40):
+        if (segments and segments.__len__() == 2 and
+                segments[0] * segments[1] <= 40):
             self.segments = segments
 
         super(HashedNameFileSystemStorage, self).__init__(*args, **kwargs)
@@ -37,9 +37,9 @@ class HashedNameFileSystemStorage(UniqueNameFileSystemStorage):
                                   content=None, chunk_size=None):
         dirname, basename = os.path.split(name)
         ext = os.path.splitext(basename)[1].lower()
-        root = (self._compute_hash_by_name(name) if self.uniquify_names
-                else self._compute_hash_by_content(content=content,
-                                                   chunk_size=chunk_size))
+        root = (self._compute_hash_by_name(name) if self.uniquify_names else
+                self._compute_hash_by_content(content=content,
+                                              chunk_size=chunk_size))
         root = self._segments(root)
 
         return os.path.join(dirname, '%s%s' % (root, ext,))

@@ -27,8 +27,8 @@ class UniqueNameFileSystemStorage(FileSystemStorage):
     uniquify_names = True
     overwrite_existing = True
 
-    def __init__(self, uniquify_names=None,
-                       overwrite_existing=None, *args, **kwargs):
+    def __init__(self, uniquify_names=None, overwrite_existing=None,
+                 *args, **kwargs):
         if uniquify_names is not None:
             self.uniquify_names = uniquify_names
         if overwrite_existing is not None:
@@ -37,8 +37,10 @@ class UniqueNameFileSystemStorage(FileSystemStorage):
         super(UniqueNameFileSystemStorage, self).__init__(*args, **kwargs)
 
     def get_available_name(self, name, max_length=None):
-        # Execute only in _save method for regenerate filename
-        # so raise NoAvailableName if not uniquify_names
+        # This method is executed only in "_save" method ("save" method is
+        # extended and it uses "get_unique_available_name" defined in this
+        # class instead) for regenerate filename so raise NoAvailableName
+        # if not uniquify_names
         if not self.uniquify_names and not self.overwrite_existing:
             raise NoAvailableName(name)
 
