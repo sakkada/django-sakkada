@@ -16,7 +16,7 @@ Usage:
 Example usage:
 -------------
 from django.contrib import admin
-from sakkada.admin.ajax_list import AjaxListAdmin
+from sakkada.admin.ajax_list import AjaxListAdmin, ajax_list_field
 
 
 class SomeAjaxListAdmin(AjaxListAdmin, admin.ModelAdmin):

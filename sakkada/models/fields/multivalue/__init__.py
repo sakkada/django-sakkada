@@ -102,10 +102,12 @@ class BaseMultipleValuesField(object):
         return [self.coerce(v) for v in values]
 
     def get_db_prep_value(self, value, *args, **kwargs):
-        assert(isinstance(value, (list, tuple, type(None))))
-
-        return (self.delimiter.join([six.text_type(s) for s in value])
-                if value else '')
+        if isinstance(value, (list, tuple)):
+            value = self.delimiter.join([six.text_type(s) for s in value])
+        value = super(BaseMultipleValuesField,
+                      self).get_db_prep_value(value, *args, **kwargs)
+        # anyway convert to empty string if null is not allowed
+        return six.text_type() if value is None and not self.null else value
 
     def get_choices(self, include_blank=True, **kwargs):
         # disable blank option anyway for multiple select
@@ -134,6 +136,11 @@ class CharMultipleValuesField(BaseMultipleValuesField, models.CharField):
         self.validators = [i for i in self.validators
                            if not isinstance(i, MaxLengthValidator)]
 
+    def get_prep_value(self, value):
+        value = super(models.CharField, self).get_prep_value(value)
+        return (value if isinstance(value, (six.string_types, type(None))) else
+                force_text(value))
+
     def validate(self, value, model_instance):
         if not value:
             return
@@ -145,6 +152,11 @@ class CharMultipleValuesField(BaseMultipleValuesField, models.CharField):
 class TextMultipleValuesField(BaseMultipleValuesField, models.TextField):
     multi_value_form_field_class = TextMultipleValuesFormField
     multi_value_delimiter = u'\n'
+
+    def get_prep_value(self, value):
+        value = super(models.TextField, self).get_prep_value(value)
+        return (value if isinstance(value, (six.string_types, type(None))) else
+                force_text(value))
 
     def formfield(self, **kwargs):
         if self.choices:
