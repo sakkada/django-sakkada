@@ -23,7 +23,7 @@ Example usage:
 -------------------------------------------------------------------------------
 from django import forms
 from django.contrib import admin
-from sakkada.admin.editors.simplefb import MarkdownTextarea
+from sakkada.admin.editors.markdown import MarkdownTextarea
 
 
 class SomeAdminForm(forms.ModelForm):

@@ -37,14 +37,26 @@ class BaseMultipleValuesFormField(forms.CharField):
     def to_python(self, value):
         # value convertation from string to python list
         value = super(BaseMultipleValuesFormField, self).to_python(value)
-        value = [i.strip() for i in value.split(self.delimiter)]
-        return value
+        if not value:
+            return None
+        values = [self.coerce(i.strip()) for i in value.split(self.delimiter)]
 
     def prepare_value(self, value):
         # value convertation from python list to string
         if isinstance(value, (list, tuple)):
             value = self.delimiter.join([unicode(i) for i in value])
         return value
+
+    def has_changed(self, initial, data):
+        """Return True if data differs from initial."""
+        # Always return False if the field is disabled since self.bound_data
+        # always uses the initial value in this case.
+        if self.disabled:
+            return False
+        try:
+            return self.coerce(self.to_python(data)) != self.coerce(initial)
+        except ValidationError:
+            return True
 
 
 class CharMultipleValuesFormField(BaseMultipleValuesFormField):
