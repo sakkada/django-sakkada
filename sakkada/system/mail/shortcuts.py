@@ -35,6 +35,6 @@ def message_from_template(context=None, template=None, email_to=None,
         message.attach_alternative(msghtml, "text/html")
     else:
         message = mail.EmailMessage(
-            subject, message, email_from, email_to)
+            subject, msgtext, email_from, email_to)
 
     return message
