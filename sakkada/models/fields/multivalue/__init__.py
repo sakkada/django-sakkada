@@ -7,6 +7,7 @@ from django.db import models
 from django.core.validators import MaxLengthValidator
 from django.forms.fields import TypedMultipleChoiceField
 from django.utils import six
+from django.utils.encoding import force_text
 
 
 # Multiple values form fields classes
@@ -113,9 +114,17 @@ class BaseMultipleValuesField(object):
                   if isinstance(value, six.string_types) else value)
         return [self.coerce(v) for v in values]
 
-    def get_db_prep_value(self, value, *args, **kwargs):
+    def get_prep_value(self, value):
+        # get still list of values because to_python method will be called
+        # in CharField and TextField fields' get_prep_value method
+        value = super(BaseMultipleValuesField, self).get_prep_value(value)
+        # convert list to string if required for database
         if isinstance(value, (list, tuple)):
             value = self.delimiter.join([six.text_type(s) for s in value])
+        return (value if isinstance(value, (six.string_types, type(None))) else
+                force_text(value))
+
+    def get_db_prep_value(self, value, *args, **kwargs):
         value = super(BaseMultipleValuesField,
                       self).get_db_prep_value(value, *args, **kwargs)
         # anyway convert to empty string if null is not allowed
@@ -148,27 +157,17 @@ class CharMultipleValuesField(BaseMultipleValuesField, models.CharField):
         self.validators = [i for i in self.validators
                            if not isinstance(i, MaxLengthValidator)]
 
-    def get_prep_value(self, value):
-        value = super(models.CharField, self).get_prep_value(value)
-        return (value if isinstance(value, (six.string_types, type(None))) else
-                force_text(value))
-
     def validate(self, value, model_instance):
         if not value:
             return
         super(CharMultipleValuesField, self).validate(value, model_instance)
         for v in self.validators_charfield:
-            v(self.get_db_prep_value(value))
+            v(self.get_prep_value(value))  # check result string value
 
 
 class TextMultipleValuesField(BaseMultipleValuesField, models.TextField):
     multi_value_form_field_class = TextMultipleValuesFormField
     multi_value_delimiter = u'\n'
-
-    def get_prep_value(self, value):
-        value = super(models.TextField, self).get_prep_value(value)
-        return (value if isinstance(value, (six.string_types, type(None))) else
-                force_text(value))
 
     def formfield(self, **kwargs):
         if self.choices:
