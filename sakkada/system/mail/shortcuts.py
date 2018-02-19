@@ -7,7 +7,8 @@ from django.core import mail
 
 def message_from_template(context=None, template=None, email_to=None,
                           email_from=None, site=None, date=None,
-                          template_html=None, user_email_subject_prefix=False):
+                          template_html=None, user_email_subject_prefix=False,
+                          **kwargs):
     if not template or not email_to:
         raise ValueError('Shortcut "message_from_template": template and'
                          ' email_to params are required')
@@ -31,10 +32,10 @@ def message_from_template(context=None, template=None, email_to=None,
 
     if msghtml:
         message = mail.EmailMultiAlternatives(
-            subject, msgtext, email_from, email_to)
+            subject, msgtext, email_from, email_to, **kwargs)
         message.attach_alternative(msghtml, "text/html")
     else:
         message = mail.EmailMessage(
-            subject, msgtext, email_from, email_to)
+            subject, msgtext, email_from, email_to, **kwargs)
 
     return message
