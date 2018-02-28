@@ -2,7 +2,7 @@
 import os
 
 from django.test import TestCase
-from sakkada.template.html_attrs.templatetags import html_attrs
+from sakkada.template.htmlattrs.templatetags import htmlattrs
 
 
 class RegexTests(TestCase):
@@ -43,7 +43,7 @@ class RegexTests(TestCase):
               ('f', '=', '', '', 'f#'), ('g', '=', '"', 'g', ''),],),
         ]
 
-        REGEX = html_attrs.REGEX
+        REGEX = htmlattrs.REGEX
         for pattern, results in checkers:
             self.assertEqual(REGEX.findall(pattern), results)
 
@@ -54,7 +54,7 @@ class RegexTests(TestCase):
                    ('', '_dname'), ('', 'e--name__'), ('', '__-fname'),
                    ('!', 'gname'), ('!', '-hname'), ('', 'name2')]
 
-        RECLS = html_attrs.RECLS
+        RECLS = htmlattrs.RECLS
         self.assertEqual(RECLS.findall(pattern), results)
 
 
@@ -72,7 +72,7 @@ class ParsersTests(TestCase):
               (u'c', u'', True,), (u'd', u'+=', u'd',),],),
         ]
 
-        attrs_parser = html_attrs.attrs_parser
+        attrs_parser = htmlattrs.attrs_parser
         for pattern, results in checkers:
             self.assertEqual(attrs_parser(pattern), results)
 
@@ -114,12 +114,12 @@ class ParsersTests(TestCase):
             },
         }
 
-        attr_name_parser = html_attrs.attr_name_parser
+        attr_name_parser = htmlattrs.attr_name_parser
         for pattern, results in checkers:
             self.assertEqual(attr_name_parser(pattern, config), results)
 
         # set errors rising mode (silent to false)
-        html_attrs.DEBUG = True
+        htmlattrs.DEBUG = True
         for pattern, exception in checkers_with_exception:
             self.assertRaises(exception, attr_name_parser, pattern, config)
-        html_attrs.DEBUG = False
+        htmlattrs.DEBUG = False

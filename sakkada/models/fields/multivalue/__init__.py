@@ -18,15 +18,16 @@ class BaseMultipleValuesFormField(forms.CharField):
     def __init__(self, *args, **kwargs):
         self.coerce = kwargs.pop('coerce', lambda value: value)
         self.delimiter = kwargs.pop('delimiter', None) or self.delimiter
-        super(BaseMultipleValuesFormField, self).__init__(*args, **kwargs)
+        self.empty_value = kwargs.pop('empty_value', [])  # default is list
+        super(BaseMultipleValuesFormField, self).__init__(
+            empty_value=self.empty_value, *args, **kwargs)
 
-    def clean(self, value):
-        value = super(BaseMultipleValuesFormField, self).clean(value)
-        return self.values_coerce(value)
-
-    def values_coerce(self, value):
-        if value in self.empty_values:
-            return None
+    def _coerce(self, value):
+        # validates that the values can be coerced to the right type
+        # returns coerced list of values like in TypedMultipleChoiceField
+        # django: used in clean and has_changed methods
+        if value == self.empty_value or value in self.empty_values:
+            return self.empty_value
         values = []
         for vitem in value:
             try:
@@ -35,11 +36,16 @@ class BaseMultipleValuesFormField(forms.CharField):
                 raise forms.ValidationError('Value "%s" is incorrect.' % vitem)
         return values
 
+    def clean(self, value):
+        value = super(BaseMultipleValuesFormField, self).clean(value)
+        return self._coerce(value)
+
     def to_python(self, value):
-        # value convertation from string to python list
+        # value convertation from string to python list with _coerce call
+        # allowed to raise ValidationErrors if required
         value = super(BaseMultipleValuesFormField, self).to_python(value)
-        return [self.coerce(i.strip())
-                for i in value.split(self.delimiter)] if value else None
+        return (self._coerce(value.split(self.delimiter))
+                if value else self.empty_value)
 
     def prepare_value(self, value):
         # value convertation from python list to string
@@ -49,13 +55,12 @@ class BaseMultipleValuesFormField(forms.CharField):
 
     def has_changed(self, initial, data):
         """Return True if data differs from initial."""
-        # Always return False if the field is disabled since self.bound_data
-        # always uses the initial value in this case.
+        # data is a string, initial is a list here
         if self.disabled:
             return False
         try:
-            return self.coerce(self.to_python(data)) != self.coerce(initial)
-        except ValidationError:
+            return self.to_python(data) != self._coerce(initial)
+        except forms.ValidationError:
             return True
 
 
@@ -97,24 +102,56 @@ class BaseMultipleValuesField(object):
         setattr(cls, self.name,
                 MultipleValuesDeferredAttribute(self.attname, cls, self))
 
-    def validate(self, value, model_instance):
-        if not value:
-            return
-        spr, values = super(BaseMultipleValuesField, self), value
-        for value in values:
-            spr.validate(value, model_instance)
-
     def to_python(self, value):
+        # receives list value from field's clean method for example
+        # receives string value from deferred attribute for example
+        # returns list of coerced values or
+        # returns empty value in the following way:
+        #   if value is None return it (we care about it only if forms)
+        #   otherwise always return empty list
         assert(isinstance(value, (list, tuple, six.string_types, type(None))))
         if not value:
-            return None
+            return value if value is None else []
 
         values = ([i.strip() for i in value.split(self.delimiter)]
                   if isinstance(value, six.string_types) else value)
         return [self.coerce(v) for v in values]
 
+    def validate(self, value, model_instance):
+        # extended method without calling super version from Field
+        # receices list or None, checks for choices correctness for every
+        # item in list, and checks for null and blank for whole list value
+        if not self.editable:
+            return
+
+        # value is already a list here (from to_python), so check every item
+        if self.choices and value not in self.empty_values:
+            for vitem in value:
+                for option_key, option_value in self.choices:
+                    if isinstance(option_value, (list, tuple)):
+                        # This is an optgroup, so look inside for options.
+                        for optgroup_key, optgroup_value in option_value:
+                            if vitem == optgroup_key:
+                                return
+                    elif vitem == option_key:
+                        return
+                raise exceptions.ValidationError(
+                    self.error_messages['invalid_choice'],
+                    code='invalid_choice',
+                    params={'value': vitem,},
+                )
+
+        # check whole value as usual
+        if value is None and not self.null:
+            raise exceptions.ValidationError(
+                self.error_messages['null'], code='null')
+
+        if not self.blank and value in self.empty_values:
+            raise exceptions.ValidationError(
+                self.error_messages['blank'], code='blank')
+
     def get_prep_value(self, value):
-        # get still list of values because to_python method will be called
+        # may be still list of values because to_python method will be called
         # in CharField and TextField fields' get_prep_value method
         value = super(BaseMultipleValuesField, self).get_prep_value(value)
         # convert list to string if required for database
@@ -123,18 +160,13 @@ class BaseMultipleValuesField(object):
         return (value if isinstance(value, (six.string_types, type(None))) else
                 force_text(value))
 
-    def get_db_prep_value(self, value, *args, **kwargs):
-        value = super(BaseMultipleValuesField,
-                      self).get_db_prep_value(value, *args, **kwargs)
-        # anyway convert to empty string if null is not allowed
-        return six.text_type() if value is None and not self.null else value
-
     def get_choices(self, include_blank=True, **kwargs):
         # disable blank option anyway for multiple select
         return super(BaseMultipleValuesField, self).get_choices(
             include_blank=False, **kwargs)
 
     def formfield(self, form_class=None, choices_form_class=None, **kwargs):
+        # set coerce anyway, by default it equals to default text_type
         kwargs.update(coerce=kwargs.get('coerce', self.coerce))
         if not self.choices:
             kwargs.update(delimiter=kwargs.get('delimiter', self.delimiter))
@@ -144,6 +176,11 @@ class BaseMultipleValuesField(object):
             choices_form_class=(choices_form_class or
                                 self.multi_value_form_field_class_choices),
             **kwargs)
+
+    def value_to_string(self, obj):
+        # returns a string value of this field from the passed obj
+        # this is used by the serialization framework
+        return self.get_prep_value(self.value_from_object(obj))
 
 
 class CharMultipleValuesField(BaseMultipleValuesField, models.CharField):
@@ -156,10 +193,12 @@ class CharMultipleValuesField(BaseMultipleValuesField, models.CharField):
         self.validators = [i for i in self.validators
                            if not isinstance(i, MaxLengthValidator)]
 
-    def validate(self, value, model_instance):
-        if not value:
+    def run_validators(self, value):
+        # all user defined validators receives list of values or None
+        # validators_charfield receives result string and check it
+        super(CharMultipleValuesField, self).run_validators(value)
+        if value in self.empty_values:
             return
-        super(CharMultipleValuesField, self).validate(value, model_instance)
         for v in self.validators_charfield:
             v(self.get_prep_value(value))  # check result string value
 
