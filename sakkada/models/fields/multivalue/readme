@@ -22,6 +22,24 @@ Contains:
     MultipleValuesDeferredAttribute - multi value deffered attribte class
 
 
+Test:
+-----
+Fields to test:
+
+1. CharField with null=False blank=True
+2. CharField with null=True blank=True
+3. CharField with null=False blank=False
+
+Code to test:
+
+    mvblank = CharMultipleValuesField(
+        max_length=1024*10, blank=True, coerce=int)
+    mvblanknull = CharMultipleValuesField(
+        max_length=1024*10, blank=True, null=True, coerce=int)
+    mv = CharMultipleValuesField(
+        max_length=1024*10, choices=((1, '1'), (2, '2')))
+
+
 Usage:
 -----
  *  Import desired model field to your models module and use as usual field

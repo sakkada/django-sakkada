@@ -1,4 +1,5 @@
 import os
+from django.core.exceptions import ImproperlyConfigured
 from .unique import UniqueNameFileSystemStorage
 
 

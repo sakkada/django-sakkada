@@ -171,7 +171,6 @@ class MpttTreeAdmin(admin.ModelAdmin):
                  % (r, getattr(item, 'short_title', item.__unicode__)(),))
         return mark_safe(r)
     indented_short_title.short_description = _('title')
-    indented_short_title.allow_tags = True
 
     def move_node_column(self, node):
         action = (u'<a class="mtree_paste_target" href="#"'
@@ -188,6 +187,5 @@ class MpttTreeAdmin(admin.ModelAdmin):
             action % (node.pk, 'first-child', _('Insert as first child'), u'&#x2198;'),
             u'</nobr>',
         ]
-        return u''.join(actions)
-    move_node_column.allow_tags = True
+        return mark_safe(u''.join(actions))
     move_node_column.short_description = _('move')

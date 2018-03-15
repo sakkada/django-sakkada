@@ -1,4 +1,5 @@
 import os
+from django.utils.safestring import mark_safe
 from django.db.models import signals
 from django.db.models.fields.files import (FieldFile, ImageFieldFile,
                                            FileField, ImageField)
@@ -16,8 +17,8 @@ class AdvancedFieldFile(FieldFile):
 class AdvancedImageFieldFile(AdvancedFieldFile, ImageFieldFile):
     @property
     def image_tag(self):
-        return (u'<img src="%s" alt="%s" width="%s" height="%s">'
-                % (self.url, self.name, self.width, self.height))
+        return mark_safe(u'<img src="%s" alt="%s" width="%s" height="%s">'
+                         % (self.url, self.name, self.width, self.height))
 
 
 # file fields
