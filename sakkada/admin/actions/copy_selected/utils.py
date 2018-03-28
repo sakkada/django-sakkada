@@ -8,7 +8,7 @@ from django.contrib.admin.utils import quote
 from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils import six
 from django.utils.html import format_html
 from django.utils.text import capfirst

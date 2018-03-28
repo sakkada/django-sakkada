@@ -6,6 +6,7 @@ from django.core.exceptions import PermissionDenied
 from django.contrib import admin
 from django.conf import settings
 from django.forms.widgets import Media
+from django.utils.safestring import mark_safe
 
 
 def ajax_field_cell(item, attr, text=''):
@@ -31,8 +32,7 @@ def ajax_list_field(attr, short_description=u''):
             list_display = ('pk', 'toggle_active',)
     """
     def _fn(self, item):
-        return ajax_field_cell(item, attr)
-    _fn.allow_tags = True
+        return mark_safe(ajax_field_cell(item, attr))
     _fn.short_description = short_description or attr
     _fn.ajax_editable_field = attr
     return _fn

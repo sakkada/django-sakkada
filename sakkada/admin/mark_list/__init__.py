@@ -3,6 +3,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 from django.forms.widgets import Media
+from django.utils.safestring import mark_safe
 
 
 class MarkListAdmin(admin.ModelAdmin):
@@ -60,13 +61,12 @@ class MarkListAdmin(admin.ModelAdmin):
                    m['on'] if condition else m['off'], m['title'],)
             )
 
-        return ''.join([
+        return mark_safe(''.join([
             '<span class="marks">',
             '<span class="marks-bar"><nobr>', ''.join(links), '</nobr></span>',
             '<pre style="display: none;">%s</pre>' % self.marks_info(obj),
             '</span>'
-        ])
-    marks.allow_tags = True
+        ]))
     marks.short_description = _('Marks')
 
     def marks_info(self, obj):

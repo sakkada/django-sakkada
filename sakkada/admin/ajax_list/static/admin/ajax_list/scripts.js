@@ -1,4 +1,5 @@
 (function ($) {
+
     // ajax fields get/set values
     var get_ajax_field_value = function(self) {
         var value = undefined;
@@ -13,7 +14,7 @@
         } else if (self.tagName == "SELECT") {
             value = self.value;
         }
-        return value
+        return value;
     }
 
     var set_ajax_field_value = function(self, value) {
@@ -89,7 +90,7 @@
                 var index = Array.prototype.indexOf.call(el.parentNode.parentNode.childNodes, el.parentNode);
                 thead.querySelectorAll('th')[index].classList.add('ajax_field_title');
             }
-        )
+        );
 
         var handle_table_cells = function (action){
             var show = action != 'hide';
@@ -137,7 +138,19 @@
                 django_admin_ajax_list_hide = false;
                 handle_table_cells('show');
             }
-        })
-    })
+        });
+
+        // attach keydown/keypress events on table lines
+        $('#result_list tr').keypress(function(event) {
+            var status = false;
+            switch(event.charCode) {
+                case 42: document.getElementById('ajaxlist-showhide-fields').dispatchEvent(new CustomEvent('click'));
+                         break;  // *
+                default: status = true;
+                         break;
+            }
+            return status;
+        });
+    });
 
 })(django.jQuery);

@@ -2,10 +2,11 @@
 import re
 from urllib2 import urlparse
 from functools import update_wrapper
-from django.core.urlresolvers import reverse, resolve, Resolver404
+from django.urls import reverse, resolve, Resolver404
 from django.http import HttpResponseRedirect
 from django.utils.http import urlencode
 from django.db.models import Count
+from django.utils.safestring import mark_safe
 from django.contrib import admin
 from django.contrib.admin.views.main import ChangeList
 from django.contrib.admin.utils import quote
@@ -115,9 +116,8 @@ def fkey_list_link(name, model_set=None, fkey_name=None,
                       static(u'admin/img/icon-addlink.svg'))
                       if with_add_link else result)
 
-        return result
+        return mark_safe(result)
     link.short_description = '%s list' % name
-    link.allow_tags = True
 
     return link
 
