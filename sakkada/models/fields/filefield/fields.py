@@ -13,6 +13,16 @@ class AdvancedFieldFile(FieldFile):
         file = getattr(self.instance, self.field.name)
         return file and os.path.splitext(file.name)[1]
 
+    @property
+    def basename(self):
+        file = getattr(self.instance, self.field.name)
+        return file and os.path.basename(self.file.name)
+
+    @property
+    def basename_splitext(self):
+        file = getattr(self.instance, self.field.name)
+        return file and os.path.splitext(os.path.basename(self.file.name))
+
 
 class AdvancedImageFieldFile(AdvancedFieldFile, ImageFieldFile):
     @property

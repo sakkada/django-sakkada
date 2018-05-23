@@ -8,7 +8,7 @@ setup(
 
     description = (u'Collection of custom extensions'
                    u' for the Django Framework'.encode('utf8')),
-    long_description = (open('README.rst').read().decode('utf8') 
+    long_description = (open('README.rst').read().decode('utf8')
                         + open('CHANGES.rst').read().decode('utf8')),
 
     author='Guchetl Murat',
