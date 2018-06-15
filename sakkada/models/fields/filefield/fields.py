@@ -64,19 +64,18 @@ class AdvancedFileField(FileField):
             super(AdvancedFileField, self).save_form_data(instance, data)
 
     def pre_save(self, instance, add):
+        file = getattr(instance, self.name)
         action = getattr(self, '__pre_save_action__', '__erase_previous__')
         if action == '__delete__':
             # delete file if delete checkbox is checked
-            file = getattr(instance, self.name)
-            self._safe_erase(file, instance)
+            self._safe_erase(file, instance, save=False)
             setattr(instance, self.name, None)
-        elif action == '__erase_previous__':
+        elif action == '__erase_previous__' and not add and file:
             # erase old file before update if field is erasable
-            file = getattr(instance, self.name)
-            if not add and file:
-                orig = instance.__class__.objects.filter(pk=instance.pk)
-                orig = list(orig) and getattr(orig[0], self.name)
-                orig and orig != file and self._safe_erase(orig, instance)
+            orig = instance.__class__.objects.filter(pk=instance.pk).first()
+            orig = getattr(orig, self.name, None)
+            orig and orig != file and self._safe_erase(orig, instance,
+                                                       save=False)
 
         return super(AdvancedFileField, self).pre_save(instance, add)
 
