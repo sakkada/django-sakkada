@@ -675,3 +675,34 @@ def widget_type(field):
     """
     return (field.field.widget.__class__.__name__.lower()
             if isinstance(field, BoundField) else '')
+
+@register.filter
+def widget_render_context(field, extra=None):
+    """Get context from widget's render method directly to template."""
+    if not isinstance(field, BoundField):
+        return {}
+
+    # input extra params
+    extra = ({i[0]: i[2] for i in attrs_parser(extra, strict=True)}
+             if extra else {})
+    only_initial = extra.get('only_initial', False)
+    widget = extra.get('widget', None)
+    widget = (import_string(widget if '.' in widget else
+                            'django.forms.%s' % widget)()
+              if widget else None)
+
+    if not widget:
+        widget = field.field.widget
+    if field.field.localize:
+        widget.is_localized = True
+
+    name = field.html_initial_name if only_initial else field.html_name
+
+    # get attrs, try to get attrs from monkeypathed field first
+    attrs = container = getattr(field, CONTAINER, {}).get('attrs', {})
+    attrs = field.build_widget_attrs(attrs, widget)
+    auto_id = field.auto_id
+    if auto_id and 'id' not in attrs and 'id' not in widget.attrs:
+        attrs['id'] = field.html_initial_id if only_initial else auto_id
+
+    return widget.get_context(name, field.value(), attrs)
