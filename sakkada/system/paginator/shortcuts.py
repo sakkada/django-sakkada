@@ -1,6 +1,7 @@
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.http import HttpRequest
-from pagination import Pagination
+from .pagination import Pagination
+
 
 def paginator(queryset, number=None, per_page=10, pagination=True):
     """

@@ -1,2 +1,3 @@
-include *.txt
-include *.rst
+include README.md
+recursive-include sakkada *.html *.js *.css *.eot *.svg *.ttf *.woff *.json *.png *.gif *.txt readme
+global-exclude *.py[co]

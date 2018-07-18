@@ -1,21 +1,33 @@
 import re
 import copy
 import types
+from functools import reduce
 from django.template import Library, Node, TemplateSyntaxError
 from django.template.base import FilterExpression
 from django.forms.forms import BoundField
-from django.forms.utils import flatatt
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_text
 from django.utils.module_loading import import_string
+from django.utils.html import format_html
 from django.conf import settings
 
 
-REGEX = re.compile(
-    '(?:^|\\s)' # start from start-of-line or with space char
-    '([a-z0-9_:\\.-]+)' # take attr name (g1)
-    '(?: \\s*(\\+?=\\+?)\\s*' # take attr sign (g2)
-    '  (?: ("|\')(.+?)(?<!\\\\)\\3 | ([^\\s"\'][^\\s]*)(?=\\s|$) )'
+# Settings section
+# ----------------
+# REATTRS - parse string with multiple html attrs, allow "+" sign around "="
+# REATTRSSTRICT - same as REATTRS, but without "+" near "=", only clear attrs
+# REATTR - parse single attr value, work like REATTRS ("+" sign allowed), but
+#          without spaces near signs and without surround spaces,
+#          used for checking attr strings parsed by django template engine,
+#          raise error if not matched and DEBUG mode is on
+# RECLASS - parse css classes, allow "!" sign to remove specified class
+# RETAG - parse common opening html tag
+
+REATTRS = re.compile(
+    '(?:^|\\s)'  # start from start-of-line or with space char
+    '([a-z0-9_:\\.-]+)'  # take attr name (g1)
+    '(?: \\s*(\\+=|=\\+|=)\\s*'  # take attr sign, "+=", "=+" or "=" (g2)
+    '  (?: ("|\')(.*?)(?<!\\\\)\\3 | ([^\\s"\'][^\\s]*)(?=\\s|$) )'
     # try to take left quote (g3), if left quote is taken, try to take anything
     # upto right quote, which is not prepended by slash (g4), else try to take
     # any chars, except spaces and quotes upto any space or end-of-line (g5)
@@ -24,28 +36,36 @@ REGEX = re.compile(
     # if sign+value part is not presented, check that space char or end-of-line
     # located after attr-name (support for html5 boolean attrs)
     re.I | re.X)
-REGEXSTRICT = re.compile(
-    # same as REGEX but for parse attrs in html source strings for htmlattrs
+REATTRSSTRICT = re.compile(
+    # same as REATTRS but for parse attrs in html source strings for htmlattrs
     # filter, main difference is that this regex do not allow "+" signs around
     # "=" sign (strict html)
     '(?:^|\\s)'
     '([a-z0-9_:\\.-]+)'
     '(?: \\s*(=)\\s*'
-    '  (?: ("|\')(.+?)(?<!\\\\)\\3 | ([^\\s"\'][^\\s]*)(?=\\s|$) )'
+    '  (?: ("|\')(.*?)(?<!\\\\)\\3 | ([^\\s"\'][^\\s]*)(?=\\s|$) )'
     ')?'
     '(?(2) |(?=\\s|$))',
     re.I | re.X)
 REATTR = re.compile(
-    '([a-z0-9_:\\.-]+)' # take attr name (g1)
-    '(?: (\\+?=\\+?)' # take attr sign (g2)
-    '  (?: ("|\')(.+?)(?<!\\\\)\\3 | ([^"\'].*))'
+    '^'  # start from start-of-line or with space char
+    '([a-z0-9_:\\.-]+)'  # take attr name (g1)
+    '(?: (\\+=|=\\+|=)'  # take attr sign (g2)
+    '  (?: ("|\')(.*?)(?<!\\\\)\\3 | ([^\\s"\'][^\\s]*)(?=$) )'
     # try to take left quote (g3), if left quote is taken, try to take anything
     # upto right quote, which is not prepended by slash (g4), else try to take
-    # any chars with no starting quote upto end-of-line (g5)
-    ')?',
+    # any chars with no starting quote and without spaces upto end-of-line (g5)
+    ')?'
+    '(?(2) |(?=$))',
     re.I | re.X)
-RECLS = re.compile("(?:^|\\s)(!?)(-?[a-z_][a-z0-9_-]*)(?=\\s|$)", re.I)
-RETAG = "<(?!/)(%s[^>]*)/?>"
+RECLASS = re.compile(
+    '(?:^|\\s)'  # start from start-of-line or with space char
+    '(!?)'  # posible "!" sign ("!" - remove class, otherwise - add class)
+    '(-?[a-z_][a-z0-9_-]*)(?=\\s|$)',
+    # class name value, chars, digits, dashes and underscores,
+    # should be followed only by end-of-line or space char
+    re.I)
+RETAG = '<(?!/)(%s[^>]*)/?>'  # just opening html tag
 
 DEBUG = settings.DEBUG
 CONTAINER = '__htmlattrs_container__'
@@ -59,7 +79,7 @@ ATTR_NAME_PARSER_CONFIG = getattr(settings,
     # available values for params name detection if it not specified and also
     # for validation if param name in "strict" list
     'values': {
-        'ns': ['main', 'empty', 'required', 'error',],
+        'ns': ['main', 'empty', 'required', 'error', 'valid',],
         'method': ['set', 'setdefault', 'setifnochanged'],
         'type': ['string', 'classlist',],
     },
@@ -72,6 +92,13 @@ ATTR_NAME_PARSER_CONFIG = getattr(settings,
     },
 })
 
+# namespaces handler (generate all available namespaces)
+NAMESPACES_HANDLER = getattr(
+    settings, 'HTMLATTRS_NAMESPACES_HANDLER', 'base_namespaces_handler')
+
+# allow empty quotes as value or just attr name, False by default
+EMPTY_QUOTES = getattr(settings, 'HTMLATTRS_EMPTY_QUOTES', False)
+
 # processors for each value type (whole import path or local function name)
 ATTR_VALUE_PROCESSORS = getattr(settings, 'HTMLATTRS_ATTR_VALUE_PROCESSORS', {
     'string': 'string_value_processor',
@@ -83,7 +110,6 @@ STRING_VALUE = {
     'sign_templates': {
         '+=': '{} {?}{=}',
         '=+': '{=}{?} {}',
-        '+=+': '{} {?}{=}{?} {}',
     },
     'replacements': (
         ('<{}>', '<####>', '{}',),
@@ -99,16 +125,27 @@ WIDGET_ERROR_CLASS = getattr(
 WIDGET_REQUIRED_CLASS = getattr(
     settings, 'HTMLATTRS_WIDGET_REQUIRED_CLASS', 'WIDGET_REQUIRED_CLASS')
 
+# runtime values
+attr_value_processors = {}
+namespaces_handler = None
+settings_prepared = False
+
 register = Library()
 
 
 # Utils section
 # -------------
+def import_or_local_setting(value):
+    """Import setting value or get from module scope."""
+    return value if callable(value) else (
+        import_string(value) if '.' in value else globals()[value]
+    )
+
 def attrs_parser(extra, strict=False):
     """Parse attrs string into tuple of (name, sign, value,)."""
     values = {u'None': None, u'': True,}
 
-    extra = re.findall(REGEX if not strict else REGEXSTRICT, extra)
+    extra = re.findall(REATTRS if not strict else REATTRSSTRICT, extra)
     extra = ([(i[0], i[1], i[3] or values.get(i[4], i[4]),)
               for i in extra]) if extra else []
     return extra
@@ -138,13 +175,13 @@ def attrs_processor(extra, attrs, original_attrs=None, container=None):
         ns[params['ns']][name] = (name, value, params, sign,)
 
     # set extra params to target attrs
-    for i in  extra_params:
-        if i[2]['ns'] in ns and i[0] in ns[i[2]['ns']]:
-            ns[i[2]['ns']][i[0]][2][i[2]['extra']] = i[1]
+    for name, value, params, sign in extra_params:
+        if params['ns'] in ns and name in ns[params['ns']]:
+            ns[params['ns']][name][2][params['extra']] = value
         elif DEBUG:
             raise ValueError('htmlattrs: extra param "%s" for attr "ns:%s %s"'
                              ' is invalid, target attr is not defined.'
-                             % (i[2]['extra'], i[2]['ns'], i[0]))
+                             % (params['extra'], params['ns'], name,))
 
     # process values in namespaces by namespace order
     nsordering = config['values']['ns']
@@ -164,12 +201,11 @@ def attrs_processor(extra, attrs, original_attrs=None, container=None):
                 attrsval = attrs.get(key, None)
                 if attrsval and ((attr[2]['method'] == 'setdefault') or
                                  (attr[2]['method'] == 'setifnochanged' and
-                                  original_attrs.has_key(key) and
-                                  original_attrs[key] != attrsval)):
+                                  original_attrs.get(key, None) != attrsval)):
                     continue
 
                 # set value via specified value type processor
-                attrs[key] = ATTR_VALUE_PROCESSORS[attr[2]['type']](attr, attrs)
+                attrs[key] = attr_value_processors[attr[2]['type']](attr, attrs)
 
     return attrs
 
@@ -218,23 +254,28 @@ def attr_name_parser(value, config):
                             ' "%s" attr, it should not be one of "%s".'
                             % (pvalue, value, ', '.join(values.keys()),))
         else:
-            name = params = None # ignore attr
+            name = params = None  # ignore attr
 
     return (name, params,)
 
 def regex_with_attrs_parser(extra):
     """
-    Get extra attrs and regex from string value by pattern:
+    Parse regex string with attrs for htmlattrs filter and tag.
+    Takes regex-with-attr string and return attrs as string, regex string and
+    slice python object.
+
+    Get extra attrs and regex with slice from string value by pattern:
         [[<{separater}>]regex[{slice}]{separater}]attrs
     Defaults:
         separater   - "|"
-        regex       - a-z{1}\w*
+        regex       - [a-z]{1}\\w*
         slice       - [:] (slice(None), whole list)
     Examples:
         input|class="red"
         input[1:]|class="blue"
         <@>(?:input|select)[1]@title="some | title" # when "|" used in attrs
     """
+    original = extra
     if extra[0] != '<':
         extra = '<|>%s' % extra
     elif not '>' in extra:
@@ -247,12 +288,25 @@ def regex_with_attrs_parser(extra):
     if len(split) == 2:
         regex, extra = split
     else:
-        regex = 'a-z{1}\w*'
+        regex, extra = '[a-z]{1}\\w*', original
     regex, sliceobj = regex_parser(regex)
     return extra, regex, sliceobj
 
 def regex_parser(regex):
-    if regex[-1] == ']':
+    """
+    Parse regex string for htmlattrs filter and tag.
+    Divide input string into regex string and slice python object.
+
+    Get regex with slice from string value by pattern:
+        regex[{slice}]
+    Defaults:
+        slice       - [:] (slice(None), whole list)
+    Examples:
+        input
+        input[1:]
+        (?:input|select)[1]
+    """
+    if regex and regex[-1] == ']' and '[' in regex:
         original, (regex, sliceobj,) = regex, regex.rsplit('[', 1)
         try:
             # try to get slice object from string
@@ -261,14 +315,13 @@ def regex_parser(regex):
             # imitate direct indexing if no ":" char exist because
             # stop param in slice is default, see also
             # http://docs.python.org/library/functions.html#slice
-            len(sliceobj) == 1 and sliceobj.append(None)
-        except ValueError, e:
-            regex = original # revert original regex
+            len(sliceobj) == 1 and sliceobj.append(sliceobj[0]+1 or None)
+        except ValueError as e:
+            regex = original  # revert original regex
             sliceobj = (None,)
     else:
         sliceobj = (None,)
     return regex, slice(*sliceobj)
-
 
 def monkey_patch_bound_field(field):
     """
@@ -281,16 +334,13 @@ def monkey_patch_bound_field(field):
 
     # get namespace list and attrname config dict
     config = copy.deepcopy(ATTR_NAME_PARSER_CONFIG)
-    nsset = list(NAMESPACES)
-    field.data or nsset.append('empty')
-    field.field.required and nsset.append('required')
-    field.errors and nsset.append('error')
+    namespaces = namespaces_handler(field)
 
     # copy bound field and set container
     field, original = copy.copy(field), field
     field.__setattr__(CONTAINER, {
         'original': original, 'config': config,
-        'namespaces': nsset, 'attrs': None,
+        'namespaces': namespaces, 'attrs': None,
     })
 
     # extend any data in CONTAINER for current field if required
@@ -315,14 +365,15 @@ def monkey_patch_bound_field(field):
     return field
 
 
-# Value types processors
-# ----------------------
+# Value types processors and namespaces handler
+# ---------------------------------------------
 def string_value_processor(attr, attrs):
     """Process string value type with value inheritance."""
     name, value, params, sign = attr
     previous = attrs.get(name, '')
 
     # inheritance: template first, sign second, value with {} third
+    # anchors surrounded by <> will be escaped with replacements
     if 'template' in params:
         template = reduce(lambda x, y: x.replace(*y[:2]),
                           STRING_VALUE['replacements'], params['template'])
@@ -330,6 +381,9 @@ def string_value_processor(attr, attrs):
         template = STRING_VALUE['sign_templates'][sign]
     elif value is True:
         template = None
+    elif value == '' and not EMPTY_QUOTES:
+        template = None
+        value = True
     else:
         template = reduce(lambda x, y: x.replace(*y[:2]),
                           STRING_VALUE['replacements'], value)
@@ -341,18 +395,20 @@ def string_value_processor(attr, attrs):
     if not template:
         return value
 
+    # process pattern anchors
     tpl, prev = [i.split('{?}') for i in template.split('{}')], bool(previous)
     for i in range(1, len(tpl)):
         l, r, rwhole = tpl[i-1], tpl[i], len(tpl[i])<3 or i==len(tpl)-1
 
-        if len(l) > 1: # left segment
+        if len(l) > 1:  # left segment
             l[:] = [''.join(l[0:None if prev else 1])]
 
-        if len(r) > 1: # right segment
+        if len(r) > 1:  # right segment
             r[0:None if rwhole else -1] = [''.join(r[
                 0 if prev else (-1 if rwhole else -2):None if rwhole else -1
             ])]
 
+    # compile result value and restore escaped anchors
     value = previous.join(i[0] for i in tpl).replace('{=}', value)
     value = reduce(lambda x, y: x.replace(*y[1:]),
                    STRING_VALUE['replacements'], value)
@@ -363,11 +419,11 @@ def classlist_value_processor(attr, attrs):
     name, value, params, sign = attr
     previous = attrs.get(name, '')
 
-    # parse class attr value by RECLS, get clist value according sign
+    # parse class attr value by RECLASS, get clist value according sign
     # and previous class attr value and set methods dict (add or remove)
-    value = value and re.findall(RECLS, value) or []
+    value = value and re.findall(RECLASS, value) or []
     clist = set(previous.split() if '+' in sign and previous else [])
-    mdict = {'': 'add', '!': 'discard'}
+    mdict = {'': 'add', '!': 'discard',}
 
     # remove class if it prepended by "!" or add otherwise
     if value:
@@ -377,19 +433,41 @@ def classlist_value_processor(attr, attrs):
     # return sorted class list joined by space
     return u' '.join(sorted(clist)).strip()
 
+def base_namespaces_handler(boundfield):
+    """
+    Common namespaces handler.
+    Add all available namespaces for current field to namespaces list.
+    If it's required to change behaviour for particular field, add
+    method "extend_htmlattrs_field_container" instead of this function.
+    May be changed by HTMLATTRS_NAMESPACES_HANDLER setting.
+    """
+    namespaces = list(NAMESPACES)
+    boundfield.data or namespaces.append('empty')
+    boundfield.field.required and namespaces.append('required')
+    boundfield.errors and namespaces.append('error')
+    boundfield.data and not boundfield.errors and namespaces.append('valid')
+    return namespaces
+
+def flatatt(attrs):
+    # similar to builtin flatatt, but without sorting final attrs
+    data = [(' {}' if value is True else ' {}="{}"', (attr, value,),)
+            for attr, value in attrs.items() if not value in (False, None,)]
+    return mark_safe(''.join(format_html(template, *tuple(args))
+                             for template, args in data))
+
 
 # Initial configuration
 # ---------------------
 # prepare functions for value processing (import from string)
-def prepare_attr_value_processors(processors):
-    if '__prepared__' in processors:
-        return
-    for key, value in processors.items():
-        processors[key] = value if callable(value) else (
-            import_string(value) if '.' in value else globals()[value]
-        )
-    processors['__prepared__'] = True
-prepare_attr_value_processors(ATTR_VALUE_PROCESSORS)
+if not settings_prepared:
+    # prepare all available attr value processors
+    for key, value in ATTR_VALUE_PROCESSORS.items():
+        attr_value_processors[key] = import_or_local_setting(value)
+    # prepare namespaces generater
+    namespaces_handler = import_or_local_setting(NAMESPACES_HANDLER)
+
+    # prepare only once
+    settings_prepared = True
 
 
 # Template tags
@@ -405,7 +483,7 @@ def attrs_tag(parser, token):
     """
     errors = {
         'invalid_attr' : ('htmlattrs: attrs template tag error - attrs should'
-                          ' be in "\w-_.:[=value]" format, not "%s".'),
+                          ' be in "\\w-_.:[=value]" format, not "%s".'),
         'missing_args' : ('htmlattrs: attrs template tag error - too few'
                           ' reveived arguments, should be at least one.')
     }
@@ -443,9 +521,9 @@ class AttrsNode(Node):
 
     def render(self, context):
         boundfield = self.field.resolve(context)
-        extra = [[name, sign, force_text(value.resolve(context))
-                              if isinstance(value, FilterExpression)
-                              else value,]
+        extra = [[name, sign, (force_text(value.resolve(context))
+                               if isinstance(value, FilterExpression) else
+                               value),]
                  for name, sign, value in self.extra]
 
         # widget tweaks idea: if variable exist -> set ns::class value
@@ -486,7 +564,7 @@ def htmlattrs_tag(parser, token):
     """
     errors = {
         'invalid_attr' : ('htmlattrs: htmlattrs template tag error - attrs'
-                          ' should be in "\w-_.:[=value]" format, not "%s".'),
+                          ' should be in "\\w-_.:[=value]" format, not "%s".'),
         'missing_args' : ('htmlattrs: attrs template tag error - too few'
                           ' reveived arguments, should be at least two.')
     }
@@ -540,9 +618,9 @@ class HtmlAttrsNode(Node):
             withfield = monkey_patch_bound_field(withfield)
             container = getattr(withfield, CONTAINER)
 
-        extra = [[name, sign, force_text(value.resolve(context))
-                              if isinstance(value, FilterExpression)
-                              else value,]
+        extra = [[name, sign, (force_text(value.resolve(context))
+                               if isinstance(value, FilterExpression) else
+                               value),]
                  for name, sign, value in self.extra]
 
         # widget tweaks idea: if variable exist -> set ns::class value
@@ -577,7 +655,7 @@ class HtmlAttrsNode(Node):
                                     original_attrs=attrs,
                                     container=container) or attrs
             compiled.extend([html[index:i.start()],
-                            ("<%s%s%s>" % (tag, flatatt(attrs), slash))])
+                             ("<%s%s%s>" % (tag, flatatt(attrs), slash))])
             index = i.end()
         compiled.append(html[index:])
         compiled = mark_safe(u''.join(compiled))
@@ -598,7 +676,7 @@ def attrs(field, extra=None):
     field = monkey_patch_bound_field(field)
 
     container = getattr(field, CONTAINER)
-    attrs = container['attrs'] or dict(field.field.widget.attrs) # copy
+    attrs = container['attrs'] or dict(field.field.widget.attrs)  # copy
     extra = attrs_parser(extra)
     attrs = attrs_processor(extra, attrs, container=container)
     container['attrs'] = attrs
@@ -615,7 +693,7 @@ def htmlattrs(html, extra=None):
         withfield = monkey_patch_bound_field(withfield)
         container = getattr(withfield, CONTAINER, None)
 
-    if not isinstance(html, basestring):
+    if not isinstance(html, str):
         html = mark_safe(force_text(html))
     if not extra:
         return html
@@ -637,12 +715,12 @@ def htmlattrs(html, extra=None):
         tag = i.group()[1:-1].strip('/ ').split(' ', 1)
         tag, attrs = tag if len(tag) == 2 else (tag[0], '')
         slash = i.group()[-2] == '/' and ' /' or ''
-        attrs = attrs and attrs_parser(attrs, strict=True) or {}
+        attrs = attrs and attrs_parser(attrs, strict=True) or []
         attrs = attrs_processor(extra, {i[0]:i[2] for i in attrs},
                                 original_attrs=attrs,
                                 container=container) or attrs
         compiled.extend([html[index:i.start()],
-                        ("<%s%s%s>" % (tag, flatatt(attrs), slash))])
+                         ("<%s%s%s>" % (tag, flatatt(attrs), slash))])
         index = i.end()
     compiled.append(html[index:])
 

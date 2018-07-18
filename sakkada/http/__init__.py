@@ -1,1 +1,1 @@
-from querystring import QueryString
+from .querystring import QueryString

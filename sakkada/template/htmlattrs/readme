@@ -2,6 +2,7 @@ Bismillahi RRahmani RRahim!
 In The Name of Allah, The Most Beneficent, The Most Merciful!
 -------------------------------------------------------------------------------
 
+
 Html attrs library
 ==================
 
@@ -17,11 +18,13 @@ while "htmlattrs" receives string (or convert any object to string,
 if required), tries to match it with defined regex and changes attrs
 in finded tags.
 
+
 Installation
 ------------
 Copy templatetags folder into any app directory or add
 "sakkada.template.htmlattrs" to your "INSTALLED_APPS".
 In templates just load the library with {% load htmlattrs %}
+
 
 "attrs" tag and filter
 ----------------------
@@ -39,6 +42,7 @@ arguments in template tag:
 string argument - desired attrs, so each attrs value should be predefined and
 can not be taken from context variable or other in-template features:
     {{ form.field|attrs:'attr="v a l u e" attr2=value attr3=None attr4' }}
+
 
 "htmlattrs" tag and filter
 --------------------------
@@ -66,6 +70,7 @@ boundfield as a context for it ("htmlattrs"), this is similar to third and
 fourth arguments of "htmlattrs" tag ("... with form.boundfield ...").
     {{ form.field.label_tag|withfield:form.field|htmlattrs:'label|class="value" error::class+="err-value"' }}
 
+
 Regex pattern and regex-with-attrs string definition format for "htmlattrs"
 ---------------------------------------------------------------------------
 Regular expression for matching tags in strings is generated from pattern:
@@ -75,7 +80,7 @@ Regular expression for matching tags in strings is generated from pattern:
     or single tags, closing tags are ignored.
 This pattern means, that defined in "htmlattrs" regex:
     - should not contain any catching groups (for grouping should be used
-      non-catching groups - (?:expr)),
+      non-catching groups - "(?:expr)",
     - should match only internal tag string (any value between "<>" chars),
     - should match any valid tag name/names at the beginning,
     - should not use greedy quantifiers, which can captures more than one tag
@@ -105,7 +110,7 @@ By default, slice value is "[:]" - get all elements in sequence.
 In "htmlattrs" filter regex separates from attrs by divider.
 By default it is "|" character. But in case of attrs contain at least
 one "|" character, you should redefine separater value to allow parser
-correctly separate regex+slice from attrs value. To explain the probles, lets
+correctly separate regex+slice from attrs value. To explain the problem, lets
 see at examples:
     {{ '<input type="text">'|htmlattrs:'input|title="Detail | Home"' }}
 Because parser splits string by divider once from right side, result will be:
@@ -128,20 +133,41 @@ And syntax of "htmlattrs" filter argument may be described like:
     └─────────────────────────────────────────┘
     [] - optional value
 
+Regex value, according template, also optional and by default
+equals to '[a-z]{1}\w*' - first letter and optional any word-like letters.
+
+
 Attrs string definition format for "attrs" and "htmlattrs" tags and filters
 ---------------------------------------------------------------------------
 The syntax of each attr value described by the following template:
     ┌────────────────────────────────────────────────────────────┐
     │[[param.]value:[param.]value...::]name[[+]=[+]['"]value['"]]│
     └────────────────────────────────────────────────────────────┘
-    []  - optional,
-    ... - repeatable with delimiter ":" if more than one element.
+    []   - optional,
+    ...  - repeatable with delimiter ":" if more than one element,
+    [+]  - optional "+" sign, but allowed only one at the same time (=|+=|=+)
+    ['"] - optional quotes, should be defined from both sides and be the same
+           type from left and from right ('text' or "text" or text, not 'text")
 
 Accordint to template, each attr should have at leat name, may have value
 and additinal parameters.
+Note: if "::" pattern will be omitted (misplaced by ":", which is just
+      namespace in XML format and is valid char for attr name), library will
+      interprets attr name as is and renders it also as is:
+        {% attrs form.field required:class=red %}
+      will be rendered to
+        <input name="field" required:class="red">
+      so be carefull, defining attrs.
+      Usage example with colons in attr name:
+        {% attrs form.field somens:class=red %}
+        <input name="field" somens:class="red">
+      Verbose version of definition with the same result:
+        {% attrs form.field ns.main::somens:class=red %}
+        <input name="field" somens:class="red">
 
-Attr additinal parameters
--------------------------
+
+Attr additional parameters
+--------------------------
 Each attr have parameters, which describes it behaviour, value type and other
 properties. "ATTR_NAME_PARSER_CONFIG" (see below) setting value stores
 "htmlattrs" for builtin additinal parameters of any attr. Parameters may be
@@ -173,15 +199,16 @@ For example, "ns" parameter takes available namespaces from field instance,
 and if field is not provided ("htmlattrs" with no context), only "main"
 namespace will be available, the default one.
 
-Thers is a list of supported builtin parameters of each attr:
+There is a list of supported builtin parameters of each attr:
 -   "ns" - namespace, non strict, have predefined values, default value is
     "main", not present in preset values. Namespace is special parameter,
     which was introduced to support conditional attr setting. The default
-    list of supported namespaces is ['main', 'empty', 'required', 'error'].
-    "main" is default, "empty", "required" and "error" are available if field
-    has no data, field is required and have errors after validation
-    respectively. Namespaces extends each other in order, specified in
-    ATTR_NAME_PARSER_CONFIG['values']['ns'] list.
+    list of supported namespaces is
+        ['main', 'empty', 'required', 'error', 'valid',].
+    "main" is default, "empty", "required", "error" and "valid" are available
+    if field has no data, field is required, have errors after validation and
+    have data and have not errors respectively. Namespaces extends each other
+    in order, specified in ATTR_NAME_PARSER_CONFIG['values']['ns'] list.
     If defined namespace not exists in ns list, it will be ignored at all.
     For example, if we have following "attrs" filter definition:
         {{ boundfield|attrs:'class=main required::class+=required' }},
@@ -199,6 +226,7 @@ Thers is a list of supported builtin parameters of each attr:
     Any namespace attrs values may be omitted, for example only "error"
     namespace may be defined:
         {{ boundfield|attrs:'error::data-error=error-value' }}.
+
     Use "extend_htmlattrs_field_container" method, defined in form, which
     contains current field to extend list of supported namespaces and to set
     extra available namespace or to extend something else. For example:
@@ -206,11 +234,10 @@ Thers is a list of supported builtin parameters of each attr:
         # parent form method
         def extend_htmlattrs_field_container(self, field):
             container = getattr(field, '__htmlattrs_container__', {})
-            # add empty namespace to supported namespaces
-            container['config']['values']['ns'] = [
-                'main', 'empty', 'required', 'error', 'valueis10',
-            ]
-            # add empty namespace to available namespaces if no data received
+            # add valueis10 namespace to supported namespaces
+            container['config']['values']['ns'].append('valueis10')
+
+            # add valueis10 namespace to available namespaces if condition
             if field.data == '10':
                 container['namespaces'].append('valueis10')
 
@@ -218,6 +245,12 @@ Thers is a list of supported builtin parameters of each attr:
         {{ form.field|attrs:'valueis10::class+="class_if_value_is_10"' }}
 
     In similar way you can add some value types, presets, ect.
+
+    Additionaly, it is possible to change behaviour of namespaces
+    generation globally, by defining "HTMLATTRS_NAMESPACES_HANDLER" value
+    in setting - it should be path to function, which takes boundfield and
+    returns list of namespaces. Default function for this purpose is
+    "base_namespaces_handler" (see source of it for more details).
 
 -   "method" - method of conditional value setting, strict, have predefined
     values, default is "set", non present in preset values.
@@ -269,8 +302,8 @@ Thers is a list of supported builtin parameters of each attr:
             - previous value is empty result will be "14",
             - previous value equals to "3" result will be "1-2-3-4-5".
             Note: template may contain more than one "{}" value anchors,
-                  and in this case "{?}" anchors processing from left to right,
-                  so be carefull, if pattern is:
+                  and in this case "{?}" anchors will be processed from left
+                  to right, so be carefull, if pattern is:
                     "{?}-left-{} some text {?}-left-{}-right-{?}", and user
                   expect something like this:
                     "({?}-left-{}) some text ({?}-left-{}-right-{?})", system
@@ -297,6 +330,12 @@ Thers is a list of supported builtin parameters of each attr:
                 {% attrs form.field disabled checked="" %}
             will be rendered to
                 <input name="field" disabled checked>
+            If it is really need to render empty strings as values, set
+            "HTMLATTRS_EMPTY_QUOTES" to True and empty strings will rendered
+            as is:
+                {% attrs form.field disabled checked="" %}
+            will be rendered to
+                <input name="field" disabled checked="">
         - None - string without quotes and with first capitalized letter,
             if value is None, system will omit current attr in rendered html:
                 {% htmlattrs '<b foo="bar">' 'b' foo=None %}
@@ -304,14 +343,13 @@ Thers is a list of supported builtin parameters of each attr:
                 <foo>
 
         As you can see in attrs definition syntax, sign between attr name and
-        it value may be in several combinations ("=", "+=", "=+" and "+=+").
+        it value may be in several combinations ("=", "+=" and "=+").
         Having known value inheritance template syntax described below, user
         may see, that all available signs combinations is just shortcuts for
         several templates:
             "="   - direct value assignation,
             "+="  - "{} {?}defined-attr-value",
-            "=+"  - "defined-attr-value{?} {}",
-            "+=+" - "{} {?}difined-attr-value{?} {}", and that means, you
+            "=+"  - "defined-attr-value{?} {}", and that means, you
         should use only sign with "+" or only template with anchors at the
         same time, not both of them. So, for example:
             {{ form.field|attrs:'a="value{?} {}"' }} and
@@ -323,15 +361,15 @@ Thers is a list of supported builtin parameters of each attr:
         is the same as in plain html, expect sign value with "+" and class
         removing syntax. Signs have the following meaning:
             "=" - do not use previous value, use only current,
-            "+=", "=+", "+=+" - inherit previous value and extend it with
+            "+=", "=+" - inherit previous value and extend it with
             current, without difference which one is used.
         Each class value in class list may be prepended by "!" sign, meaning
         that this class value will be removed in result html tag.
         Result classes will be sorted in alphabetical order. Examples:
-            {% htmlattrs "<b class="a b c d">" "b" class="x y z" %}
-            {% htmlattrs "<b class="a b c d">" "b" class+="x y z" %}
-            {% htmlattrs "<b class="a b c d">" "b" class="z !c !d" %}
-            {% htmlattrs "<b class="a b c d">" "b" class+="z !c !d" %}
+            {% htmlattrs '<b class="a b c d">' "b" class="x y z" %}
+            {% htmlattrs '<b class="a b c d">' "b" class+="x y z" %}
+            {% htmlattrs '<b class="a b c d">' "b" class="z !c !d" %}
+            {% htmlattrs '<b class="a b c d">' "b" class+="z !c !d" %}
         will be rendered as:
             <b class="x y z" %}
             <b class="a b c d x y z" %}
@@ -389,6 +427,20 @@ Thers is a list of supported builtin parameters of each attr:
         template definitions. This library tries to be flexible as possible,
         and gives required level of complexivity in each individual case.
 
+        You can use any custom extra parameters in your attr_value_processor
+        code to extend library functionality as you need. For code example,
+        see source of "string_value_processor" and "template" extra param
+        usage.
+        Define param in template:
+            ".. attr=1 extra.someparam::attr=value .."
+        And process it in value processor:
+            def custom_value_processor(attr, attrs):
+                name, value, params, sign = attr
+                if 'someparam' in params:
+                    # do stuff here
+                ...
+
+
 htmlattr settings
 -----------------
 -   "ATTR_NAME_PARSER_CONFIG"
@@ -404,7 +456,7 @@ htmlattr settings
         # available values for params name detection if it not specified and also
         # for validation if param name in "strict" list
         'values': {
-            'ns': ['main', 'empty', 'required', 'error',],
+            'ns': ['main', 'empty', 'required', 'error', 'valid',],
             'method': ['set', 'setdefault', 'setifnochanged'],
             'type': ['string', 'classlist',],
         },
@@ -454,8 +506,29 @@ htmlattr settings
         'newtype': 'path.to.module.new_value_processor', # user defined
     }
 
+-   "HTMLATTRS_NAMESPACES_HANDLER"
+    This variables contains path to global namespaces list generation
+    from boundfield function (whole import path or local function name)
+    NAMESPACES_HANDLER = getattr(
+        settings, 'HTMLATTRS_NAMESPACES_HANDLER', 'base_namespaces_handler')
+
+    Possible redefinition in project settings:
+    HTMLATTRS_NAMESPACES_HANDLER = 'path.to.module.new_namespaces_handler'
+
+-   "HTMLATTRS_EMPTY_QUOTES"
+    By default (False value), expressions, like:
+        {% attrs form.field disabled checked="" %} will be rendered to
+        <input name="field" disabled checked>
+
+    To render empty strings as values, set "HTMLATTRS_EMPTY_QUOTES" to True
+    and empty strings will rendered as is:
+        {% attrs form.field disabled checked="" %} will be rendered to
+        <input name="field" disabled checked="">
+
+
 Additional fitlers
 ------------------
+
 "field_type" filter used to getting field class name in lowercase, which is
 usable in conditional tags and filters, "if", "elif", ect.
     {% if form.field|field_type == "charfield" %}
@@ -470,6 +543,57 @@ in lowercase instead field class name.
 
 Both filters taken from "widget_tweaks" library as is.
 
+"widget_render_context" filter used to getting all entire context, generating
+by widget's "render" method for rendering particular field, directly
+in template, without calling "render" method. It is useful for rendering
+fields with custom html code (pretty looking selects, radio buttons, etc.)
+in place, in the same template, where all other form's fields placed.
+    {% with fieldcontext=form.radiofield|attrs:'class="radio-input"'|widget_render_context %}
+      {% for group, options, index in fieldcontext.widget.optgroups %}{% for option in options %}
+      <div>
+        {% if field.wrap_label %}<label class="radio-label"{% if option.attrs.id %} for="{{ option.attrs.id }}"{% endif %}>{% endif %}
+          <input type="{{ option.type }}" name="{{ option.name }}"{% if option.value != None %} value="{{ option.value|stringformat:'s' }}"{% endif %}
+                 {% for name, value in option.attrs.items %}{% if value is not False %} {{ name }}{% if value is not True %}="{{ value|stringformat:'s' }}"{% endif %}{% endif %}{% endfor %}/>
+        {% if field.wrap_label %} {{ option.label }}</label>{% endif %}
+      </div>
+      {% endfor %}{% endfor %}
+    {% endwith %}
+
+Note: django's default form field templates are not available for the template
+      system by default (it used by form renderer only) and to get it available
+      add "django/forms/templates/django/forms/widgets" dir to 'DIRS' list
+      in 'TEMPLATES' setting, like builtin django's form renderer do (see
+      'django.forms.renderers.EngineMixin' for more details).
+
+
+Unchangable attrs
+-----------------
+
+Because of internal django and htmlattrs code organisation, some attrs are
+defined by django itself after htmlattrs code processed the field, in widget's
+python code or in template's html code. Some of them (for charfield):
+    "type", "name", "value", "id".
+There attrs can not be changed by "attrs" tag and filter (because both
+works with boundfield object and before it's rendering).
+
+But it can be done by usage "htmlattrs" tag or filter (because both works
+after boundfield is rendered, with raw html string, and default behaviour
+does not take effect here). So, if you can use "attrs" tag or filter, use it,
+because it probably faster, otherwise use "htmlattrs" tag or filter.
+
+    Works with field object, django extends values.
+
+    {% attrs form.field id=id_value %}
+    <input name="field" id="id_field">
+
+    Works with html strings, which django rendered first.
+
+    {% htmlattrs form.field 'input' with form.field id=id_value %}
+    <input name="field" id="id_value">
+
+
 Examples
 --------
-todo...
+Todo...
+
+Todo: add widget param to attrs filter and tag
