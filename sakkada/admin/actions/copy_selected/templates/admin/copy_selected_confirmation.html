@@ -1,7 +1,9 @@
 {% extends "admin/base_site.html" %}
 {% load i18n l10n admin_urls %}
 
-{% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} copy-confirmation copy-selected-confirmation{% endblock %}
+
+{% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} copy-confirmation copy-selected-confirmation delete-confirmation{% endblock %}
+
 
 {% block breadcrumbs %}
 <div class="breadcrumbs">
@@ -12,31 +14,32 @@
 </div>
 {% endblock %}
 
+
 {% block content %}
-{% if perms_lacking %}
-    <p>{% blocktrans %}Copying the selected {{ objects_name }} would result in copying related objects, but your account doesn't have permission to create the following types of objects:{% endblocktrans %}</p>
-    <ul>
+  {% if perms_lacking %}
+  <p>{% blocktrans %}Copying the selected {{ objects_name }} would result in copying related objects, but your account doesn't have permission to create the following types of objects:{% endblocktrans %}</p>
+  <ul>
     {% for obj in perms_lacking %}
-        <li>{{ obj }}</li>
+    <li>{{ obj }}</li>
     {% endfor %}
-    </ul>
-{% else %}
-    <p>{% blocktrans %}Are you sure you want to copy the selected {{ objects_name }}? All of the following objects and their related items will be copied:{% endblocktrans %}</p>
-    {% include "admin/includes/object_delete_summary.html" %}
-    <h2>{% trans "Objects" %}</h2>
-    {% for creatable_object in creatable_objects %}
-        <ul>{{ creatable_object|unordered_list }}</ul>
-    {% endfor %}
-    <form action="" method="post">{% csrf_token %}
+  </ul>
+  {% else %}
+  <p>{% blocktrans %}Are you sure you want to copy the selected {{ objects_name }}? All of the following objects and their related items will be copied:{% endblocktrans %}</p>
+  {% include "admin/includes/object_delete_summary.html" %}
+  <h2>{% trans "Objects" %}</h2>
+  {% for creatable_object in creatable_objects %}
+  <ul>{{ creatable_object|unordered_list }}</ul>
+  {% endfor %}
+  <form action="" method="post">{% csrf_token %}
     <div>
-    {% for obj in queryset %}
-    <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk|unlocalize }}" />
-    {% endfor %}
-    <input type="hidden" name="action" value="copy_selected" />
-    <input type="hidden" name="post" value="yes" />
-    <input type="submit" value="{% trans "Yes, I'm sure" %}" />
-    <a href="#" onclick="window.history.back(); return false;" class="button cancel-link">{% trans "No, take me back" %}</a>
+      {% for obj in queryset %}
+      <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk|unlocalize }}" />
+      {% endfor %}
+      <input type="hidden" name="action" value="copy_selected" />
+      <input type="hidden" name="post" value="yes" />
+      <input type="submit" value="{% trans "Yes, I'm sure" %}" />
+      <a href="#" onclick="window.history.back(); return false;" class="button cancel-link">{% trans "No, take me back" %}</a>
     </div>
-    </form>
-{% endif %}
+  </form>
+  {% endif %}
 {% endblock %}

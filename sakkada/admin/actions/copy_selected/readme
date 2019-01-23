@@ -9,10 +9,22 @@ Usage:
 Example usage:
 -------------------------------------------------------------------------------
 from django.contrib import admin
+from django.utils.crypto import get_random_string
 from sakkada.admin.actions.copy_selected import copy_selected
+from sakkada.models.copying import SET, CASCADE, DO_NOTHING
 
 
 class SomeAdmin(admin.ModelAdmin):
     actions = (copy_selected,)
+
+    copy_selected_confirmation_template = (
+        'admin/copy_selected_confirmation.html')
+    copy_selected_handlers = {
+        'app.some:relation': CASCADE,
+        'app.some:relation_two': DO_NOTHING,
+        'app.some:string': SET('some-string-value'),
+        'app.some:string_unique': SET(get_random_string),
+    }
+
 
 admin.site.register(Some, SomeAdmin)
