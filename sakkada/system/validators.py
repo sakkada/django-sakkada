@@ -38,18 +38,18 @@ class FilesizeValidator(BaseValidator):
     def __call__(self, value):
         if not isuploaded(value):
             return
-        if self.max is not None and value.file._size > self.max:
+        if self.max is not None and value.size > self.max:
             raise ValidationError(
                 _('Please keep filesize under %(max)s. Current filesize is %(real)s')
                 % {'max': filesizeformat(self.max),
-                   'real': filesizeformat(value.file._size),},
+                   'real': filesizeformat(value.size),},
                 code=self.code
             )
-        if self.min is not None and value.file._size < self.min:
+        if self.min is not None and value.size < self.min:
             raise ValidationError(
                 _('Please keep filesize above %(min)s. Current filesize is %(real)s')
                 % {'min': filesizeformat(self.min),
-                   'real': filesizeformat(value.file._size),},
+                   'real': filesizeformat(value.size),},
                 code=self.code
             )
 

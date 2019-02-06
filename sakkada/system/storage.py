@@ -7,7 +7,7 @@ class Storage(object):
     def __setattr__(self, name, value):
         _thread_locals.storage[name] = value
     def __delattr__(self, name):
-        if _thread_locals.storage.has_key(name):
+        if name in _thread_locals.storage:
             _thread_locals.storage.__delitem__(name)
 
 class StorageMiddleware(object):

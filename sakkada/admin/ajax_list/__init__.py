@@ -112,7 +112,7 @@ class AjaxListAdmin(admin.ModelAdmin):
 
         self._collect_ajax_fields()
 
-        if not self._ajax_editable_fields.has_key(attr):
+        if not attr in self._ajax_editable_fields:
             return HttpResponseBadRequest('Not a valid attribute "%s"' % attr)
 
         try:

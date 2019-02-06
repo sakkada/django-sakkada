@@ -1,7 +1,5 @@
 syntax: glob
 *.swp
-*.pyc*
-*.pyo*
-*.orig*
-*.yml*
-*.backup*
+*.pyc
+*.pyo
+*.orig

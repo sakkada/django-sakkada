@@ -1,3 +1,3 @@
-include README.md
-recursive-include sakkada *.html *.js *.css *.eot *.svg *.ttf *.woff *.json *.png *.gif *.txt readme
+include README.md LICENSE.txt
+recursive-include sakkada *.html *.js *.css *.png *.gif *.txt readme
 global-exclude *.py[co]

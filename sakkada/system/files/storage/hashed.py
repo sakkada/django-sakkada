@@ -54,10 +54,9 @@ class HashedNameFileSystemStorage(UniqueNameFileSystemStorage):
 
     def _compute_hash_by_name(self, name):
         # generate hash from filename and some random value
-        encoding = sys.getfilesystemencoding()
+        name = '{}#{:.20f}'.format(name, random.random())
         hasher = hashlib.sha1()
-        hasher.update('%s#%.20f' % (name.encode(encoding, 'ignore'),
-                                    random.random(),))
+        hasher.update(name.encode(sys.getfilesystemencoding(), 'ignore'))
         return hasher.hexdigest()
 
     def _compute_hash_by_content(self, content, chunk_size=None):
