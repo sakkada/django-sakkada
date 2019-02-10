@@ -2,15 +2,10 @@ AdminViews lets you add admin views that are not tied to models.
 
 Usage:
  *  Install "django-sakkada".
- *  Replace "django.contrib.admin" with "django.contrib.admin.apps.SimpleAdminConfig"
-    in your installed apps to disable the automatic auto-discovery.
- *  In your root urls.py patch admin module with AdminViewsSite instance
-    and run autodiscover manually:
-        ...
-        admin.site = AdminViewsSite()
-        admin.sites.site = admin.site
-        admin.autodiscover()
-        ...
+ *  Replace "django.contrib.admin" with "main.apps.AdminConfig"
+    in your installed apps to define extended admin Config (see usage example
+    at "apps.py" source code, django 2.1+ allows to define "default_site"
+    value in Config to set default django admin Site class path).
  *  Copy templates "admin/views/*" to your project/application template folder
     or add "sakkada.admin.sites.admin_views" to your INSTALLED_APPS.
  *  Register custom views anywhere in your project with register_view.
@@ -62,22 +57,20 @@ Module contains:
                 provided by django: "addlink", "changelink" and "deletelink").
 
 Example usage:
--------------------------------------------------------------------------------
-urls.py (root):
--------------------------------------------------------------------------------
-from django.conf import settings
-from django.conf.urls import include, url
-from django.conf.urls.static import static
-from django.contrib import admin
-from sakkada.admin.sites.admin_views import AdminViewsSite
+-------------
 
-admin.site = AdminViewsSite()
-admin.sites.site = admin.site
-admin.autodiscover()
+apps.py (usually main.apps, may be placed in any app)
+-------------------------------------------------------------------------------
+from django.apps import AppConfig
+from django.contrib.admin.apps import AdminConfig
 
-urlpatterns = [
-    url(r'^admin/', include(admin.site.urls)),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+class MainConfig(AppConfig):
+    name = 'main'
+
+
+class AdminConfig(AdminConfig):
+    default_site = 'sakkada.admin.sites.admin_views.AdminViewsSite'
 -------------------------------------------------------------------------------
 
 settings.py:
@@ -85,17 +78,19 @@ settings.py:
 # ...
 INSTALLED_APPS = (
     # ...
-    'django.contrib.admin.apps.SimpleAdminConfig',
+    'main.apps.AdminConfig',  #  django admin main config (extended)
+    'main',  # main app itself (if main.__init__ has default_app_config value)
     # ...
-    'sakkada.admin.sites.admin_views', # or copy template to your project dir
+    'sakkada.admin.sites.admin_views',  # or copy template to your project dir
     # ...
 )
 # ...
 -------------------------------------------------------------------------------
 
-anywhere in project:
+admin.py (usually in main.admin, may be placed in any app):
 -------------------------------------------------------------------------------
 from django.contrib import admin
+
 
 def custom_admin_view(request, *args, **kwargs):
     "Some custom admin view."
@@ -104,6 +99,7 @@ def custom_admin_view(request, *args, **kwargs):
 admin.site.register_view('^somepath$', view=custom_admin_view,
                          help_text=custom_admin_view.__doc__,
                          dashboard_extra_context={'link_icon': 'deletelink',})
+
 
 @admin.site.register_view('^anotherpath$', help_text='Some help text')
 def another_admin_view(request, *args, **kwargs):
