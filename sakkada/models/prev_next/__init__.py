@@ -1,5 +1,5 @@
-from django.db import models
-from django.db import connections
+from functools import reduce
+from django.db import models, connections
 
 
 class PrevNextModel(models.Model):
@@ -35,25 +35,30 @@ class PrevNextModel(models.Model):
 
         return ordering
 
-    def _get_next_or_previous_by_order(self, order_by=None, queryset=None,
-                                       cachename=None, is_next=True,
-                                       force=False, as_queryset=False,
-                                       nullsfirst=None):
+    def _get_next_or_prev_by_order(self, order_by=None,
+                                   is_next=True, nulls_first=None,
+                                   queryset=None, as_queryset=False,
+                                   cache_name=None, force=False):
         """Get next or previous element according current queryset ordering"""
-        cachename = '_%s' % cachename if cachename else ''
-        cachename = '__%s%s_nextprev_cache' % ('next' if is_next else 'prev',
-                                               cachename)
+        cache_name = '_%s' % cache_name if cache_name else ''
+        cache_name = '__%s%s_nextprev_cache' % ('next' if is_next else 'prev',
+                                                cache_name)
 
-        if force or not hasattr(self, cachename):
+        if force or not hasattr(self, cache_name):
             # get queryset and current ordering data
-            queryset = (self._default_manager.get_queryset()
+            queryset = (type(self)._default_manager.get_queryset()
                         if not isinstance(queryset, models.query.QuerySet)
                         else queryset)
             queryset = queryset.order_by(*order_by) if order_by else queryset
             ordering = self._get_current_ordering(queryset)
+            if any((not isinstance(i, str) or
+                    '__' in i or '?' in i) for i in ordering):
+                raise ValueError('PrevNextModel at this moment supports only'
+                                 ' local order_by fields defined as strings.')
+
             nodirect = [i.lstrip('-') for i in ordering]
-            nullsfirst = (connections[queryset.db].features.nulls_order_largest
-                          if nullsfirst is None else bool(nullsfirst))
+            nulls_first = (connections[queryset.db].features.nulls_order_largest
+                           if nulls_first is None else bool(nulls_first))
 
             if is_next:
                 directions = [not i.startswith('-') for i in ordering]
@@ -72,7 +77,7 @@ class PrevNextModel(models.Model):
                 # generate filter according each ordering fields and direction
                 if value is None:
                     # ignore to disable loop by null values
-                    if not nullsfirst ^ direction:
+                    if not nulls_first ^ direction:
                         continue
                     key, value = '%s__isnull' % name, False
                     cmps = models.Q(**{key: value,})
@@ -82,7 +87,7 @@ class PrevNextModel(models.Model):
 
                     # add isnull filter for reverse direction on nullable fields
                     null = self.__class__._meta.get_field(name).null
-                    if not direction ^ nullsfirst and null:
+                    if not direction ^ nulls_first and null:
                         cmps = cmps | models.Q(**{'%s__isnull' % name: True,})
 
                 filter.append((models.Q(**equals) & cmps))
@@ -99,14 +104,14 @@ class PrevNextModel(models.Model):
             # do not save to cache if 'nocache'
             if force == 'nocache':
                 return queryset
-            setattr(self, cachename, queryset)
+            setattr(self, cache_name, queryset)
 
-        return getattr(self, cachename)
+        return getattr(self, cache_name)
 
     def get_next_by_order(self, **kwargs):
         kwargs['is_next'] = True
-        return self._get_next_or_previous_by_order(**kwargs)
+        return self._get_next_or_prev_by_order(**kwargs)
 
     def get_prev_by_order(self, **kwargs):
         kwargs['is_next'] = False
-        return self._get_next_or_previous_by_order(**kwargs)
+        return self._get_next_or_prev_by_order(**kwargs)

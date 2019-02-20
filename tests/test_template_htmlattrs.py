@@ -429,17 +429,17 @@ class ParsersProcessorsFunctionsTests(TestCase):
         10  {{ emptyform.required_field|attrs:'id=None type=None name=None' }}{# unchangable attrs (see docs) #}
             ---
 
-         1  <input type="text" name="required_field" class="red" size="40" required id="id_required_field" />
-         2  <input type="text" name="required_field" class="field" size="40" required id="id_required_field" />
-         3  <input type="text" name="required_field" class="field" size="40" required id="id_required_field" />
-         4  <input type="text" name="required_field" class="field" size="40" required id="id_required_field" />
-         5  <input type="text" name="required_field" class="red" size="40" main:class="field" required id="id_required_field" />
-         6  <input type="text" name="required_field" class="red" size="40" main:class="field" required id="id_required_field" />
+         1  <input type="text" name="required_field" class="red" size="40" required id="id_required_field">
+         2  <input type="text" name="required_field" class="field" size="40" required id="id_required_field">
+         3  <input type="text" name="required_field" class="field" size="40" required id="id_required_field">
+         4  <input type="text" name="required_field" class="field" size="40" required id="id_required_field">
+         5  <input type="text" name="required_field" class="red" size="40" main:class="field" required id="id_required_field">
+         6  <input type="text" name="required_field" class="red" size="40" main:class="field" required id="id_required_field">
 
-         7  <input type="text" name="required_field" class="blue red" size="40" required id="id_required_field" />
-         8  <input type="text" name="required_field" class="" size="40" required id="id_required_field" />
-         9  <input type="text" name="required_field" size="40" required id="id_required_field" />
-        10  <input type="text" name="required_field" class="red" size="40" required id="id_required_field" />
+         7  <input type="text" name="required_field" class="blue red" size="40" required id="id_required_field">
+         8  <input type="text" name="required_field" class="" size="40" required id="id_required_field">
+         9  <input type="text" name="required_field" size="40" required id="id_required_field">
+        10  <input type="text" name="required_field" class="red" size="40" required id="id_required_field">
             === {# syntax of additional params #}
         11  {{ emptyform.required_field|attrs:'size=30' }}
         12  {{ emptyform.required_field|attrs:'set::size=30' }}
@@ -453,17 +453,17 @@ class ParsersProcessorsFunctionsTests(TestCase):
         19  {{ emptyform.required_field|attrs:'classlist::class+="blue !green"' }}
         20  {{ emptyform.required_field|attrs:'string::class+="blue !green"' }}
             ---
-        11  <input type="text" name="required_field" class="red" size="30" required id="id_required_field" />
-        12  <input type="text" name="required_field" class="red" size="30" required id="id_required_field" />
-        13  <input type="text" name="required_field" class="red" size="30" required id="id_required_field" />
-        14  <input type="text" name="required_field" class="red" size="40" length="20" required id="id_required_field" />
-        15  <input type="text" name="required_field" class="red" size="30" required id="id_required_field" />
-        16  <input type="text" name="required_field" class="red" size="20" required id="id_required_field" />
+        11  <input type="text" name="required_field" class="red" size="30" required id="id_required_field">
+        12  <input type="text" name="required_field" class="red" size="30" required id="id_required_field">
+        13  <input type="text" name="required_field" class="red" size="30" required id="id_required_field">
+        14  <input type="text" name="required_field" class="red" size="40" length="20" required id="id_required_field">
+        15  <input type="text" name="required_field" class="red" size="30" required id="id_required_field">
+        16  <input type="text" name="required_field" class="red" size="20" required id="id_required_field">
 
-        17  <input type="text" name="required_field" class="blue red" size="40" required id="id_required_field" />
-        18  <input type="text" name="required_field" class="blue red" size="40" required id="id_required_field" />
-        19  <input type="text" name="required_field" class="blue red" size="40" required id="id_required_field" />
-        20  <input type="text" name="required_field" class="red blue !green" size="40" required id="id_required_field" />
+        17  <input type="text" name="required_field" class="blue red" size="40" required id="id_required_field">
+        18  <input type="text" name="required_field" class="blue red" size="40" required id="id_required_field">
+        19  <input type="text" name="required_field" class="blue red" size="40" required id="id_required_field">
+        20  <input type="text" name="required_field" class="red blue !green" size="40" required id="id_required_field">
             === {# namespaces and templates for string values #}
         21  {{ emptyform.required_field|attrs:'size=30' }}
         22  {{ emptyform.required_field|attrs:'size=30 empty::size+=40 required::size+=50' }}
@@ -485,25 +485,25 @@ class ParsersProcessorsFunctionsTests(TestCase):
         35  {{ emptyform.optional_field|attrs:'attr=old-value empty::attr={}--conditional--{?}new-value{?}--another-conditional--{}' }}
         36  {{ emptyform.optional_field|attrs:'size+=50 empty::size=+30' }}
             ---
-        21  <input type="text" name="required_field" class="red" size="30" required id="id_required_field" />
-        22  <input type="text" name="required_field" class="red" size="30 40 50" required id="id_required_field" />
-        23  <input type="text" name="required_field" class="red" size="30 40 50 60" required id="id_required_field" />
-        24  <input type="text" name="required_field" class="red" size="30 40 50 60" required id="id_required_field" />
-        25  <input type="text" name="optional_field" value="optional-value" class="blue" size="30 70" id="id_optional_field" />
+        21  <input type="text" name="required_field" class="red" size="30" required id="id_required_field">
+        22  <input type="text" name="required_field" class="red" size="30 40 50" required id="id_required_field">
+        23  <input type="text" name="required_field" class="red" size="30 40 50 60" required id="id_required_field">
+        24  <input type="text" name="required_field" class="red" size="30 40 50 60" required id="id_required_field">
+        25  <input type="text" name="optional_field" value="optional-value" class="blue" size="30 70" id="id_optional_field">
 
-        26  <input type="text" name="required_field" class="red" size="40" a="4 3 2 1" required id="id_required_field" />
+        26  <input type="text" name="required_field" class="red" size="40" a="4 3 2 1" required id="id_required_field">
 
-        27  <input type="text" name="required_field" class="red" size="40" attr="main empty required" required id="id_required_field" />
-        28  <input type="text" name="optional_field" class="blue" size="40" attr="main empty" id="id_optional_field" />
-        29  <input type="text" name="required_field" class="red" size="40" attr="main empty required error" required id="id_required_field" />
-        30  <input type="text" name="optional_field" value="optional-value" class="blue" size="40" attr="main valid" id="id_optional_field" />
-        31  <input type="text" name="required_field" value="wrong-value" class="red" size="40" attr="main required error" required id="id_required_field" />
-        32  <input type="text" name="optional_field" class="blue" size="40" attr="main empty" id="id_optional_field" />
+        27  <input type="text" name="required_field" class="red" size="40" attr="main empty required" required id="id_required_field">
+        28  <input type="text" name="optional_field" class="blue" size="40" attr="main empty" id="id_optional_field">
+        29  <input type="text" name="required_field" class="red" size="40" attr="main empty required error" required id="id_required_field">
+        30  <input type="text" name="optional_field" value="optional-value" class="blue" size="40" attr="main valid" id="id_optional_field">
+        31  <input type="text" name="required_field" value="wrong-value" class="red" size="40" attr="main required error" required id="id_required_field">
+        32  <input type="text" name="optional_field" class="blue" size="40" attr="main empty" id="id_optional_field">
 
-        33  <input type="text" name="optional_field" class="blue" size="40" attr="old-value--and-conditional-and--new-value--and-conditional-again-and--old-value--and-unconditional-text" id="id_optional_field" />
-        34  <input type="text" name="optional_field" class="blue" size="40" attr="new-value--and-unconditional-text" id="id_optional_field" />
-        35  <input type="text" name="optional_field" class="blue" size="40" attr="old-value--conditional--new-value--another-conditional--old-value" id="id_optional_field" />
-        36  <input type="text" name="optional_field" class="blue" size="30 40 50" id="id_optional_field" />
+        33  <input type="text" name="optional_field" class="blue" size="40" attr="old-value--and-conditional-and--new-value--and-conditional-again-and--old-value--and-unconditional-text" id="id_optional_field">
+        34  <input type="text" name="optional_field" class="blue" size="40" attr="new-value--and-unconditional-text" id="id_optional_field">
+        35  <input type="text" name="optional_field" class="blue" size="40" attr="old-value--conditional--new-value--another-conditional--old-value" id="id_optional_field">
+        36  <input type="text" name="optional_field" class="blue" size="30 40 50" id="id_optional_field">
             ===
         37  {{ emptyform.required_field|attrs:'class=green' }}
         38  {{ emptyform.required_field|attrs:'class+=green' }}
@@ -513,13 +513,13 @@ class ParsersProcessorsFunctionsTests(TestCase):
         42  {{ emptyform.required_field|attrs:'class+="green"'|attrs:'class+="blue !green"' }}
         43  {{ emptyform.required_field|attrs:'class+="green red"' }} {# duplicates are ingored #}
             ---
-        37  <input type="text" name="required_field" class="green" size="40" required id="id_required_field" />
-        38  <input type="text" name="required_field" class="green red" size="40" required id="id_required_field" />
-        39  <input type="text" name="required_field" class="green red" size="40" required id="id_required_field" />
-        40  <input type="text" name="required_field" class="green" size="40" required id="id_required_field" />
-        41  <input type="text" name="required_field" class="" size="40" required id="id_required_field" />
-        42  <input type="text" name="required_field" class="blue red" size="40" required id="id_required_field" />
-        43  <input type="text" name="required_field" class="green red" size="40" required id="id_required_field" />
+        37  <input type="text" name="required_field" class="green" size="40" required id="id_required_field">
+        38  <input type="text" name="required_field" class="green red" size="40" required id="id_required_field">
+        39  <input type="text" name="required_field" class="green red" size="40" required id="id_required_field">
+        40  <input type="text" name="required_field" class="green" size="40" required id="id_required_field">
+        41  <input type="text" name="required_field" class="" size="40" required id="id_required_field">
+        42  <input type="text" name="required_field" class="blue red" size="40" required id="id_required_field">
+        43  <input type="text" name="required_field" class="green red" size="40" required id="id_required_field">
         """
 
         results = self.render_string(checkers)
@@ -540,14 +540,14 @@ class ParsersProcessorsFunctionsTests(TestCase):
          9  {% endwith %}
             ---
 
-         1  <input type="text" name="required_field" class="red" size="40" required id="id_required_field" />
-         2  <input type="text" name="required_field" class="field" size="40" required id="id_required_field" />
-         3  <input type="text" name="required_field" class="red" size="40" placeholder="Required field" required id="id_required_field" />
-         4  <input type="text" name="required_field" class="red" placeholder="REQUIRED FIELD" required id="id_required_field" />
+         1  <input type="text" name="required_field" class="red" size="40" required id="id_required_field">
+         2  <input type="text" name="required_field" class="field" size="40" required id="id_required_field">
+         3  <input type="text" name="required_field" class="red" size="40" placeholder="Required field" required id="id_required_field">
+         4  <input type="text" name="required_field" class="red" placeholder="REQUIRED FIELD" required id="id_required_field">
          5
-         6  <input type="text" name="required_field" class="red" size="40" placeholder="REQUIRED FIELD" disabled required id="id_required_field" />
+         6  <input type="text" name="required_field" class="red" size="40" placeholder="REQUIRED FIELD" disabled required id="id_required_field">
          7
-         8  <input type="text" name="required_field" class="empty field required" size="40" required id="id_required_field" />
+         8  <input type="text" name="required_field" class="empty field required" size="40" required id="id_required_field">
          9
         """
 
@@ -567,19 +567,19 @@ class ParsersProcessorsFunctionsTests(TestCase):
          7  {{ emptyform.required_field|htmlattrs:'input[1:]|class="field"' }}
             ---
 
-         1  <input type="text" name="required_field" class="red" size="40" required id="id_required_field" />
-         2  <input type="text" name="required_field" class="field" size="40" required id="id_required_field" />
-         3  <input type="text" name="required_field" class="field" size="40" required id="id_required_field" />
-         4  <input type="text" name="required_field" class="field" size="40" required id="id_required_field" />
-         5  <input type="text" name="required_field" class="field" size="40" required id="id_required_field" />
-         6  <input type="text" name="required_field" class="field" size="40" required id="id_required_field" />
-         7  <input type="text" name="required_field" class="red" size="40" required id="id_required_field" />
+         1  <input type="text" name="required_field" class="red" size="40" required id="id_required_field">
+         2  <input type="text" name="required_field" class="field" size="40" required id="id_required_field">
+         3  <input type="text" name="required_field" class="field" size="40" required id="id_required_field">
+         4  <input type="text" name="required_field" class="field" size="40" required id="id_required_field">
+         5  <input type="text" name="required_field" class="field" size="40" required id="id_required_field">
+         6  <input type="text" name="required_field" class="field" size="40" required id="id_required_field">
+         7  <input type="text" name="required_field" class="red" size="40" required id="id_required_field">
             === {# withfield filter test #}
          8  {{ emptyform.required_field|htmlattrs:'class="field" empty::class+=empty required::class+=required' }}
          9  {{ emptyform.required_field|withfield:emptyform.required_field|htmlattrs:'class="field" empty::class+=empty required::class+=required' }}
             ---
-         8  <input type="text" name="required_field" class="field" size="40" required id="id_required_field" />
-         9  <input type="text" name="required_field" class="empty field required" size="40" required id="id_required_field" />
+         8  <input type="text" name="required_field" class="field" size="40" required id="id_required_field">
+         9  <input type="text" name="required_field" class="empty field required" size="40" required id="id_required_field">
             === {# slice obj test #}
         10  {{ '<img/><img/><img/>'|htmlattrs:'src="path"' }}
         11  {{ '<img/><img/><img/>'|htmlattrs:'img[0]|src="path"' }}
@@ -616,17 +616,17 @@ class ParsersProcessorsFunctionsTests(TestCase):
         11  {% htmlattrs emptyform.required_field 'input' with emptyform.required_field class="field" required::class+="required" %}
             ---
 
-         1  <input type="text" name="required_field" class="red" size="40" required id="id_required_field" />
-         2  <input type="text" name="required_field" class="field" size="40" required id="id_required_field" />
-         3  <input type="text" name="required_field" class="red" size="40" required id="id_required_field" placeholder="Required field" />
-         4  <input type="text" name="required_field" class="red" required id="id_required_field" placeholder="REQUIRED FIELD" />
+         1  <input type="text" name="required_field" class="red" size="40" required id="id_required_field">
+         2  <input type="text" name="required_field" class="field" size="40" required id="id_required_field">
+         3  <input type="text" name="required_field" class="red" size="40" required id="id_required_field" placeholder="Required field">
+         4  <input type="text" name="required_field" class="red" required id="id_required_field" placeholder="REQUIRED FIELD">
          5
-         6  <input type="text" name="required_field" class="red" size="40" required id="id_required_field" placeholder="REQUIRED FIELD" disabled />
+         6  <input type="text" name="required_field" class="red" size="40" required id="id_required_field" placeholder="REQUIRED FIELD" disabled>
          7
-         8  <input type="text" name="required_field" class="empty field required" size="40" required id="id_required_field" />
+         8  <input type="text" name="required_field" class="empty field required" size="40" required id="id_required_field">
          9
-        10  <input type="text" name="required_field" class="field" size="40" required id="id_required_field" />
-        11  <input type="text" name="required_field" class="field required" size="40" required id="id_required_field" />
+        10  <input type="text" name="required_field" class="field" size="40" required id="id_required_field">
+        11  <input type="text" name="required_field" class="field required" size="40" required id="id_required_field">
         """
 
         results = self.render_string(checkers)
