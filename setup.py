@@ -84,7 +84,13 @@ setup(
     ],
 
     # Extras (optional features with their own dependencies)
-    extras_require={},
+    extras_require={
+        'testing': [
+            'coverage>=3.7.0',
+            'flake8>=2.2.0',
+            'isort>=4.2.5',
+        ],
+    },
 
     python_requires='>=3.5,<4',
 

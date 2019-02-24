@@ -71,8 +71,7 @@ DEBUG = settings.DEBUG
 CONTAINER = '__htmlattrs_container__'
 NAMESPACES = ['main',]
 
-ATTR_NAME_PARSER_CONFIG = getattr(settings,
-                                  'HTMLATTRS_ATTR_NAME_PARSER_CONFIG', {
+ATTR_NAME_PARSER_CONFIG = getattr(settings, 'HTMLATTRS_ATTR_NAME_PARSER_CONFIG', {
     # order for values checking if no param name specified, also all priority
     # params will be presented in result params (first value is default)
     'priority': ['ns', 'method', 'type',],
@@ -141,6 +140,7 @@ def import_or_local_setting(value):
         import_string(value) if '.' in value else globals()[value]
     )
 
+
 def attrs_parser(extra, strict=False):
     """Parse attrs string into tuple of (name, sign, value,)."""
     values = {u'None': None, u'': True,}
@@ -149,6 +149,7 @@ def attrs_parser(extra, strict=False):
     extra = ([(i[0], i[1], i[3] or values.get(i[4], i[4]),)
               for i in extra]) if extra else []
     return extra
+
 
 def attrs_processor(extra, attrs, original_attrs=None, container=None):
     """Process html tag attrs with extra new values."""
@@ -189,7 +190,7 @@ def attrs_processor(extra, attrs, original_attrs=None, container=None):
     for namespace in nsordering:
         # ignore absent namespace attrs (should be defined both in field
         # and in attrs value to be processed)
-        if not namespace in namespaces or not namespace in ns:
+        if namespace not in namespaces or namespace not in ns:
             continue
         namespace = ns[namespace]
         for key, attr in namespace.items():
@@ -208,6 +209,7 @@ def attrs_processor(extra, attrs, original_attrs=None, container=None):
                 attrs[key] = attr_value_processors[attr[2]['type']](attr, attrs)
 
     return attrs
+
 
 def attr_name_parser(value, config):
     """Parse attr name according attr name parser config."""
@@ -233,7 +235,7 @@ def attr_name_parser(value, config):
                 raise ValueError('htmlattrs: value "%s" is invalid in'
                                  ' "%s" attr.' % (pvalue, value))
         # validate "priority" params values by "values"
-        elif pname in strict and not pvalue in values[pname]:
+        elif pname in strict and pvalue not in values[pname]:
             if DEBUG:
                 raise ValueError('htmlattrs: value "%s" is invalid in'
                                  ' "%s" attr, allowed values are "%s".'
@@ -251,12 +253,13 @@ def attr_name_parser(value, config):
     if 'extra' in params and params['extra'] in values:
         if DEBUG:
             raise ValueError('htmlattrs: extra param name "%s" is invalid in'
-                            ' "%s" attr, it should not be one of "%s".'
-                            % (pvalue, value, ', '.join(values.keys()),))
+                             ' "%s" attr, it should not be one of "%s".'
+                             % (pvalue, value, ', '.join(values.keys()),))
         else:
             name = params = None  # ignore attr
 
     return (name, params,)
+
 
 def regex_with_attrs_parser(extra):
     """
@@ -278,7 +281,7 @@ def regex_with_attrs_parser(extra):
     original = extra
     if extra[0] != '<':
         extra = '<|>%s' % extra
-    elif not '>' in extra:
+    elif '>' not in extra:
         if DEBUG:
             raise ValueError('htmlattrs: htmlattrs filter regex definition'
                              ' error - ">" char missed')
@@ -291,6 +294,7 @@ def regex_with_attrs_parser(extra):
         regex, extra = '[a-z]{1}\\w*', original
     regex, sliceobj = regex_parser(regex)
     return extra, regex, sliceobj
+
 
 def regex_parser(regex):
     """
@@ -316,12 +320,13 @@ def regex_parser(regex):
             # stop param in slice is default, see also
             # http://docs.python.org/library/functions.html#slice
             len(sliceobj) == 1 and sliceobj.append(sliceobj[0]+1 or None)
-        except ValueError as e:
+        except ValueError:
             regex = original  # revert original regex
             sliceobj = (None,)
     else:
         sliceobj = (None,)
     return regex, slice(*sliceobj)
+
 
 def monkey_patch_bound_field(field):
     """
@@ -398,7 +403,7 @@ def string_value_processor(attr, attrs):
     # process pattern anchors
     tpl, prev = [i.split('{?}') for i in template.split('{}')], bool(previous)
     for i in range(1, len(tpl)):
-        l, r, rwhole = tpl[i-1], tpl[i], len(tpl[i])<3 or i==len(tpl)-1
+        l, r, rwhole = tpl[i-1], tpl[i], len(tpl[i]) < 3 or i == len(tpl)-1
 
         if len(l) > 1:  # left segment
             l[:] = [''.join(l[0:None if prev else 1])]
@@ -413,6 +418,7 @@ def string_value_processor(attr, attrs):
     value = reduce(lambda x, y: x.replace(*y[1:]),
                    STRING_VALUE['replacements'], value)
     return value
+
 
 def classlist_value_processor(attr, attrs):
     """Process class list value type."""
@@ -433,6 +439,7 @@ def classlist_value_processor(attr, attrs):
     # return sorted class list joined by space
     return u' '.join(sorted(clist)).strip()
 
+
 def base_namespaces_handler(boundfield):
     """
     Common namespaces handler.
@@ -448,10 +455,11 @@ def base_namespaces_handler(boundfield):
     boundfield.data and not boundfield.errors and namespaces.append('valid')
     return namespaces
 
+
 def flatatt(attrs):
     # similar to builtin flatatt, but without sorting final attrs
     data = [(' {}' if value is True else ' {}="{}"', (attr, value,),)
-            for attr, value in attrs.items() if not value in (False, None,)]
+            for attr, value in attrs.items() if value not in (False, None,)]
     return mark_safe(''.join(format_html(template, *tuple(args))
                              for template, args in data))
 
@@ -482,10 +490,10 @@ def attrs_tag(parser, token):
     django tags).
     """
     errors = {
-        'invalid_attr' : ('htmlattrs: attrs template tag error - attrs should'
-                          ' be in "\\w-_.:[=value]" format, not "%s".'),
-        'missing_args' : ('htmlattrs: attrs template tag error - too few'
-                          ' reveived arguments, should be at least one.')
+        'invalid_attr': ('htmlattrs: attrs template tag error - attrs should'
+                         ' be in "\\w-_.:[=value]" format, not "%s".'),
+        'missing_args': ('htmlattrs: attrs template tag error - too few'
+                         ' reveived arguments, should be at least one.'),
     }
 
     bits, asvar = token.split_contents(), None
@@ -563,10 +571,10 @@ def htmlattrs_tag(parser, token):
     django tags).
     """
     errors = {
-        'invalid_attr' : ('htmlattrs: htmlattrs template tag error - attrs'
-                          ' should be in "\\w-_.:[=value]" format, not "%s".'),
-        'missing_args' : ('htmlattrs: attrs template tag error - too few'
-                          ' reveived arguments, should be at least two.')
+        'invalid_attr': ('htmlattrs: htmlattrs template tag error - attrs'
+                         ' should be in "\\w-_.:[=value]" format, not "%s".'),
+        'missing_args': ('htmlattrs: attrs template tag error - too few'
+                         ' reveived arguments, should be at least two.'),
     }
 
     bits, asvar = token.split_contents(), None
@@ -683,6 +691,7 @@ def attrs(field, extra=None):
 
     return field
 
+
 @register.filter
 def htmlattrs(html, extra=None):
     """Html tags attrs template filter."""
@@ -727,12 +736,14 @@ def htmlattrs(html, extra=None):
     # return safe compiled html string
     return mark_safe(u''.join(compiled))
 
+
 @register.filter
 def withfield(html, field=None):
     """Template filter for providing BoundField into htmlattrs filter."""
     if not isinstance(field, BoundField):
         return html
     return {'html': html, 'field': field, 'unique': CONTAINER,}
+
 
 @register.filter(name='field_type')
 def field_type(field):
@@ -744,6 +755,7 @@ def field_type(field):
     return (field.field.__class__.__name__.lower()
             if isinstance(field, BoundField) else '')
 
+
 @register.filter(name='widget_type')
 def widget_type(field):
     """
@@ -753,6 +765,7 @@ def widget_type(field):
     """
     return (field.field.widget.__class__.__name__.lower()
             if isinstance(field, BoundField) else '')
+
 
 @register.filter
 def widget_render_context(field, extra=None):
@@ -777,7 +790,7 @@ def widget_render_context(field, extra=None):
     name = field.html_initial_name if only_initial else field.html_name
 
     # get attrs, try to get attrs from monkeypathed field first
-    attrs = container = getattr(field, CONTAINER, {}).get('attrs', {})
+    attrs = getattr(field, CONTAINER, {}).get('attrs', {})
     attrs = field.build_widget_attrs(attrs, widget)
     auto_id = field.auto_id
     if auto_id and 'id' not in attrs and 'id' not in widget.attrs:

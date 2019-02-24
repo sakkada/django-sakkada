@@ -1,7 +1,7 @@
-from django.conf import settings
-from django.core.mail.backends.base import BaseEmailBackend
-from subprocess import Popen, PIPE
 import threading
+from subprocess import Popen, PIPE
+from django.core.mail.backends.base import BaseEmailBackend
+
 
 class EmailBackend(BaseEmailBackend):
     def __init__(self, fail_silently=False, **kwargs):
@@ -16,7 +16,8 @@ class EmailBackend(BaseEmailBackend):
 
     def send_messages(self, email_messages):
         """Sends one or more EmailMessage objects and returns the number of email messages sent."""
-        if not email_messages: return
+        if not email_messages:
+            return
         self._lock.acquire()
         try:
             num_sent = 0
@@ -38,7 +39,7 @@ class EmailBackend(BaseEmailBackend):
             ps.stdin.flush()
             ps.stdin.close()
             return not ps.wait()
-        except:
+        except Exception:
             if not self.fail_silently:
                 raise
             return False

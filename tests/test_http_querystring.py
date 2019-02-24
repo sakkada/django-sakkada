@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from django.http import QueryDict
 from django.test import TestCase, RequestFactory
 from sakkada.http.querystring import QueryString

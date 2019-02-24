@@ -200,7 +200,7 @@ class FkeyListAdmin(FkeyListParentAdmin, admin.ModelAdmin):
             if not value.isdigit():
                 try:
                     item = self.model._default_manager.get(pk=value)
-                except ValueError, self.model.DoesNotExist:
+                except (ValueError, self.model.DoesNotExist):
                     return HttpResponseRedirect('../../%s' % value)
 
         if not hasattr(self, view_name):

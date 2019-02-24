@@ -27,6 +27,11 @@ class PrevNextModel(models.Model):
         # else cut any fields after pk (because pk is unique)
         ordering = [i.replace('pk', pk) if i in ['pk', '-pk'] else i
                     for i in ordering]
+        if any((not isinstance(i, str) or '__' in i or '?' in i)
+               for i in ordering):
+            raise ValueError('PrevNextModel at this moment supports only'
+                             ' local order_by fields defined as strings.')
+
         nodirect = [i.lstrip('-') for i in ordering]
         if pk in nodirect:
             ordering = ordering[0:nodirect.index(pk)+1]
@@ -41,20 +46,16 @@ class PrevNextModel(models.Model):
                                    cache_name=None, force=False):
         """Get next or previous element according current queryset ordering"""
         cache_name = '_%s' % cache_name if cache_name else ''
-        cache_name = '__%s%s_nextprev_cache' % ('next' if is_next else 'prev',
-                                                cache_name)
+        cache_name = '_%s%s_nextprev_cache' % ('next' if is_next else 'prev',
+                                               cache_name)
 
-        if force or not hasattr(self, cache_name):
+        if force or not hasattr(self, cache_name) or as_queryset:
             # get queryset and current ordering data
             queryset = (type(self)._default_manager.get_queryset()
                         if not isinstance(queryset, models.query.QuerySet)
                         else queryset)
             queryset = queryset.order_by(*order_by) if order_by else queryset
             ordering = self._get_current_ordering(queryset)
-            if any((not isinstance(i, str) or
-                    '__' in i or '?' in i) for i in ordering):
-                raise ValueError('PrevNextModel at this moment supports only'
-                                 ' local order_by fields defined as strings.')
 
             nodirect = [i.lstrip('-') for i in ordering]
             nulls_first = (connections[queryset.db].features.nulls_order_largest

@@ -3,3 +3,6 @@ syntax: glob
 *.pyc
 *.pyo
 *.orig
+
+syntax: regexp
+^(?!sakkada)

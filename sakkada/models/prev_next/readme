@@ -5,7 +5,7 @@ and specific filtering by ordered fields.
 
 Note: Mixin works only if all order_by fields defined as string values (no any
       expressions) and are local fields (no __ inside ordering field name) and
-      no contains randomizer ('?' value).
+      do not contains randomizer ('?' value).
 ToDo: Realize expressions processing, at least local fields and direct forward
       relations, etc.
 

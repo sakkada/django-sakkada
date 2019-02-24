@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-import os
 import re
-
+import django
 from django.test import TestCase
 from django import forms
 from django.core import validators
@@ -239,7 +237,7 @@ class ParsersProcessorsFunctionsTests(TestCase):
     def test_regex_with_attrs_parser(self):
         checkers = [
             ('class="red"',
-             ('class="red"', 'a-z{1}\w*', slice(None,),),),  # default regex
+             ('class="red"', r'[a-z]{1}\w*', slice(None,),),),  # default regex
             ('input|class="red"',
              ('class="red"', 'input', slice(None,),),),
             ('input[1:]|class="blue"',
@@ -383,7 +381,7 @@ class ParsersProcessorsFunctionsTests(TestCase):
         self.assertTrue('valueis10' in container['config']['values']['ns'])
 
 
-class ParsersProcessorsFunctionsTests(TestCase):
+class TemplateFiltersTagsTests(TestCase):
     maxDiff = None
 
     def setUp(self):
@@ -403,10 +401,13 @@ class ParsersProcessorsFunctionsTests(TestCase):
             'invalidform': self.invalidform,
             'emptyform': self.emptyform,
         })
+        content = template.render(context).strip()
+        if django.VERSION[:2] == (2,0,):
+            content = re.sub('<(input[^/>]+)>', '<\\1 />', content)
+
         # get blocks, divided by === and ---
         blocks = [[j.strip() for j in re.split('\n\s*---\s*\n', i)]
-                  for i in re.split('\n\s*===\s*\n',
-                                    template.render(context).strip())]
+                  for i in re.split('\n\s*===\s*\n', content)]
         # get blocks, divided by === and ---
         blocks = [([i.strip() for i in left.split('\n')],
                    [i.strip() for i in right.split('\n')],)

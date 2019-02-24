@@ -26,10 +26,10 @@ def paginator(queryset, number=None, per_page=10, pagination=True):
 
     # try to paginate
     try:
-        page    = paginator.page(number)
+        page = paginator.page(number)
     except (EmptyPage, InvalidPage):
-        number  = paginator.num_pages
-        page    = paginator.page(number)
+        number = paginator.num_pages
+        page = paginator.page(number)
 
     # attach pagination list or None
     if pagination and pagination is True:

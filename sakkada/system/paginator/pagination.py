@@ -8,19 +8,20 @@ class PaginationBase(object):
 
     def __init__(self, page, paginate=True):
         if isinstance(page, dict):
-            pages   = page.get('pages') or 1 if 'pages' in page else None
-            pages   = pages or (page['count']//page['perpage'] +
-                                (page['count'] % page['perpage'] and 1))
-            number  = page['page'] if 1 <= page['page'] <= pages else 1
+            pages = page.get('pages') or 1 if 'pages' in page else None
+            pages = pages or (page['count'] // page['perpage'] +
+                              (page['count'] % page['perpage'] and 1))
+            number = page['page'] if 1 <= page['page'] <= pages else 1
         else:
-            pages   = page.paginator.num_pages
-            number  = page.number
+            pages = page.paginator.num_pages
+            number = page.number
 
         self.pages, self.number = pages, number
         paginate and self.paginate()
 
     def paginate(self):
         raise NotImplementedError
+
 
 class Pagination(PaginationBase):
     """
@@ -77,16 +78,16 @@ class Pagination(PaginationBase):
         start_dot = start > 1
         end_dot = end < pages
 
-        self.pages      = list()
-        self.num_pages  = pages
+        self.pages = list()
+        self.num_pages = pages
 
-        self.prev       = number - 1 if number > 1 else None
-        self.first      = 1 if start_dot else None
-        self.dots_left  = start-1 if start_dot and start-1>1 else None
-        self.current    = number
-        self.dots_right = end+1 if end_dot and end+1<pages else None
-        self.last       = pages if end_dot else None
-        self.next       = number + 1 if number < pages else None
+        self.prev = number - 1 if number > 1 else None
+        self.first = 1 if start_dot else None
+        self.dots_left = start-1 if start_dot and start-1 > 1 else None
+        self.current = number
+        self.dots_right = end+1 if end_dot and end+1 < pages else None
+        self.last = pages if end_dot else None
+        self.next = number + 1 if number < pages else None
 
         for i in range(start, end+1):
             self.pages.append({'current': i == number, 'number': i,})

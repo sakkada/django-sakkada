@@ -125,7 +125,7 @@ class AjaxListAdmin(admin.ModelAdmin):
             setattr(obj, attr, value)
             obj.save()
             data = {'status': 'OK', 'value': value,}
-        except Exception, e:
+        except Exception as e:
             return HttpResponseServerError('Unable to change "%s" on "%s"'
                                            % (attr, obj))
 

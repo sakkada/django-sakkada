@@ -1,11 +1,10 @@
 import os
 import re
 import sys
-from optparse import make_option
 from django.db import models
 from django.apps import apps
 from django.conf import settings
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.core.files.storage import FileSystemStorage
 from django.utils.functional import LazyObject
 
@@ -34,8 +33,8 @@ class Command(BaseCommand):
             )
         )
 
-        parser.add_argument('-l', '--list', dest='list', default='fs', help="Response "
-            "data type (fs/db/dirs/nodirs): "
+        parser.add_argument('-l', '--list', dest='list', default='fs', help=(
+            "Response data type (fs/db/dirs/nodirs): "
             "fs=files on filesystem that no longer have an db entry; "
             "fsall=all files on filesystem; "
             "db=filefields in database that no longer have an fs entry; "
@@ -43,21 +42,23 @@ class Command(BaseCommand):
             "dbfs=filefields in database that have an db entry; "
             "dirs=directories for search files; "
             "nodirs=directories excluded from search list by regex. Default 'fs'."
-        )
+        ))
 
     def handle(self, *args, **options):
-        #filename = None if options['filename'] == 'none' else options['filename']
-        result  = options['list']
-        regex   = None if options['regex'] == 'none' else options['regex']
+        # filename = None if options['filename'] == 'none' else options['filename']
+        result = options['list']
+        regex = None if options['regex'] == 'none' else options['regex']
         if result not in ['fs', 'fsall', 'db', 'dball', 'dbfs', 'dirs', 'nodirs']:
-            sys.stdout.write("Use only 'fs', 'fsall', 'db', 'dball', 'dbfs', "
-                   "'dirs', 'nodirs' for -l param."
-                   "\nUse 'python manage.py help files_clean' for help message.")
+            sys.stdout.write(
+                "Use only 'fs', 'fsall', 'db', 'dball', 'dbfs', "
+                "'dirs', 'nodirs' for -l param."
+                "\nUse 'python manage.py help files_clean' for help message.")
             return
         if not regex:
-            sys.stdout.write("Regex param (-r) is required."
-                   "\nUse 'python manage.py help files_clean' for help message."
-                   "\nExample: \"^upload/(?!upload(/|$)).*$\"")
+            sys.stdout.write(
+                "Regex param (-r) is required."
+                "\nUse 'python manage.py help files_clean' for help message."
+                "\nExample: \"^upload/(?!upload(/|$)).*$\"")
             return
 
         registry, dbfilesmeta, dbfiles, fsfiles = {}, {}, [], []
@@ -86,13 +87,13 @@ class Command(BaseCommand):
         # get database files list data
         for model in apps.get_models():
             fields = dict([(f.name, f) for f in model._meta.fields if isinstance(f, models.FileField)])
-            
+
             for name, field in fields.items():
                 storage = get_storage_by_field(field)
                 if not isinstance(storage, FileSystemStorage):
                     # TODO: allow to use other storage classes (may be for dbonly commands)
                     sys.stderr.write('Illegal fileField storage class "%s" (%s, %s).' %
-                                         (storage.__class__.__name__, model.__name__, name))
+                                     (storage.__class__.__name__, model.__name__, name))
                     fields.__delitem__(name)
                 location = storage.location.replace('\\', '/')
                 if not location.startswith(media_root):
@@ -100,9 +101,10 @@ class Command(BaseCommand):
                                      'Current:    %s\nMust be in: %s' %
                                      (model.__name__, name, location, media_root))
                     fields.__delitem__(name)
-            
-            if not fields or not model.objects.count(): continue
-            registry[model.__name__] = {'class': model, 'fields': fields}
+
+            if not fields or not model.objects.count():
+                continue
+            registry[model.__name__] = {'class': model, 'fields': fields,}
 
         for data in registry.values():
             model, fields = data['class'], data['fields']
@@ -146,7 +148,7 @@ class Command(BaseCommand):
             else:
                 difference = list(dbfiles.intersection(fsfiles))
             difference.sort()
-            
+
             sys.stdout.write('model_name\ttb_name\tid\tfield_name\tpath\tcount')
             for i in difference:
                 sys.stderr.write(

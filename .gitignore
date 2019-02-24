@@ -2,3 +2,7 @@
 *.swp
 *.py[co]
 *.orig
+
+# ignore everything except project
+/*
+!/sakkada
