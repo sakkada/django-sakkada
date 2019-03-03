@@ -1,9 +1,12 @@
 import os
 from django.utils.safestring import mark_safe
+from django.contrib.admin.options import FORMFIELD_FOR_DBFIELD_DEFAULTS
+from django.core.exceptions import ImproperlyConfigured
 from django.db.models import signals
 from django.db.models.fields.files import (FieldFile, ImageFieldFile,
                                            FileField, ImageField)
 from .forms import ClearableFormFileField, ClearableFormImageField
+from .widgets import ClearableFileInput, ClearableImageFileInput
 
 
 # field files
@@ -25,43 +28,36 @@ class AdvancedFieldFile(FieldFile):
 
 
 class AdvancedImageFieldFile(AdvancedFieldFile, ImageFieldFile):
-    @property
-    def image_tag(self):
-        return mark_safe(u'<img src="%s" alt="%s" width="%s" height="%s">'
-                         % (self.url, self.name, self.width, self.height))
+    def image_tag(self, max_width=200):
+        return mark_safe(u'<img src="%s" alt="%s" width="%s">'
+                         % (self.url, self.name, min(max_width, self.width),))
 
 
 # file fields
 class AdvancedFileField(FileField):
     attr_class = AdvancedFieldFile
+    form_class = ClearableFormFileField
 
-    def __init__(self, verbose_name=None, clearable=False, erasable=False,
-                 **kwargs):
-        super(AdvancedFileField, self).__init__(verbose_name=verbose_name,
-                                                **kwargs)
+    def __init__(self, verbose_name=None, name=None,
+                 clearable=False, erasable=False, **kwargs):
         self.clearable, self.erasable = clearable, erasable
+        super().__init__(verbose_name, name, **kwargs)
 
         if not self.blank and self.clearable:
-            raise ValueError('Non blank FileField can not be clearable.')
+            raise ImproperlyConfigured(
+                'Non blank FileField can not be clearable.')
 
     def formfield(self, **kwargs):
-        kwargs['form_class'] = ClearableFormFileField
+        kwargs['form_class'] = self.form_class
         kwargs['clearable'] = self.clearable
-        return super(AdvancedFileField, self).formfield(**kwargs)
-
-    def south_field_triple(self):
-        """Return a suitable description of this field for South."""
-        from south.modelsinspector import introspector
-        field_class = "django.db.models.fields.files.FileField"
-        args, kwargs = introspector(self)
-        return (field_class, args, kwargs)
+        return super().formfield(**kwargs)
 
     def save_form_data(self, instance, data):
         if data == '__delete__' and self.blank and self.clearable:
             self.__pre_save_action__ = '__delete__'
         else:
             self.__pre_save_action__ = '__erase_previous__'
-            super(AdvancedFileField, self).save_form_data(instance, data)
+            super().save_form_data(instance, data)
 
     def pre_save(self, instance, add):
         file = getattr(instance, self.name)
@@ -77,11 +73,11 @@ class AdvancedFileField(FileField):
             orig and orig != file and self._safe_erase(orig, instance,
                                                        save=False)
 
-        return super(AdvancedFileField, self).pre_save(instance, add)
+        return super().pre_save(instance, add)
 
     # erasable deletion
     def contribute_to_class(self, cls, name):
-        super(AdvancedFileField, self).contribute_to_class(cls, name)
+        super().contribute_to_class(cls, name)
         signals.post_delete.connect(self.post_delete, sender=cls)
 
     def post_delete(self, instance, sender, **kwargs):
@@ -92,15 +88,16 @@ class AdvancedFileField(FileField):
         # safe file storage real erase
         if not file:
             return
+
         count = instance.__class__._default_manager
-        count = count.filter(**{self.name: file.name,}) \
-                     .exclude(pk=instance.pk).count()
+        count = count.exclude(
+            pk=instance.pk).filter(**{self.name: file.name,}).count()
 
         # if no other object of this type references the file
         # and it's not the default value for future objects,
         # delete it from the backend
-        not count and file.name != self.default and self.erasable \
-                  and file.delete(save=save)
+        if not count and file.name != self.default and self.erasable:
+            file.delete(save=save)
 
         # try to close the file, so it doesn't tie up resources.
         file.closed or file.close()
@@ -108,21 +105,21 @@ class AdvancedFileField(FileField):
 
 class AdvancedImageField(AdvancedFileField, ImageField):
     attr_class = AdvancedImageFieldFile
+    form_class = ClearableFormImageField
 
-    def __init__(self, verbose_name=None, show_image=True, **kwargs):
-        super(AdvancedImageField, self).__init__(verbose_name=verbose_name,
-                                                 **kwargs)
+    def __init__(self, verbose_name=None, name=None, show_image=True, **kwargs):
         self.show_image = show_image
+        super().__init__(verbose_name, name, **kwargs)
 
     def formfield(self, **kwargs):
-        kwargs['form_class'] = ClearableFormImageField
+        kwargs['form_class'] = self.form_class
         kwargs['clearable'] = self.clearable
         kwargs['show_image'] = self.show_image
-        return super(AdvancedFileField, self).formfield(**kwargs)
+        return super().formfield(**kwargs)
 
-    def south_field_triple(self):
-        """Return a suitable description of this field for South."""
-        from south.modelsinspector import introspector
-        field_class = "django.db.models.fields.files.ImageField"
-        args, kwargs = introspector(self)
-        return (field_class, args, kwargs)
+
+# Register fields to use custom widgets in the Admin
+FORMFIELD_FOR_DBFIELD_DEFAULTS.update({
+    AdvancedFileField: {'widget': ClearableFileInput,},
+    AdvancedImageField: {'widget': ClearableImageFileInput,},
+})

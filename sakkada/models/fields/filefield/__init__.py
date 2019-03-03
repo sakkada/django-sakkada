@@ -1,5 +1,3 @@
-from django import VERSION
-from .fields import AdvancedFileField, AdvancedImageField
-
-if VERSION < (1, 2, 5,):
-    raise Exception('Extended FileField require Django 1.2.5 or greater.')
+from .fields import AdvancedFileField, AdvancedImageField  # noqa
+from .forms import ClearableFormFileField, ClearableFormImageField  # noqa
+from .widgets import ClearableFileInput, ClearableImageFileInput  # noqa

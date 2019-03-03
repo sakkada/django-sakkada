@@ -25,6 +25,7 @@ lint.text:
 	isort --check-only --diff --recursive sakkada tests > .isort.text
 
 test:
+	python tests/manage.py makemigrations
 	python tests/manage.py test tests
 
 test-all:

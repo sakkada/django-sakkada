@@ -1,29 +1,41 @@
 AdvancedFileField based on django FileField.
-AdvancedFileField partially based on ImrpovedFileField
-          (http://django.org.ua/wiki/ImrpovedFileField)
-Used for Django 1.2.5 or later.
+AdvancedFileField partially based on http://django.org.ua/wiki/ImrpovedFileField
+
 
 Contains:
     AdvancedFileField
-    AdvancedImageField (same, but mixed with ImageField)
+    AdvancedImageField
 
-Dependencies:
- * Django 1.2.5 or later
 
 Functionality added:
- * 'erasable' optional argument to erase file from fs on delete model, default False
- * 'clearable' optional argument - show delete checkbox in generated forms which allows
-                to delete filefield value on form save if field is not required (blank)
- * 'extension' property (value with dot, for example: '.ext')
+ * 'erasable'   - field optional argument - erase file from fs on delete model,
+                  default to False (after djagno 1.2.5 django does not erase
+                  files from file system while deleting file value)
+ * 'clearable'  - field  optional argument - show delete checkbox in forms,
+                  which allows to delete filefield value on form save
+                  if field is not required (blank)
+
+Both AdvancedFieldFile and AdvancedImageFieldFile have the following
+additional properties:
+ * 'extension'  - extension of file (value with dot, for example: '.ext')
+ * 'basename'   - basename of file ('b.c' if file path is '/a/b.c')
+ * 'basename_splitext' - tuple with filename without extension and extension
+                  itself (('b', '.c',) tuple if file path is '/a/b.c')
+AdvancedImageField additionaly has method:
+ * 'image_tag'  - returns img html tag, receives max_width keyword argument
+                  (default to 200) - max value in width property of img tag
+
 
 Usage:
- * import AdvancedFileField to your models module and use as usual FileField
+ * import AdvancedFileField to your models and use as usual FileField
  * optionally set 'erasable' to erase files from fs on delete
- * optionally set 'clearable' to allow users clear only filefield, not whole object
+ * optionally set 'clearable' to allow users clear filefield value with checkbox
 
-Simple example of usage in model:
---------------------------------
 
+Simple example of usage:
+-----------------------
+models.py:
+---------
 from sakkada.models.fields.filefield import fields
 from sakkada.system import validators
 
@@ -38,11 +50,20 @@ class MyModel(models.Model)
         ]
     )
 
-    attach  = fields.AdvancedImageField(
-        _('Attach'), blank=False, null=False, upload_to="upload/images/%Y/%m/",
+    image = fields.AdvancedImageField(
+        _('Image'), blank=False, null=False, upload_to="upload/images/%Y/%m/",
         clearable=False, erasable=True,
         validators=[
             validators.MimetypeValidator(['image/jpeg', 'image/png',]),
             validators.FilesizeValidator(max=1024*1024*5),
         ]
     )
+
+admin.py:
+--------
+class MyModelAdmin(admin.ModelAdmin):
+    list_display = ('id', 'image_tag',)
+
+    def image_tag(self, obj):
+        return obj.image.image_tag(max_width=220) if obj.image else ''
+    image_tag.short_description = _('image')
