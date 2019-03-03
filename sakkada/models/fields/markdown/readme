@@ -1,0 +1,63 @@
+Markdown model fields "MarkdownTextField" and "MarkdownCharField".
+Markdown form field "MarkdownCharFormField".
+Markdown string value container "MarkdownStringValue".
+
+
+Contains:
+--------
+    MarkdownStringValue - builtin str based class, allows to render self
+                          value with markdown library
+    MarkdownCharFormField - form CharField based field, returns as cleaned_data
+                            value MarkdownStringValue instance
+    MarkdownAttribute - deffered attribte class, wraps string values with
+                        MarkdownStringValue
+    BaseMarkdownModelField - base markdown model field, as form field, returns
+                             as field's value MarkdownStringValue instance
+    MarkdownCharField - markdown model field, based on CharField
+    MarkdownTextField - markdown model field, based on TextField
+
+
+Usage:
+-----
+ *  Install 'sakkada.admin.editors.markdown' for django admin form widgets
+ *  Import desired model field to your models module and use as usual field
+ *  Optionally set 'cache_field' to save generatged html in other field
+ *  Optionally set 'value_class' to set extened MarkdownStringValue class as
+    markdown value class.
+
+
+Simple example of usage:
+-----------------------
+models.py:
+---------
+from sakkada.models.fields.markdown import (
+    MarkdownStringValue, MarkdownTextField, MARKDOWN_HELP_TEXT)
+
+
+class ExtendedMarkdownStringValue(MarkdownStringValue):
+    def markdown(self)
+        # do some staff here
+        return super().markdown().replace('<br>', '<hr>')
+
+
+class MyModel(models.Model)
+    text = MarkdownTextField(
+        'Text', max_length=1024*10, blank=True,
+        cache_field='text_html', value_class=ExtendedMarkdownStringValue,
+        help_text=MARKDOWN_HELP_TEXT)
+    text_html = models.TextField(
+        'Text (html)', max_length=1024*20, blank=True, editable=False)
+
+python code:
+-----------
+> mm = MyModel.objects.first()
+> mm.text               # MarkdownStringValue instance or None
+> mm.text_html          # rendered html string
+> mm.text = '**bold**'  # MarkdownStringValue instance with defined str
+> mm.text.markdown()    # result is "<p><strong>bold</strong></p>"
+
+templates:
+---------
+{{ my_model.text }} - markdown raw text (it is MarkdownStringValue instance)
+{{ my_model.text.markdown }} - markdown rendered html (render on the fly)
+{{ my_model.text_html }} - markdown rendered html (cached in db value)

@@ -9,7 +9,7 @@
   $.fn.extend({
     markdownPreview: function(options) {
       // generate markdown preview
-      var defaults = {tabString: '    '};
+      var defaults = {tabString: '  '};
       var opts = $.extend(defaults, options);
       var template = ''
         + '<div class="editor-markdown">'

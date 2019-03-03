@@ -41,7 +41,7 @@ class MarkdownWidget(Widget):
         return base + Media(js=js, css=css)
 
 
-class MarkdownInput(TextInput, MarkdownWidget):
+class MarkdownTextInput(TextInput, MarkdownWidget):
     pass
 
 

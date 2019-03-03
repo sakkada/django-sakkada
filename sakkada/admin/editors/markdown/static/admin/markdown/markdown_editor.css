@@ -20,3 +20,11 @@
   padding: 0;
   margin: 0;
 }
+
+/* django admin fixes */
+form .aligned .editor-markdown-preview ul {
+  margin-left: 1.5em;
+}
+form .aligned .editor-markdown-preview ul li {
+  list-style-type: unset;
+}
