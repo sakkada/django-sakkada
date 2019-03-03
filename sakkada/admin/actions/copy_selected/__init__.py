@@ -81,5 +81,6 @@ def copy_selected(modeladmin, request, queryset):
         context
     )
 
+
 copy_selected.allowed_permissions = ('add',)
 copy_selected.short_description = gettext_lazy('Copy selected %(verbose_name_plural)s')

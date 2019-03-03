@@ -2,7 +2,6 @@ import json
 from django.http import HttpResponse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
-from django.core.exceptions import PermissionDenied
 from django.contrib.admin.views.main import ChangeList
 from django.contrib import admin
 from django.conf import settings
@@ -21,6 +20,7 @@ def _build_tree_structure(queryset):
          ...
     """
     all_nodes = {'order':[], 'nodes': {},}
+
     def add_as_descendant(n, p):
         all_nodes['nodes'][n]['descendants'].append(p)
         n_parent_id = all_nodes['nodes'][n]['parent']
@@ -32,7 +32,7 @@ def _build_tree_structure(queryset):
                                                opts.level_attr):
         all_nodes['order'].append(pk)
         all_nodes['nodes'][pk] = {'id': pk, 'parent': parent_id, 'level': lvl,
-                                    'children': [], 'descendants': [],}
+                                  'children': [], 'descendants': [],}
         if parent_id:
             all_nodes['nodes'][parent_id]['children'].append(pk)
             add_as_descendant(parent_id, pk)

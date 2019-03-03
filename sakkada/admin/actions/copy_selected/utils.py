@@ -2,6 +2,7 @@ from collections import defaultdict
 from django.db import router
 from django.contrib.admin.utils import quote
 from django.urls import reverse
+from django.urls.exceptions import NoReverseMatch
 from django.utils.html import format_html
 from django.utils.text import capfirst
 from sakkada.models.copying import Collector

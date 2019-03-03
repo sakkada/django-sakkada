@@ -5,6 +5,8 @@ Usage:
  *  Copy templates "admin/*" to your project/application template folder
     or add "sakkada.admin.actions.copy_selected" to your INSTALLED_APPS.
  *  Add "copy_selected" action to your ModelAdmin "actions".
+ *  Optionaly, define "copy_selected_handlers" in ModelAdmin to configure
+    Collector behaviour.
 
 Example usage:
 -------------------------------------------------------------------------------

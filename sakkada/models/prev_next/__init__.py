@@ -100,7 +100,7 @@ class PrevNextModel(models.Model):
             # return as (queryset, filter and ordering params) if as_queryset
             if as_queryset:
                 return queryset, filter, ordering
-            queryset = list(queryset[0:1]) # preventing count call
+            queryset = list(queryset[0:1])  # preventing count call
             queryset = queryset[0] if queryset else None
             # do not save to cache if 'nocache'
             if force == 'nocache':

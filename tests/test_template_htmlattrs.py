@@ -406,8 +406,8 @@ class TemplateFiltersTagsTests(TestCase):
             content = re.sub('<(input[^/>]+)>', '<\\1 />', content)
 
         # get blocks, divided by === and ---
-        blocks = [[j.strip() for j in re.split('\n\s*---\s*\n', i)]
-                  for i in re.split('\n\s*===\s*\n', content)]
+        blocks = [[j.strip() for j in re.split(r'\n\s*---\s*\n', i)]
+                  for i in re.split(r'\n\s*===\s*\n', content)]
         # get blocks, divided by === and ---
         blocks = [([i.strip() for i in left.split('\n')],
                    [i.strip() for i in right.split('\n')],)

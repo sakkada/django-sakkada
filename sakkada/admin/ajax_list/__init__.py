@@ -2,7 +2,6 @@ import json
 from django.http import (HttpResponse, HttpResponseBadRequest,
                          HttpResponseServerError, HttpResponseForbidden,
                          HttpResponseNotFound)
-from django.core.exceptions import PermissionDenied
 from django.contrib import admin
 from django.conf import settings
 from django.forms.widgets import Media
@@ -18,9 +17,10 @@ def ajax_field_cell(item, attr, text=''):
 
     return text
 
+
 def ajax_field_value(item, attr, value):
-    attrs = {'data-item': item.pk, 'data-attr': attr,}
     return item._meta.get_field(attr).formfield().to_python(value)
+
 
 def ajax_list_field(attr, short_description=u''):
     """
@@ -52,16 +52,16 @@ class AjaxListAdmin(admin.ModelAdmin):
         )
         css = {'all': ('admin/ajax_list/styles.css',),}
 
-        base = getattr(super(AjaxListAdmin, self), 'media', Media())
+        base = getattr(super(), 'media', Media())
         return base + Media(js=js, css=css)
 
     def __init__(self, *args, **kwargs):
         """AjaxBool Admin initialisation"""
-        super(AjaxListAdmin, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         opts = self.model._meta
         self.change_list_template = [
             'admin/ajax_list/%s/%s/change_list.html' % (opts.app_label,
-                                                             opts.model_name),
+                                                        opts.model_name),
             'admin/ajax_list/%s/change_list.html' % opts.app_label,
             'admin/ajax_list/change_list.html',
         ]
@@ -79,8 +79,7 @@ class AjaxListAdmin(admin.ModelAdmin):
         extra_context.update({
             'ajax_list_parent_template': self.ajax_list_parent_template,
         })
-        return super(AjaxListAdmin, self).changelist_view(request, extra_context,
-                                                          *args, **kwargs)
+        return super().changelist_view(request, extra_context, *args, **kwargs)
 
     def _collect_ajax_fields(self):
         """
@@ -103,7 +102,7 @@ class AjaxListAdmin(admin.ModelAdmin):
             item = int(request.POST.get('item', None))
             attr = str(request.POST.get('attr', None))
             value = str(request.POST.get('value', None))
-        except:
+        except Exception:
             return HttpResponseBadRequest('Invalid request')
 
         if not self.has_change_permission(request, None):
@@ -112,7 +111,7 @@ class AjaxListAdmin(admin.ModelAdmin):
 
         self._collect_ajax_fields()
 
-        if not attr in self._ajax_editable_fields:
+        if attr not in self._ajax_editable_fields:
             return HttpResponseBadRequest('Not a valid attribute "%s"' % attr)
 
         try:
@@ -125,7 +124,7 @@ class AjaxListAdmin(admin.ModelAdmin):
             setattr(obj, attr, value)
             obj.save()
             data = {'status': 'OK', 'value': value,}
-        except Exception as e:
+        except Exception:
             return HttpResponseServerError('Unable to change "%s" on "%s"'
                                            % (attr, obj))
 

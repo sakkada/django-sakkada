@@ -1,7 +1,8 @@
 from django.contrib import messages
 from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import render, redirect
-from django.core.cache import InvalidCacheBackendError, caches
+from django.core.cache import caches
+
 
 def cache_clear_view(request, template_name=None, extra_context=None,
                      admin_site=None):

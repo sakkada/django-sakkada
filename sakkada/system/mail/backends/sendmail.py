@@ -5,7 +5,7 @@ from django.core.mail.backends.base import BaseEmailBackend
 
 class EmailBackend(BaseEmailBackend):
     def __init__(self, fail_silently=False, **kwargs):
-        super(EmailBackend, self).__init__(fail_silently=fail_silently)
+        super().__init__(fail_silently=fail_silently)
         self._lock = threading.RLock()
 
     def open(self):
@@ -15,7 +15,10 @@ class EmailBackend(BaseEmailBackend):
         pass
 
     def send_messages(self, email_messages):
-        """Sends one or more EmailMessage objects and returns the number of email messages sent."""
+        """
+        Sends one or more EmailMessage objects
+        and returns the number of email messages sent.
+        """
         if not email_messages:
             return
         self._lock.acquire()
@@ -34,7 +37,8 @@ class EmailBackend(BaseEmailBackend):
         if not email_message.recipients():
             return False
         try:
-            ps = Popen(["sendmail"]+list(email_message.recipients()), stdin=PIPE)
+            ps = Popen(["sendmail"] + list(email_message.recipients()),
+                       stdin=PIPE)
             ps.stdin.write(email_message.message().as_string())
             ps.stdin.flush()
             ps.stdin.close()

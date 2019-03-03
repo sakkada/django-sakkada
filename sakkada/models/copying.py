@@ -136,9 +136,8 @@ def CASCADE_SELF(collector, field, sub_objs, using, reverse_dependency=False):
 def SET(value, deferred=False):
     def set_on_copy(collector, field, sub_objs, using,
                     reverse_dependency=False):
-        if callable(value) and not deferred:
-            value = value()
-        collector.add_field_update(field, value, sub_objs)
+        field_value = value() if callable(value) and not deferred else value
+        collector.add_field_update(field, field_value, sub_objs)
     return set_on_copy
 
 
@@ -246,8 +245,7 @@ class Collector:
         # 1-N GenericRel relations aren't candidates for copy.
         return [
             f for f in opts.get_fields(include_hidden=True)
-            if (f in opts.private_fields and
-                hasattr(field, 'bulk_related_objects'))
+            if f in opts.private_fields and hasattr(f, 'bulk_related_objects')
         ]
 
     def get_key_for_field(self, field):
@@ -426,7 +424,7 @@ class Collector:
             with open(path, 'rb') as image:
                 file = SimpleUploadedFile(image.name, image.read())
                 file.content_type = mimetypes.guess_type(path)[0]
-        except IOError as e:
+        except IOError:
             if not quiet:
                 raise
             file = None

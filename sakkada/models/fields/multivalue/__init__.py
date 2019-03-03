@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # some ideas taken from https://github.com/ulule/django-separatedvaluesfield
 # some ideas taken from https://github.com/sakkada/django-eavkit
-from __future__ import unicode_literals
 from django import forms
 from django.db import models
 from django.core.validators import MaxLengthValidator
@@ -50,7 +49,7 @@ class BaseMultipleValuesFormField(forms.CharField):
     def prepare_value(self, value):
         # value convertation from python list to string
         if isinstance(value, (list, tuple)):
-            value = self.delimiter.join([unicode(i) for i in value])
+            value = self.delimiter.join([str(i) for i in value])
         return value
 
     def has_changed(self, initial, data):
@@ -135,7 +134,7 @@ class BaseMultipleValuesField(object):
                                 return
                     elif vitem == option_key:
                         return
-                raise exceptions.ValidationError(
+                raise forms.ValidationError(
                     self.error_messages['invalid_choice'],
                     code='invalid_choice',
                     params={'value': vitem,},
@@ -143,11 +142,11 @@ class BaseMultipleValuesField(object):
 
         # check whole value as usual
         if value is None and not self.null:
-            raise exceptions.ValidationError(
+            raise forms.ValidationError(
                 self.error_messages['null'], code='null')
 
         if not self.blank and value in self.empty_values:
-            raise exceptions.ValidationError(
+            raise forms.ValidationError(
                 self.error_messages['blank'], code='blank')
 
     def get_prep_value(self, value):

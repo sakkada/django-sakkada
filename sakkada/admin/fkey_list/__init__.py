@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-import re
 from urllib2 import urlparse
 from functools import update_wrapper
 from django.urls import reverse, resolve, Resolver404
@@ -33,7 +31,7 @@ class FkeyListChangeList(ChangeList):
         if hasattr(request, 'FKEY_LIST'):
             self.fkey_list_data = request.FKEY_LIST
 
-    def url_for_result(self, result): # (child fkey_list)
+    def url_for_result(self, result):  # (child fkey_list)
         if self.fkey_list_data:
             view = getattr(self.fkey_list_data['link_name'], 'change_fkeylist')
             args = (self.fkey_list_data['fkey_name'],
@@ -44,7 +42,7 @@ class FkeyListChangeList(ChangeList):
 
         return super(FkeyListChangeList, self).url_for_result(result)
 
-    def get_queryset(self, request): # (parent fkey_list)
+    def get_queryset(self, request):  # (parent fkey_list)
         # add count annotations if fkey_list_annotate_counts defined
         qs = super(FkeyListChangeList, self).get_queryset(request)
         annotations = self.model_admin.fkey_list_annotate_counts
@@ -104,7 +102,7 @@ def fkey_list_link(name, model_set=None, fkey_name=None,
                      modelset.model._meta.verbose_name_plural.capitalize(),)
             count = ''
             if with_count:
-                count = (with_count if isinstance(with_count, basestring) else
+                count = (with_count if isinstance(with_count, str) else
                          '%s__count' % modelset.field.related_query_name())
                 count = (getattr(item, count) if hasattr(item, count) else
                          modelset.count())
@@ -112,9 +110,10 @@ def fkey_list_link(name, model_set=None, fkey_name=None,
             result = (u'<a href="%s" title="Show related «%s»">%s</a>%s'
                       % (link_list, names[1], names[1], count))
             result = (u'<nobr>%s <a href="%s" title="Create related «%s»">'
-                      u'<img src="%s"></a></nobr>' % (result, link_add, names[0],
-                      static(u'admin/img/icon-addlink.svg'))
-                      if with_add_link else result)
+                      u'<img src="%s"></a></nobr>' % (
+                          result, link_add, names[0],
+                          static(u'admin/img/icon-addlink.svg')
+                      ) if with_add_link else result)
 
         return mark_safe(result)
     link.short_description = '%s list' % name
@@ -199,7 +198,7 @@ class FkeyListAdmin(FkeyListParentAdmin, admin.ModelAdmin):
             value = args[2]
             if not value.isdigit():
                 try:
-                    item = self.model._default_manager.get(pk=value)
+                    self.model._default_manager.get(pk=value)
                 except (ValueError, self.model.DoesNotExist):
                     return HttpResponseRedirect('../../%s' % value)
 
@@ -271,7 +270,7 @@ class FkeyListAdmin(FkeyListParentAdmin, admin.ModelAdmin):
 
             # 1 - if link_deps value contains non-empty string (url), redirect
             # rescue "add new after saving" and "return to changelist" redirects
-            if isinstance(newlocation, basestring):
+            if isinstance(newlocation, str):
                 break
 
             # 2 - if link_deps value is True, process each case directly

@@ -7,7 +7,7 @@ from main.models import PrevNextTestModel as Model
 class QueryStringTests(TestCase):
     def setUp(self):
         super().setUp()
-        # settings.DEBUG = True
+        settings.DEBUG = False  # set to True here to show sql queries
 
         Model.objects.create(title='a', slug='a', weight=500, nweight=4)
         Model.objects.create(title='a', slug='b', weight=500, nweight=None)
@@ -18,7 +18,7 @@ class QueryStringTests(TestCase):
 
     def tearDown(self):
         super().tearDown()
-        # settings.DEBUG = False
+        settings.DEBUG = False
 
     def test_get_current_ordering(self):
         qset_default = Model.objects.all()
