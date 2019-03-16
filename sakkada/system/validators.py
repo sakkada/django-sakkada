@@ -7,12 +7,14 @@ from django.core.files.uploadedfile import UploadedFile
 from django.template.defaultfilters import filesizeformat
 
 
-def isuploaded(value):
+def isuploaded(value, getfile=False):
     # note: value may be FieldFile or UploadedFile (model field or form field
-    #       validation respectively), if FieldFile - get _file attr as value
+    #       validation respectively), if value is FieldFile - get _file attr
+    #       as value (usually InMemoryUploadedFile instance)
     if isinstance(value, FieldFile):
         value = getattr(value, '_file', None)
-    return isinstance(value, UploadedFile)
+    return ((value if getfile else True)
+            if isinstance(value, UploadedFile) else None)
 
 
 class BaseValidator(object):
@@ -22,7 +24,7 @@ class BaseValidator(object):
         raise NotImplementedError
 
     def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.code == other.code
+        raise NotImplementedError
 
 
 @deconstructible
@@ -53,6 +55,13 @@ class FilesizeValidator(BaseValidator):
                 code=self.code
             )
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, self.__class__) and
+            self.code == other.code and
+            self.min == other.min and self.max == other.max
+        )
+
 
 @deconstructible
 class MimetypeValidator(BaseValidator):
@@ -61,18 +70,28 @@ class MimetypeValidator(BaseValidator):
     def __init__(self, mimetypes=None):
         if not mimetypes:
             raise ValueError(u'There is not any allowed mimetypes for check.')
+        if isinstance(mimetypes, str):
+            mimetypes = (mimetypes,)
         self.mimetypes = mimetypes
 
     def __call__(self, value):
-        if not isuploaded(value):
+        value = isuploaded(value, getfile=True)
+        if not value:
             return
-        mimetype = getattr(value.file, 'content_type', None)
+        mimetype = getattr(value, 'content_type', None)
         if mimetype and mimetype not in self.mimetypes:
             raise ValidationError(
                 _('Filetype "%(curr)s" is not allowed. Available types - [%(list)s].')
                 % {'curr': mimetype, 'list': str(', '.join(self.mimetypes))},
                 code=self.code
             )
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, self.__class__) and
+            self.code == other.code and
+            self.mimetypes == other.mimetypes
+        )
 
 
 @deconstructible
@@ -82,6 +101,8 @@ class ExtensionValidator(BaseValidator):
     def __init__(self, extensions=None):
         if not extensions:
             raise ValueError(u'There is not any allowed extensions for check.')
+        if isinstance(extensions, str):
+            extensions = (extensions,)
         self.extensions = extensions
 
     def __call__(self, value):
@@ -95,3 +116,10 @@ class ExtensionValidator(BaseValidator):
                 % {'curr': extension, 'list': str(', '.join(self.extensions))},
                 code=self.code
             )
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, self.__class__) and
+            self.code == other.code and
+            self.extensions == other.extensions
+        )

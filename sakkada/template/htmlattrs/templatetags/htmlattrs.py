@@ -558,7 +558,7 @@ class AttrsNode(Node):
         if self.asvar:
             context[self.asvar] = boundfield
             return ''
-        return boundfield
+        return force_text(boundfield)
 
 
 @register.tag(name='htmlattrs')
