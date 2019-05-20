@@ -1,24 +1,31 @@
-ModelAdmin for django-mptt based tree. (Based on FEINCMS tree editor,
-see http://www.feinheit.ch/, https://github.com/matthiask/feincms)
+ModelAdmin for django-mptt or django-treebeard based tree.
+(Based on FEINCMS tree editor, see
+ http://www.feinheit.ch/, https://github.com/matthiask/feincms)
 
 Usage:
 -----
  *  Install "django-sakkada"
- *  Import "sakkada.admin.mptt_tree.MpttTreeAdmin"
- *  Set "MpttTreeAdmin" as class of admin model
- *  Set extended template name in "mptt_tree_parent_template" property if required
- *  Copy static "admin/*" to your project static folder
-    or add "sakkada.admin.mptt_tree" to your INSTALLED_APPS.
- *  Copy templates "admin/mptt_tree/*" to your project/application template folder
-    or add "sakkada.admin.mptt_tree" to your INSTALLED_APPS.
+ *  Add "sakkada.admin.tree_list" to your INSTALLED_APPS
+    for accessing static files and templates
+ *  Import "sakkada.admin.tree_list.MpttTreeAdmin" or "TreeBeardTreeAdmin"
+ *  Set "MpttTreeAdmin" or "TreeBeardTreeAdmin" as class of admin model
+    for "mptt" or "treebeard" models respectively
+ *  Set extended template name in "tree_list_parent_template"
+    property if required
 
 Example usage:
 -------------
 from django.contrib import admin
-from sakkada.admin.mptt_tree import MpttTreeAdmin
+from sakkada.admin.tree_list import MpttTreeAdmin, TreeBeardTreeAdmin
 
 
-class SomeTreeAdmin(MpttTreeAdmin, admin.ModelAdmin):
-    mptt_tree_parent_template = 'admin/mptt_tree_parent_template.html'
+class SomeMpttTreeAdmin(MpttTreeAdmin, admin.ModelAdmin):
+    tree_list_parent_template = 'admin/tree_list_parent_template.html'
 
-admin.site.register(Some, SomeTreeAdmin)
+
+class SomeTreeBeardTreeAdmin(TreeBeardTreeAdmin, admin.ModelAdmin):
+    tree_list_parent_template = 'admin/tree_list_parent_template.html'
+
+
+admin.site.register(SomeMpttModel, SomeMpttTreeAdmin)
+admin.site.register(SomeTreeBeardModel, SomeTreeBeardTreeAdmin)

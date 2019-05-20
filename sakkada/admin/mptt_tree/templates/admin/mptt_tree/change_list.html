@@ -1,31 +1,24 @@
-{% extends mptt_tree_parent_template|default:"admin/change_list.html" %}
-
+{% extends tree_list_parent_template|default:"admin/change_list.html" %}
 {% load i18n %}
 
-{% block extrahead %}{{ block.super }}
+
+{% block extrahead %}
+{{ block.super }}
 <script type="text/javascript">
 (function($) {
-    // get current state of the tree
-    mptt_tree.tree_structure = {{ mptt_tree_structure|default:"{}" }};
-
-    $(function() {
-        {% if is_popup %}
-        // resize window a bit, the default size is too small for the tree column
-        window.resizeTo(Math.min(window.outerWidth+300, screen.availWidth), window.outerHeight);
-        {% endif %}
-    });
+  // get current state of the tree
+  tree_list.tree_structure = {{ tree_list_structure|default:"{}" }};
 })(django.jQuery);
 </script>
 {% endblock %}
 
-{% block filters %}
+
+{% block object-tools-items %}
+<li>
+  <a id="treelist-expand-collapse-tree" href="#"
+     title="{% trans 'Press Ctrl+Shift+Right to expand and Ctrl+Shift+Left to collapse tree.'% }">
+    {% trans 'Expand/Collapse tree' %}
+  </a>
+</li>
 {{ block.super }}
-{% if cl.has_filters %}
-<div id="mtree-changelist-filter">
-<h2>{% trans 'Shortcuts' %}</h2>
-<ul class="changelist-filter-shortcuts">
-    <li><a id="mtree-expand-collapse-tree" href="#">{% trans 'Expand/Collapse tree' %}</a></li>
-</ul>
-</div>
-{% endif %}
 {% endblock %}
