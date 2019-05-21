@@ -20,8 +20,8 @@ Installation:
         "fkey_list_parent_delete_selected_confirmation_template",
         "fkey_list_parent_object_history_template",
     ) properties if required in child model admin
- *  Copy templates "admin/fkey_list/*" to your project/application template
-    folder or add "sakkada.admin.fkey_list" to your INSTALLED_APPS.
+ *  Add "sakkada.admin.fkey_list" to your INSTALLED_APPS
+    for accessing "admin/fkey_list/*" templates
 
 
 Usage:
@@ -54,7 +54,7 @@ FkeyListParentAdmin:
         List of foreign key reverse model_set names for count annotation:
         - fkey_list_annotate_counts
 
-FkeyListAdmin:
+FkeyListAdmin and FkeyMpttAdmin:
     Properties:
         Parent template name for each supported admin view:
         - fkey_list_parent_change_list_template
@@ -65,6 +65,9 @@ FkeyListAdmin:
 
         List of foreign key reverse model_set names for count annotation:
         - fkey_list_annotate_counts
+
+        Method or property for root link/links (h2 tag) definition:
+        - fkey_list_root_link
 
 Note:
     FkeyListAdmin.__init__ appends admin with _fkeylist views and urls, that's
@@ -176,6 +179,9 @@ class SomeNodeAdmin(FkeyListParentAdmin, admin.ModelAdmin):
 class SomeItemAdmin(FkeyListAdmin, admin.ModelAdmin):
     fkey_list_parent_change_list_template = 'admin/fkey_list_parent_change_list.html'
 
+    def fkey_list_root_link(self, request, *args, **kwargs):
+        return mark_safe('All <a href="/some/root/link/">Some root link</a>')
+
 
 admin.site.register(SomeNode, SomeNodeAdmin)
 admin.site.register(SomeItem, SomeItemAdmin)
@@ -199,3 +205,6 @@ History:
         separated parent model admin functionality in FkeyListParentAdmin,
             FkeyListAdmin (FkeyMpttAdmin) still contains both parent
             and child functionality
+0.0.9 - added fkey_list_root_link - method returning html text
+        (or list of strings) to be placed before parent link in h2 tag (also
+        fkey_list_root_link may be string or list of strings).

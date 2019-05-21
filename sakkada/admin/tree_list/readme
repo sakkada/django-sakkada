@@ -6,7 +6,7 @@ Usage:
 -----
  *  Install "django-sakkada"
  *  Add "sakkada.admin.tree_list" to your INSTALLED_APPS
-    for accessing static files and templates
+    for accessing "admin/tree_list/*" static files and templates
  *  Import "sakkada.admin.tree_list.MpttTreeAdmin" or "TreeBeardTreeAdmin"
  *  Set "MpttTreeAdmin" or "TreeBeardTreeAdmin" as class of admin model
     for "mptt" or "treebeard" models respectively

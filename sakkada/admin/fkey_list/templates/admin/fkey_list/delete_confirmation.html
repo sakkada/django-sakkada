@@ -18,6 +18,7 @@
 
 {% block content_title %}
 {% if request.FKEY_LIST %}<h2 style="font-weight: 300; font-size: 18px; margin: 0 0 12px 0;">
+  {% for link in request.FKEY_LIST.root_link %}{{ link }} /{% endfor %}
   All <a href="{{ request.FKEY_LIST.list_link }}">{{ request.FKEY_LIST.fkey_opts.verbose_name_plural|capfirst }}</a>
   / <a href="{% url request.FKEY_LIST.link_name.changelist_fkeylist request.FKEY_LIST.fkey_name request.FKEY_LIST.id|admin_urlquote %}">{{ opts.verbose_name_plural|capfirst }}</a>
   in {{ request.FKEY_LIST.fkey_opts.verbose_name|capfirst }} <span style="font-weight: 400;">«</span><a href="{{ request.FKEY_LIST.item_link }}">{{ request.FKEY_LIST.item }}</a><span style="font-weight: 400;">»</span>
