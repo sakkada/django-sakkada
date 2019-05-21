@@ -8,10 +8,8 @@ Usage:
  *  Set "AjaxListAdmin" as class of admin model
  *  Define "ajax_list_field" properties for required fields
  *  Set extended template name in "ajax_list_parent_template" property if required
- *  Copy static "admin/*" to your project static folder
-    or add "sakkada.admin.ajax_list" to your INSTALLED_APPS.
- *  Copy templates "admin/ajax_list/*" to your project/application template folder
-    or add "sakkada.admin.ajax_list" to your INSTALLED_APPS.
+ *  Add "sakkada.admin.ajax_list" to your INSTALLED_APPS
+    for accessing "admin/ajax_list/*" static files and templates
 
 Example usage:
 -------------
@@ -25,5 +23,6 @@ class SomeAjaxListAdmin(AjaxListAdmin, admin.ModelAdmin):
     ajax_site = ajax_list_field('site', _('site'))
 
     ajax_list_parent_template = 'admin/ajax_list_parent_template.html'
+
 
 admin.site.register(Some, SomeAjaxListAdmin)

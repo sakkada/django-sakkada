@@ -51,15 +51,25 @@
             type: "POST",
             dataType: "json",
             data: {
-                '__cmd__': 'ajax_field_change',
+                'ajax_list': 'ajax_field_change',
                 'item': item,
                 'attr': attr,
                 'value': value,
                 'csrfmiddlewaretoken': Cookies.get('csrftoken')
             },
             success: function (data) {
-                set_ajax_field_value(data.value);
-                self.disabled = false;
+                var error_message = '';
+                if (!data) {
+                    error_message = 'No data received in request.';
+                } else if(data.error == undefined) {
+                    set_ajax_field_value(data.value);
+                    self.disabled = false;
+                } else {
+                    error_message = data.error
+                }
+                if (error_message) {
+                    alert('Unable to update field "' + attr + '": ' + error_message);
+                }
             },
             error: function(xhr, status, err) {
                 alert('Unable to update field "' + attr + '": ' + xhr.responseText);
@@ -83,9 +93,9 @@
 
         // Show/hide ajax fields
         // set ajax_field_title class to thead>th's
-        var thead = document.querySelectorAll('#result_list tr')[0];
+        var thead = document.querySelectorAll('#result_list thead tr')[0];
         Array.prototype.forEach.call(
-            document.querySelectorAll('#result_list tr')[1].querySelectorAll('.ajax_field'),
+            document.querySelectorAll('#result_list tbody tr')[0].querySelectorAll('.ajax_field'),
             function(el, index, collection) {
                 var index = Array.prototype.indexOf.call(el.parentNode.parentNode.childNodes, el.parentNode);
                 thead.querySelectorAll('th')[index].classList.add('ajax_field_title');
@@ -110,44 +120,38 @@
             );
         }
 
-        var django_admin_ajax_list_hide = Cookies.get('django_admin_ajax_list_hide') == 'true';
-        django_admin_ajax_list_hide && handle_table_cells('hide')
-        $(window).unload(function() {
-            Cookies.set('django_admin_ajax_list_hide', django_admin_ajax_list_hide+'', {'path':'/'});
+        var ajax_list_hide = Cookies.get('ajax_list') == 'hide';
+        ajax_list_hide && handle_table_cells('hide')
+        $(window).on('unload', function() {
+            Cookies.set('ajax_list', ajax_list_hide ? 'hide' : 'show',
+                        {path: document.location.pathname});
         });
-
-        // show shortcuts
-        var ajaxlist_filter = $('#ajaxlist-changelist-filter');
-        if (ajaxlist_filter.length) {
-            // move changelist-filter-shortcuts into changelist-filter
-            var shortcuts_list = $('#changelist-filter .changelist-filter-shortcuts');
-            if (shortcuts_list.length) {
-                shortcuts_list.append(ajaxlist_filter.find('ul li'))
-            } else {
-                $('#changelist-filter').prepend(ajaxlist_filter.children());
-            }
-            ajaxlist_filter.remove();
-        }
 
         document.getElementById('ajaxlist-showhide-fields').addEventListener('click', function (event) {
             event.preventDefault();
             if ($('#result_list .ajax_field_title:eq(0):visible').length) {
-                django_admin_ajax_list_hide = true;
+                ajax_list_hide = true;
                 handle_table_cells('hide');
             } else {
-                django_admin_ajax_list_hide = false;
+                ajax_list_hide = false;
                 handle_table_cells('show');
             }
         });
 
         // attach keydown/keypress events on table lines
-        $('#result_list tr').keypress(function(event) {
+        $('body').keydown(function(event) {
             var status = false;
-            switch(event.charCode) {
-                case 42: document.getElementById('ajaxlist-showhide-fields').dispatchEvent(new CustomEvent('click'));
-                         break;  // *
-                default: status = true;
-                         break;
+            switch(event.keyCode) {
+                case 220:
+                    if (event.ctrlKey && event.shiftKey) {
+                        document.getElementById('ajaxlist-showhide-fields').dispatchEvent(new CustomEvent('click'));
+                    } else {
+                       status = true;
+                    }
+                    break; // \
+                default:
+                    status = true;
+                    break;
             }
             return status;
         });

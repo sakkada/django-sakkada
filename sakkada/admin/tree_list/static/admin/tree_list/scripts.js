@@ -152,7 +152,7 @@
       $(window).on('unload', function() {
         // save a list of open nodes state across reloads
         Cookies.set('tree_list', tree_list.tree_state.join('-'),
-              {path: document.location.pathname});
+                    {path: document.location.pathname});
       })
     }
 

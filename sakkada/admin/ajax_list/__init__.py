@@ -1,21 +1,16 @@
-import json
-from django.http import (HttpResponse, HttpResponseBadRequest,
-                         HttpResponseServerError, HttpResponseForbidden,
-                         HttpResponseNotFound)
 from django.contrib import admin
 from django.conf import settings
 from django.forms.widgets import Media
+from django.http import JsonResponse
 from django.utils.safestring import mark_safe
 
 
 def ajax_field_cell(item, attr, text=''):
-    attrs = {'data-item': item.pk, 'data-attr': attr,}
-    text = item._meta.get_field(attr).formfield() \
-               .widget.render(attr, getattr(item, attr), attrs=attrs)
-    text = (u'<div class="ajax_field" id="wrap_%s_%d">%s</div>'
-            % (attr, item.id, text,))
-
-    return text
+    return '<div class="ajax_field" id="wrap_%s_%d">%s</div>' % (
+        attr, item.id, item._meta.get_field(attr).formfield().widget.render(
+            attr, getattr(item, attr),
+            attrs={'data-item': item.pk, 'data-attr': attr,}),
+    )
 
 
 def ajax_field_value(item, attr, value):
@@ -28,14 +23,14 @@ def ajax_list_field(attr, short_description=u''):
     of your ModelAdmin class and put the variable name into list_display.
     Example:
         class SomeAjaxListAdmin(AjaxListAdmin):
-            toggle_active = ajax_field('active', _('is active'))
+            toggle_active = ajax_list_field('active', _('is active'))
             list_display = ('pk', 'toggle_active',)
     """
-    def _fn(self, item):
+    def wrapper(self, item):
         return mark_safe(ajax_field_cell(item, attr))
-    _fn.short_description = short_description or attr
-    _fn.ajax_editable_field = attr
-    return _fn
+    wrapper.short_description = short_description or attr
+    wrapper.ajax_editable_field = attr
+    return wrapper
 
 
 class AjaxListAdmin(admin.ModelAdmin):
@@ -50,30 +45,24 @@ class AjaxListAdmin(admin.ModelAdmin):
             'admin/js/cookies.js',
             'admin/ajax_list/scripts.js',
         )
-        css = {'all': ('admin/ajax_list/styles.css',),}
 
         base = getattr(super(), 'media', Media())
-        return base + Media(js=js, css=css)
+        return base + Media(js=js)
 
     def __init__(self, *args, **kwargs):
-        """AjaxBool Admin initialisation"""
         super().__init__(*args, **kwargs)
-        opts = self.model._meta
         self.change_list_template = [
-            'admin/ajax_list/%s/%s/change_list.html' % (opts.app_label,
-                                                        opts.model_name),
-            'admin/ajax_list/%s/change_list.html' % opts.app_label,
+            'admin/ajax_list/%s/%s/change_list.html' % (
+                self.model._meta.app_label, self.model._meta.model_name),
+            'admin/ajax_list/%s/change_list.html' % self.model._meta.app_label,
             'admin/ajax_list/change_list.html',
         ]
 
     def changelist_view(self, request, extra_context=None, *args, **kwargs):
         """Handle the changelist view, add ajax_list_field support."""
-
-        # handle common AJAX requests
         if request.is_ajax():
-            cmd = request.POST.get('__cmd__')
-            if cmd == 'ajax_field_change':
-                return self._ajax_field_change(request)
+            if request.POST.get('ajax_list', None) == 'ajax_field_change':
+                return self.ajax_field_change(request)
 
         extra_context = extra_context or {}
         extra_context.update({
@@ -81,7 +70,7 @@ class AjaxListAdmin(admin.ModelAdmin):
         })
         return super().changelist_view(request, extra_context, *args, **kwargs)
 
-    def _collect_ajax_fields(self):
+    def collect_ajax_fields(self):
         """
         Collect all fields marked as ajax editable. We do not
         want the user to be able to edit arbitrary fields by crafting
@@ -96,36 +85,34 @@ class AjaxListAdmin(admin.ModelAdmin):
             attr = getattr(attr, 'ajax_editable_field', None)
             attr and self._ajax_editable_fields.update({attr: True})
 
-    def _ajax_field_change(self, request):
-        """Handle an AJAX ajax_field request"""
+    def ajax_field_change(self, request):
+        """Handle an AJAX ajax_field request."""
         try:
             item = int(request.POST.get('item', None))
             attr = str(request.POST.get('attr', None))
             value = str(request.POST.get('value', None))
         except Exception:
-            return HttpResponseBadRequest('Invalid request')
+            return JsonResponse({'error': 'Invalid request.'})
 
         if not self.has_change_permission(request, None):
-            return HttpResponseForbidden('You do not have permission'
-                                         ' to update "%s";' % attr)
+            return JsonResponse(
+                {'error': 'You do not have permission to update "%s".' % attr})
 
-        self._collect_ajax_fields()
-
+        self.collect_ajax_fields()
         if attr not in self._ajax_editable_fields:
-            return HttpResponseBadRequest('Not a valid attribute "%s"' % attr)
+            return JsonResponse({'error': 'Invalid attribute "%s".' % attr})
 
-        try:
-            obj = self.model._default_manager.get(pk=item)
-        except self.model.DoesNotExist:
-            return HttpResponseNotFound('Object does not exist')
+        obj = self.model._default_manager.filter(pk=item).first()
+        if obj is None:
+            return JsonResponse({'error': 'Object #%s does not exist.' % item})
 
         try:
             value = ajax_field_value(obj, attr, value)
             setattr(obj, attr, value)
             obj.save()
-            data = {'status': 'OK', 'value': value,}
+            data = {'value': value}
         except Exception:
-            return HttpResponseServerError('Unable to change "%s" on "%s"'
-                                           % (attr, obj))
+            return JsonResponse(
+                {'error': 'Unable to change "%s" on "%s"' % (attr, obj)})
 
-        return HttpResponse(json.dumps(data), content_type='application/json')
+        return JsonResponse(data)
