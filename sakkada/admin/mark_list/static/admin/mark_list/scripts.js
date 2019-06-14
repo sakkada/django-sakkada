@@ -4,10 +4,6 @@
   //       change_list table.tr lines if required.
 
   // common functions
-  var sortByWeightDesc = function(a, b) {
-    return ($(b).data('weight')) > ($(a).data('weight')) ? 1 : -1;
-  }
-
   var colorValueToClassName = function(value) {
     return 'marks-tr-bg-' + value.replace('#', '');
   }
@@ -41,19 +37,11 @@
     if (!$('span.marks').length) return;
 
     // get marks with (active status and row-on) or with row-off
-    var colorized = $('table#result_list tr td span.marks span[data-row-on][data-active], ' +
-                      'table#result_list tr td span.marks span[data-row-off]').parents('.marks');
+    var colorized = $('table#result_list tr td span.marks[data-row-color]');
 
     // colorize tr tags which contains colorized marks
-    // (first try - active+rowOn, second - inactive+rowOff)
     colorized.each(function(index, elem) {
-      var color, item = $(elem);
-      color = item.find('span[data-row-on][data-active]').sort(sortByWeightDesc).toArray().shift() ||
-              item.find('span[data-row-off]').not('span[data-active]').sort(sortByWeightDesc).toArray().shift();
-      color = color && $(color);
-      color = color.data(color.data('active') ? 'rowOn' : 'rowOff');
-      // set respective change_list tr class name
-      item.parents('tr').addClass(colorValueToClassName(color));
+      $(elem).parents('tr').addClass(colorValueToClassName($(elem).data('rowColor')));
     });
 
     // style tag in head and help text tag after change_list table
@@ -79,21 +67,18 @@
           + '</style>';
 
     // get first marks container and fetch all required data
-    $('span.marks:first span.marks-bar span').each(function(index, elem) {
-      var line = helpTemplate[1],
-          data = $(elem);
+    $('span.marks[data-row-color]').each(function(index, elem) {
+      var item = $(elem);
 
       // add unique class names to style tag
-      ['rowOff', 'rowOn'].forEach(function(item, i, arr) {
-        item = data.data(item);
-        if (item) {
-          styleTag.unique[colorValueToClassName(item)] = '{ background-color: ' + item + '; }';
-        }
-      });
+      styleTag.unique[colorValueToClassName(item.data('rowColor'))] = '{ background-color: ' + item.data('rowColor') + '; }';
+    });
 
+    $('span.marks:first span.marks-bar span').each(function(index, elem) {
       // add new line to help tag
-      data = {'color': data.data('on'), 'title': data.attr('title'),
-              'br': index ? '<br>' : ''};
+      var line = helpTemplate[1],
+          data = $(elem);
+      data = {'color': data.data('on'), 'title': data.attr('title'), 'br': index ? '<br>' : ''};
       for (var key in data) {
         line = line.replace('{' + key + '}', data[key]);
       }

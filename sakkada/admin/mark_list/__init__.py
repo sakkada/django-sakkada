@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from django.conf import settings
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
@@ -11,19 +10,16 @@ class MarkListAdmin(admin.ModelAdmin):
     Marks List ModelAdmin Mixin.
 
     Available keys for "marks_config" (list of dicts) are:
-      on        - css color in active state (required),
-      off       - css color in inactive state (required),
-      condition - obj.attr name to check or callable(obj) (required),
-      title     - title of mark element (required),
-      row_on    - if defined and mark is active, css background-color
-                  of line (table.tr), containing this mark (optional),
-      row_off   - if defined and mark is inactive, css background-color
-                  of line (table.tr), containing this mark (optional),
-      weight    - if several marks active+row_on or inactive+row_off
-                  at the same time, most heavy weighted will be chosen,
-                  firstly looks for active+row_on marks, if no one,
-                  secondary look for inactive+row_off
-                  (optional, default is 500).
+      on        - CSS color in active state (required),
+      off       - CSS color in inactive state (required),
+      condition - get_marks "marks" key or obj.attr name to check (required),
+      title     - Title of mark element (required),
+      row_on    - If defined and mark is active/inactive and get_marks "color"
+      row_off     value is None, css background-color of table.tr will be set
+                  from row_on/row_off value (optional),
+      weight_on - If several marks colors are defined, they will be sorted by
+      weight_off  weight_x value, weight_on if active and vice versa,
+                  by default weights of on and off are 500 and 300 (optional)
     """
     marks_config = None
 
@@ -40,40 +36,64 @@ class MarkListAdmin(admin.ModelAdmin):
 
     def marks(self, obj):
         if not self.marks_config:
-            return u''
+            return ''
+
+        data = self.get_marks(obj)
+        marks = data.get('marks', None) or {}
+        color = [data.get('color', None)]
 
         links = []
         for m in self.marks_config:
-            condition = (m['condition'](obj) if callable(m['condition']) else
-                         getattr(obj, m['condition'], False))
-            attrs = {
-                'data-on': m['on'],
-                'data-row-on': m.get('row_on', None),
-                'data-row-off': m.get('row_off', None),
-                'data-weight': m.get('weight', 500),
-                'data-active': 'yes' if condition else None,
-            }
+            condition = bool(marks[m['condition']]
+                             if m['condition'] in marks else
+                             getattr(obj, m['condition'], False))
+            if condition and 'row_on' in m:
+                color.append(
+                    (m.get('weight_on', 500), condition, m['row_on'],))
+            elif not condition and 'row_off' in m:
+                color.append(
+                    (m.get('weight_off', 300), condition, m['row_off'],))
 
+            attrs = {'data-on': m['on'],}
+            attrs = ' '.join(['%s="%s"' % i for i in attrs.items() if i[1]])
             links.append(
                 '<span %s style="color: %s; cursor: pointer;" title="%s">'
                 '&#11044;</span>'
-                % (' '.join(['%s="%s"' % i for i in attrs.items() if i[1]]),
-                   m['on'] if condition else m['off'], m['title'],)
+                % (attrs, m['on'] if condition else m['off'], m['title'],)
             )
 
-        return mark_safe(''.join([
-            '<span class="marks">',
-            '<span class="marks-bar"><nobr>', ''.join(links), '</nobr></span>',
-            '<pre style="display: none;">%s</pre>' % self.marks_info(obj),
-            '</span>'
-        ]))
+        # get tr color (False in get_marks means no color)
+        if color[0] is None and len(color) > 1:
+            color = sorted(color[1:], reverse=True, key=lambda x: x[:2])[0][2]
+        elif color[0] is False:
+            color = None
+        else:
+            color = color[0]
+
+        return mark_safe(
+            '<span%s class="marks">'
+            '  <span class="marks-bar"><nobr>%s</nobr></span>'
+            '  <pre style="display: none;">%s</pre>'
+            '</span>' % (
+                ' data-row-color="%s"' % color if color else '',
+                ''.join(links), self.get_marks_label(obj, data),
+            )
+        )
     marks.short_description = _('Marks')
 
-    def marks_info(self, obj):
+    def get_marks(self, obj):
+        return {}
+
+    def get_marks_label(self, obj, data):
         """Generated preformatted information string"""
-        info = [(m['title'], (m['condition'](obj)
-                              if callable(m['condition']) else
-                              getattr(obj, m['condition'], False)),)
-                for m in self.marks_config]
-        return '\n'.join(['{} - {}'.format(int(bool(v)), k)
-                          for k, v in info])
+        marks = data.get('marks', None) or {}
+        label = data.get('label', None) or {}
+        if label:
+            info = label.items()
+        else:
+            info = [(m['title'], (marks[m['condition']]
+                                  if m['condition'] in marks else
+                                  getattr(obj, m['condition'], False)),)
+                    for m in self.marks_config]
+        keylen = max(len(i[0]) for i in info) + 2
+        return '\n'.join('{:<{len}} {}'.format(*i, len=keylen) for i in info)

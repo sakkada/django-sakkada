@@ -9,26 +9,22 @@ Usage:
  *  Install "django-sakkada"
  *  Import "sakkada.admin.mark_list.MarkListAdmin"
  *  Set "MarkListAdmin" as class of admin model
- *  Define "marks_config" value (list of dicts) for required attributes.
+ *  Define "marks_config" value (list of dicts) with required attributes.
     Available keys for "marks_config" are:
-      "on"          - css color in active state (required),
-      "off"         - css color in inactive state (required),
-      "condition"   - obj.attr name to check or callable(obj) (required),
-      "title"       - title of mark element (required),
-      "row_on"      - if defined and mark is active, css background-color
-                      of line (table.tr), containing this mark (optional),
-      "row_off"     - if defined and mark is inactive, css background-color
-                      of line (table.tr), containing this mark (optional),
-      "weight"      - if several marks active+row_on or inactive+row_off
-                      at the same time, most heavy weighted will be chosen,
-                      firstly looks for active+row_on marks, if no one,
-                      secondary look for inactive+row_off
-                      (optional, default is 500).
- *  Copy static "admin/*" to your project static folder
-    or add "sakkada.admin.mark_list" to your INSTALLED_APPS.
- *  Define "marks_info" method, if required, which should return preformatted
-    marks information string, which will be shown on each marks bar mouse
-    hover/click.
+      "on"        - CSS color in active state (required),
+      "off"       - CSS color in inactive state (required),
+      "condition" - get_marks "marks" key or obj.attr name to check (required),
+      "title"     - Title of mark element (required),
+      "row_on"    - If defined and mark is active/inactive and get_marks
+      "row_off"     "color" value is None, css background-color of table.tr
+                    will be set from row_on/row_off value (optional),
+      "weight_on" - If several marks colors are defined, they will be sorted by
+      "weight_off"  weight_x value, weight_on if active and vice versa,
+                    by default weights of on and off are 500 and 300 (optional)
+ *  Add "sakkada.admin.mark_list" to your INSTALLED_APPS
+    for accessing "admin/mark_list/*" static files
+ *  Define "get_marks" method, if required, which should return dict with
+    current line marks config (see below)
 
 Example usage:
 -------------
@@ -41,7 +37,8 @@ class SomeMarkListAdmin(MarkListAdmin, admin.ModelAdmin):
         {'on': '#70bf2b', 'off': '#eeeeee', 'condition': 'active',
          'title': 'Node is active', 'row_on': '#efd', 'row_off': '#ccc',},
         {'on': '#ff1744', 'off': '#e0e0e0', 'condition': 'menu_only',
-         'title': 'Node use in menu only', 'row_on': '#ffe', 'weight': 600,},
+         'title': 'Node use in menu only', 'row_on': '#ffe', 'row_off': '#fef',
+         'weight_on': 600, 'weight_off': 550,},
         {'on': '#4fc3f7', 'off': '#dddddd', 'condition': 'view',
          'title': 'Alternative view defined'},
         {'on': '#ffa800', 'off': '#d0d0d0', 'condition': 'template',
@@ -50,18 +47,24 @@ class SomeMarkListAdmin(MarkListAdmin, admin.ModelAdmin):
          'title': 'Node link defined directly'},
     )
 
-    def marks_info(self, obj):
-        info = (
-            'active', str(obj.menu_only).lower(),
-            'menu_only', str(obj.menu_only).lower(),
-            'link', obj.link or u'—',
-            'view', obj.view or u'—',
-            'template', obj.template or u'—',
-            'behaviour', obj.behaviour or u'—',
-            'filter_date', 'set' if obj.filter_date else u'—',
-            'filter', 'set' if obj.filter else u'—',
-            'order_by', obj.order_by or u'—',
-            'onpage', obj.onpage or 10,
-        )
-        return '\n'.join(['{:<15} {}'.format(*i)
-                          for i in zip(info[::2], info[1::2])])
+    def get_marks_data(self):
+        return {
+            'marks': {
+                'view': self.view,
+                'template': self.template,
+                'link': self.link,
+            },
+            'label': {
+                'active': str(obj.menu_only).lower(),
+                'menu_only': str(obj.menu_only).lower(),
+                'link': obj.link or u'—',
+                'view': obj.view or u'—',
+                'template': obj.template or u'—',
+                'behaviour': obj.behaviour or u'—',
+                'filter_date': 'set' if obj.filter_date else u'—',
+                'filter': 'set' if obj.filter else u'—',
+                'order_by': obj.order_by or u'—',
+                'onpage': obj.onpage or 10,
+            },
+            'color': '#ff0000' if obj.some_extra_property else None,
+        }
