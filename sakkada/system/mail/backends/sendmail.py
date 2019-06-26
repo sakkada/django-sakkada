@@ -39,7 +39,7 @@ class EmailBackend(BaseEmailBackend):
         try:
             ps = Popen(["sendmail"] + list(email_message.recipients()),
                        stdin=PIPE)
-            ps.stdin.write(email_message.message().as_string())
+            ps.stdin.write(email_message.message().as_string().encode('utf8'))
             ps.stdin.flush()
             ps.stdin.close()
             return not ps.wait()
