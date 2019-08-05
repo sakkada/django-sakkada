@@ -6,6 +6,7 @@ Changes:
     - Added overwrite_existing argument to control file overwriting behaviour
       Note: overwriting existing files only if uniquify_names is False
 """
+
 from django.core.files import File
 from django.core.files.storage import FileSystemStorage
 from django.utils.encoding import force_text
@@ -34,7 +35,7 @@ class UniqueNameFileSystemStorage(FileSystemStorage):
         if overwrite_existing is not None:
             self.overwrite_existing = overwrite_existing
 
-        super(UniqueNameFileSystemStorage, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def get_available_name(self, name, max_length=None):
         # This method is executed only in "_save" method ("save" method is
@@ -53,8 +54,7 @@ class UniqueNameFileSystemStorage(FileSystemStorage):
                                   content=None, chunk_size=None):
         # Real method to generate new filename, it may be overwritten
         if self.uniquify_names:
-            name = super(UniqueNameFileSystemStorage,
-                         self).get_available_name(name, max_length=max_length)
+            name = super().get_available_name(name, max_length=max_length)
         return name
 
     def save(self, name, content, max_length=None):
@@ -76,8 +76,7 @@ class UniqueNameFileSystemStorage(FileSystemStorage):
     def _save(self, name, content):
         # Save original file without changes if required
         try:
-            return super(UniqueNameFileSystemStorage,
-                         self)._save(name, content)
+            return super()._save(name, content)
         except NoAvailableName:
             # File already exists, so we can safely do nothing
             # because their contents match. Raises if uniquify_names is False.

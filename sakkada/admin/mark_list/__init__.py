@@ -31,7 +31,7 @@ class MarkListAdmin(admin.ModelAdmin):
             'admin/js/jquery.init.js',
             'admin/mark_list/scripts.js',
         )
-        base = getattr(super(MarkListAdmin, self), 'media', Media())
+        base = getattr(super(), 'media', Media())
         return base + Media(js=js)
 
     def marks(self, obj):

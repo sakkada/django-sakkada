@@ -19,7 +19,7 @@ class AdminViewsMixin(object):
 
     def __init__(self, *args, **kwargs):
         self.custom_views = []
-        return super(AdminViewsMixin, self).__init__(*args, **kwargs)
+        return super().__init__(*args, **kwargs)
 
     def register_view(self, regex, view=None, urlname=None, kwargs=None,
                       wrap_view=True, name=None, help_text=None, visible=True,
@@ -81,7 +81,7 @@ class AdminViewsMixin(object):
             customs_views_urls.append(url(regex, aview,
                                           name=urlname, kwargs=kwargs))
 
-        return customs_views_urls + super(AdminViewsMixin, self).get_urls()
+        return customs_views_urls + super().get_urls()
 
     def index(self, request, extra_context=None):
         """Insert a custom views list into index page's context."""
@@ -102,7 +102,7 @@ class AdminViewsMixin(object):
             'custom_views': custom_views,
             'custom_views_parent_template': self.custom_views_parent_template,
         })
-        return super(AdminViewsMixin, self).index(request, extra_context)
+        return super().index(request, extra_context)
 
 
 class AdminViewsSite(AdminViewsMixin, AdminSite):

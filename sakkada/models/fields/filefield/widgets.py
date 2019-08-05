@@ -8,7 +8,7 @@ class ClearableFileInput(forms.widgets.FileInput):
     input_type = 'file'
 
     def __init__(self, show_delete_checkbox=True, attrs={}):
-        super(ClearableFileInput, self).__init__(attrs)
+        super().__init__(attrs)
         self.show_delete_checkbox = show_delete_checkbox
 
     def get_html_tpls(self, input, name, value, attrs):
@@ -47,7 +47,7 @@ class ClearableFileInput(forms.widgets.FileInput):
         if data.get(u'%s_delete' % name):
             value = u'__delete__'
         else:
-            value = super(ClearableFileInput, self).value_from_datadict(
+            value = super().value_from_datadict(
                 data, files, name)
         return value
 

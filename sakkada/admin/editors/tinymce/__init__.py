@@ -24,11 +24,11 @@ class EditorAdmin(admin.ModelAdmin):
         )
         css = {'all': ('admin/tinymce/setup/activater.css',),}
 
-        base = getattr(super(EditorAdmin, self), 'media', Media())
+        base = getattr(super(), 'media', Media())
         return base + Media(js=js, css=css)
 
     def get_form(self, request, obj=None, **kwargs):
-        form = super(EditorAdmin, self).get_form(request, obj=None, **kwargs)
+        form = super().get_form(request, obj=None, **kwargs)
         if hasattr(self, 'tinymce_fields') and self.tinymce_fields:
             for name in self.tinymce_fields:
                 f = form.base_fields[name]

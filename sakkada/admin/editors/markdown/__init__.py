@@ -18,7 +18,7 @@ class MarkdownWidget(Widget):
         attrs = dict({'data-dimensions': '330:270'}, **(attrs or {}))
         cls = ' '.join([attrs.get('class', ''), 'editor_markdown']).strip()
         attrs.update({'class': cls,})
-        return super(MarkdownWidget, self).__init__(attrs=attrs)
+        return super().__init__(attrs=attrs)
 
     @property
     def media(self):
@@ -37,7 +37,7 @@ class MarkdownWidget(Widget):
         )
 
         css = {'all': ('admin/markdown/markdown_editor.css',),}
-        base = getattr(super(MarkdownWidget, self), 'media', Media())
+        base = getattr(super(), 'media', Media())
         return base + Media(js=js, css=css)
 
 

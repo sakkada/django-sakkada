@@ -34,6 +34,7 @@ from django.core.management.color import supports_color
 
 
 Level = collections.namedtuple('Level', ['title', 'color',])
+
 Palette = collections.namedtuple('Palette', [
     'bk', 'rd', 'gn', 'yw', 'be', 'ma', 'cn', 'we',
     'bkb', 'rdb', 'gnb', 'ywb', 'beb', 'mab', 'cnb', 'web', 'r',
@@ -58,6 +59,7 @@ colorpalette = Palette(**{
     'web': '\x1b[37;1m',
     'r': '\x1b[0m',
 })
+
 bandwpalette = Palette(**{
     'bk': '',
     'rd': '',

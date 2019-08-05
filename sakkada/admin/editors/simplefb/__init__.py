@@ -17,7 +17,7 @@ class SimpleFBWidget(Widget):
             'admin/simplefb/simple_fb_editor.js',
         )
         css = {'all': ('admin/simplefb/simple_fb_editor.css',),}
-        base = getattr(super(SimpleFBWidget, self), 'media', Media())
+        base = getattr(super(), 'media', Media())
         return base + Media(js=js, css=css)
 
     def __init__(self, attrs=None):
@@ -25,7 +25,7 @@ class SimpleFBWidget(Widget):
             attrs = {}
         cls = ' '.join([attrs.get('class', ''), 'editor_simple_fb']).strip()
         attrs.update({'class': cls,})
-        return super(SimpleFBWidget, self).__init__(attrs=attrs)
+        return super().__init__(attrs=attrs)
 
 
 class SimpleFBInput(TextInput, SimpleFBWidget):

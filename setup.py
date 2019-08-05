@@ -50,6 +50,7 @@ setup(
         'Framework :: Django',
         'Framework :: Django :: 2.0',
         'Framework :: Django :: 2.1',
+        'Framework :: Django :: 2.2',
 
         # Pick your license as you wish (should match "license" above)
         'License :: OSI Approved :: MIT License',

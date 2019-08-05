@@ -14,8 +14,7 @@ class ModifierProcessedNameFileSystemStorage(UniqueNameFileSystemStorage):
 
     def __init__(self, modifiers=None, modifiers_extension=None,
                  *args, **kwargs):
-        super(ModifierProcessedNameFileSystemStorage,
-              self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.modifiers = modifiers
         self.modifiers_extension = modifiers_extension
         self.check()
@@ -45,8 +44,7 @@ class ModifierProcessedNameFileSystemStorage(UniqueNameFileSystemStorage):
             self.handle_rootname(dirname, rootname, extension),
             self.handle_extension(dirname, rootname, extension),))
         name = os.path.join(dirname, basename)
-        return super(ModifierProcessedNameFileSystemStorage,
-                     self).get_unique_available_name(
+        return super().get_unique_available_name(
             name, max_length=max_length,
             content=content, chunk_size=chunk_size)
 

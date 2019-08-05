@@ -5,11 +5,10 @@ Changes:
     - Added segments param to define filename segmentation rule
 """
 
-import hashlib
 import os
 import sys
 import random
-
+import hashlib
 from django.core.files import File
 from .unique import UniqueNameFileSystemStorage
 
@@ -31,7 +30,7 @@ class HashedNameFileSystemStorage(UniqueNameFileSystemStorage):
                 segments[0] * segments[1] <= 40):
             self.segments = segments
 
-        super(HashedNameFileSystemStorage, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def get_unique_available_name(self, name, max_length=None,
                                   content=None, chunk_size=None):

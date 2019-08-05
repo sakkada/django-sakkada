@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # some ideas taken from https://github.com/ulule/django-separatedvaluesfield
 # some ideas taken from https://github.com/sakkada/django-eavkit
 from django import forms
@@ -18,7 +17,7 @@ class BaseMultipleValuesFormField(forms.CharField):
         self.coerce = kwargs.pop('coerce', lambda value: value)
         self.delimiter = kwargs.pop('delimiter', None) or self.delimiter
         self.empty_value = kwargs.pop('empty_value', [])  # default is list
-        super(BaseMultipleValuesFormField, self).__init__(
+        super().__init__(
             empty_value=self.empty_value, *args, **kwargs)
 
     def _coerce(self, value):
@@ -36,13 +35,13 @@ class BaseMultipleValuesFormField(forms.CharField):
         return values
 
     def clean(self, value):
-        value = super(BaseMultipleValuesFormField, self).clean(value)
+        value = super().clean(value)
         return self._coerce(value)
 
     def to_python(self, value):
         # value convertation from string to python list with _coerce call
         # allowed to raise ValidationErrors if required
-        value = super(BaseMultipleValuesFormField, self).to_python(value)
+        value = super().to_python(value)
         return (self._coerce(value.split(self.delimiter))
                 if value else self.empty_value)
 
@@ -77,7 +76,7 @@ class TextMultipleValuesFormField(BaseMultipleValuesFormField):
 # ------------------------------------
 class MultipleValuesDeferredAttribute(models.fields.DeferredAttribute):
     def __init__(self, field_name, model, field):
-        super(MultipleValuesDeferredAttribute, self).__init__(field_name, model)
+        super().__init__(field_name, model)
         self.field = field
 
     def __set__(self, obj, value):
@@ -93,11 +92,10 @@ class BaseMultipleValuesField(object):
     def __init__(self, *args, **kwargs):
         self.delimiter = kwargs.pop('delimiter', self.multi_value_delimiter)
         self.coerce = kwargs.pop('coerce', self.multi_value_coerce)
-        super(BaseMultipleValuesField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def contribute_to_class(self, cls, name, **kwargs):
-        super(BaseMultipleValuesField,
-              self).contribute_to_class(cls, name, **kwargs)
+        super().contribute_to_class(cls, name, **kwargs)
         setattr(cls, self.name,
                 MultipleValuesDeferredAttribute(self.attname, cls, self))
 
@@ -161,7 +159,7 @@ class BaseMultipleValuesField(object):
 
     def get_choices(self, include_blank=True, **kwargs):
         # disable blank option anyway for multiple select
-        return super(BaseMultipleValuesField, self).get_choices(
+        return super().get_choices(
             include_blank=False, **kwargs)
 
     def formfield(self, form_class=None, choices_form_class=None, **kwargs):
@@ -170,7 +168,7 @@ class BaseMultipleValuesField(object):
         if not self.choices:
             kwargs.update(delimiter=kwargs.get('delimiter', self.delimiter))
 
-        return super(BaseMultipleValuesField, self).formfield(
+        return super().formfield(
             form_class=form_class or self.multi_value_form_field_class,
             choices_form_class=(choices_form_class or
                                 self.multi_value_form_field_class_choices),
@@ -184,7 +182,7 @@ class BaseMultipleValuesField(object):
 
 class CharMultipleValuesField(BaseMultipleValuesField, models.CharField):
     def __init__(self, *args, **kwargs):
-        super(CharMultipleValuesField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         # save and remove added by django MaxLengthValidator validator
         # save validator to check length of result string value (see validate)
         self.validators_charfield = [i for i in self.validators
@@ -195,7 +193,7 @@ class CharMultipleValuesField(BaseMultipleValuesField, models.CharField):
     def run_validators(self, value):
         # all user defined validators receives list of values or None
         # validators_charfield receives result string and check it
-        super(CharMultipleValuesField, self).run_validators(value)
+        super().run_validators(value)
         if value in self.empty_values:
             return
         for v in self.validators_charfield:
@@ -209,4 +207,4 @@ class TextMultipleValuesField(BaseMultipleValuesField, models.TextField):
     def formfield(self, **kwargs):
         if self.choices:
             kwargs.update(widget=kwargs.get('widget', None))  # unset Textarea
-        return super(TextMultipleValuesField, self).formfield(**kwargs)
+        return super().formfield(**kwargs)

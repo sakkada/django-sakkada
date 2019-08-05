@@ -15,11 +15,11 @@ class ClearableFormFileField(FileField):
                     "required", True)
             )
 
-        super(ClearableFormFileField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def clean(self, data, initial=None):
         return (data if data == '__delete__' else
-                super(ClearableFormFileField, self).clean(data, initial))
+                super().clean(data, initial))
 
 
 class ClearableFormImageField(ClearableFormFileField, ImageField):
