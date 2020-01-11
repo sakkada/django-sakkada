@@ -8,7 +8,7 @@ from django.utils.safestring import mark_safe
 from django.contrib import admin
 from django.contrib.admin.views.main import ChangeList
 from django.contrib.admin.utils import quote
-from django.contrib.admin.templatetags.admin_static import static
+from django.templatetags.static import static
 
 
 # Common Classes
@@ -113,7 +113,7 @@ def fkey_list_link(name, model_set=None, fkey_name=None,
                       '%s <a href="%s" title="Create related «%s»">'
                       '<img src="%s"></a></span>' % (
                           result, link_add, names[0],
-                          static(u'admin/img/icon-addlink.svg')
+                          static('admin/img/icon-addlink.svg')
                       ) if with_add_link else result)
 
         return mark_safe(result)

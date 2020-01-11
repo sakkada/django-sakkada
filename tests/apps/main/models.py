@@ -1,7 +1,9 @@
 from django.db import models
 from sakkada.models.prev_next import PrevNextModel
-from sakkada.models.fields.filefield import (AdvancedFileField,
-                                             AdvancedImageField)
+from sakkada.models.fields.filefield import (
+    AdvancedFileField, AdvancedImageField)
+from sakkada.models.fields.multivalue import (
+    CharMultipleValuesField, TextMultipleValuesField, MultipleValuesModelMixin)
 from sakkada.system import validators
 
 
@@ -19,10 +21,16 @@ class PrevNextTestModel(PrevNextModel):
         'weight nullable', default=500, null=True, blank=True)
 
     class Meta:
-        ordering = ('-weight',)
+        ordering = ['-weight',]
 
     def __str__(self):
         return '%s (%d: %s)' % (self.title, self.id, self.slug,)
+
+
+class PrevNextNoOrderingTestModel(PrevNextTestModel):
+    class Meta:
+        proxy = True
+        ordering = []
 
 
 class FileFieldModel(models.Model):
@@ -44,6 +52,47 @@ class FileFieldModel(models.Model):
             validators.FilesizeValidator(max=1024*4),
         ]
     )
+
+    class Meta:
+        ordering = ('-id',)
+
+    def __str__(self):
+        return str(self.id)
+
+
+class MultiValueFieldModel(MultipleValuesModelMixin, models.Model):
+    char_default = CharMultipleValuesField(max_length=1024)
+    text_default = TextMultipleValuesField(max_length=1024)
+
+    comma_separated = CharMultipleValuesField(
+        max_length=1024, default=['a', 'b', 'c',])
+    slash_separated = CharMultipleValuesField(
+        max_length=1024, delimiter='/', default=['a', 'b', 'c',])
+    newline_separated = TextMultipleValuesField(default=['a', 'b', 'c',])
+
+    cfield_blank = CharMultipleValuesField(max_length=1024, blank=True)
+    cfield_non_editable = CharMultipleValuesField(
+        max_length=1024, blank=True, editable=False)
+    cfield_with_extended_form_field = CharMultipleValuesField(max_length=1024)
+
+    cfield_integer = CharMultipleValuesField(max_length=1024, coerce=int)
+    cfield_integer_with_default = CharMultipleValuesField(
+        max_length=1024, coerce=int, default=[1, 2, 3,])
+
+    # fields with choices
+    cfield_float_with_choices_and_default = CharMultipleValuesField(
+        max_length=1024, coerce=float, delimiter='|', default=[1.0, 2.0,],
+        choices=((1.0, 'One',), (1.5, 'One and half',), (2.0, 'Two',),))
+    cfield_integer_with_choices_checkboxes = CharMultipleValuesField(
+        max_length=1024, coerce=int, delimiter=':', default=[1, 2,],
+        choices=((1, 'One',), (2, 'Two',), (3, 'Three',),))
+    cfield_integer_with_grouped_choices = CharMultipleValuesField(
+        max_length=1024, coerce=int, default=[1, 22,],
+        choices=(('one', ((1, 'One',), (11, 'Eleven',),),),
+                 ('two', ((2, 'Two',), (22, 'Twenty two',),),),))
+    tfield_integer_with_choices = TextMultipleValuesField(
+        max_length=1024, coerce=int, default=[1, 2,],
+        choices=((1, 'One',), (2, 'Two',), (3, 'Three',),))
 
     class Meta:
         ordering = ('-id',)

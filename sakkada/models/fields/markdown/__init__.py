@@ -50,12 +50,8 @@ class MarkdownCharFormField(forms.CharField):
 
 
 class MarkdownAttribute(models.fields.DeferredAttribute):
-    def __init__(self, field_name, field):
-        self.field = field
-        super().__init__(field_name)
-
     def __set__(self, obj, value):
-        obj.__dict__[self.field_name] = self.field.to_python(value)
+        obj.__dict__[self.field.attname] = self.field.to_python(value)
 
 
 class BaseMarkdownModelField:
@@ -71,7 +67,7 @@ class BaseMarkdownModelField:
 
     def contribute_to_class(self, cls, name, **kwargs):
         super().contribute_to_class(cls, name, **kwargs)
-        setattr(cls, self.name, MarkdownAttribute(self.attname, self))
+        setattr(cls, self.name, MarkdownAttribute(self))
 
     def deconstruct(self):
         name, path, args, kwargs = super().deconstruct()

@@ -16,18 +16,23 @@ class PrevNextModel(models.Model):
         #   at begining of method (there is no standalone method
         #   to get order_by field names for queryset instance),
         #   added order by "pk" by default for uniqueness (in else section)
+
         if query.extra_order_by:
             ordering = query.extra_order_by
         elif not query.default_ordering:
             ordering = query.order_by
+        elif query.order_by:
+            ordering = query.order_by
+        elif query.get_meta().ordering:
+            ordering = query.get_meta().ordering
         else:
-            ordering = query.order_by or query.get_meta().ordering or [pk]
+            ordering = [pk]
 
         # append pk ordering for uniqueness if not exists,
         # else cut any fields after pk (because pk is unique)
         ordering = [i.replace('pk', pk) if i in ['pk', '-pk'] else i
                     for i in ordering]
-        if any((not isinstance(i, str) or '__' in i or '?' in i)
+        if any(not isinstance(i, str) or '__' in i or '?' in i
                for i in ordering):
             raise ValueError('PrevNextModel at this moment supports only'
                              ' local order_by fields defined as strings.')

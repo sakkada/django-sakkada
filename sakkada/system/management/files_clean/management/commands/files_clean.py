@@ -108,6 +108,7 @@ class Command(BaseCommand):
 
         for data in registry.values():
             model, fields = data['class'], data['fields']
+            # todo: add isnull support
             excludes = dict([('%s__exact' % f.name, '') for f in fields.values()])
             values = model.objects.exclude(**excludes)\
                           .values('pk', *[f.name for f in fields.values()])
@@ -115,7 +116,8 @@ class Command(BaseCommand):
             for i in values:
                 pk = i.pop('pk')
                 for key, val in i.items():
-                    # val = val.encode('utf8')
+                    if not val:
+                        continue
                     val = os.path.join(settings.MEDIA_ROOT, val).replace('\\', '/')
                     entry = [model.__name__, model._meta.db_table, pk, key, val]
                     if val in dbfilesmeta:
@@ -136,6 +138,7 @@ class Command(BaseCommand):
                 difference = list(fsfiles)
             difference.sort()
 
+            sys.stdout.write('\n')
             sys.stdout.write('\n'.join(difference))
             return
 
@@ -151,7 +154,8 @@ class Command(BaseCommand):
 
             sys.stdout.write('model_name\ttb_name\tid\tfield_name\tpath\tcount')
             for i in difference:
-                sys.stderr.write(
-                    '\n'.join(['\t'.join([str(b) for b in (a+[len(dbfilesmeta[i])])]) for a in dbfilesmeta[i]])
-                )
+                sys.stdout.write('\n')
+                sys.stdout.write('\n'.join([
+                    '\t'.join([str(b) for b in (a+[len(dbfilesmeta[i])])]) for a in dbfilesmeta[i]
+                ]))
             return

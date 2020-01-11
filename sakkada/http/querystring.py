@@ -33,9 +33,9 @@ class QueryString(object):
 
     querydict = None
 
-    _formats = ('part', 'full', 'self', 'dict',)
-    _filters = ('no', 'only',)
-    _first_letter = {'full': '?', 'part': '&', 'self': '',}
+    formats = ('part', 'full', 'self', 'dict',)
+    filters = ('no', 'only',)
+    first_letter = {'full': '?', 'part': '&', 'self': '',}
 
     def __init__(self, request):
         self.querydict = request.GET.copy()
@@ -44,21 +44,21 @@ class QueryString(object):
         data = name.rsplit('as__')
         keys = data[0].strip('__').split('__')[:]
         out = data[1] if data.__len__() > 1 else 'full'
-        out = {'format': out[:4] if out[:4] in self._formats else 'full',
+        out = {'format': out[:4] if out[:4] in self.formats else 'full',
                'left': out.endswith('left'),}
         query = self.querydict.copy()
 
         # morph query by filter
-        if keys.__len__() > 1 and keys[0] in self._filters:
+        if keys.__len__() > 1 and keys[0] in self.filters:
             action, keys, realkeys = keys[0], keys[1:], list(query.keys())
             if 'no' == action:
                 [query.pop(i, None) for i in keys]
-            elif 'only' == action:
+            else:  # only
                 [query.pop(i, None) for i in realkeys if i not in keys]
 
         # output format
         if out['format'] != 'dict':
-            first = self._first_letter[out['format']]
+            first = self.first_letter[out['format']]
             query = query.urlencode()
             query = mark_safe(''.join((
                 first if query else '', query,  # first letter and querystring

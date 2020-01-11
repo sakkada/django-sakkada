@@ -20,6 +20,10 @@ Contains:
                               TextMultipleValuesFormField as form field (if no
                               choices defined)
     MultipleValuesDeferredAttribute - multi value deffered attribte class
+    MultipleValuesModelMixin - model mixin providing get_FIELD_display
+                               compability to multi value fields with defined
+                               choices (converts values lists to comma
+                               sepatated title strings)
 
 
 Test:
@@ -43,6 +47,8 @@ Code to test:
 Usage:
 -----
  *  Import desired model field to your models module and use as usual field
+ *  If you need get_FIELD_display with one of multiple values field, install
+    MultipleValuesModelMixin as a mixin to model class.
  *  Optionally set 'delimiter' to control string, by which values in the
     result string will be joined.
  *  Optionally set 'coerce' to set each value required type.
@@ -52,15 +58,29 @@ Simple example of usage in model:
 --------------------------------
 from sakkada.models.fields.multivalue import TextMultipleValuesField
 from sakkada.models.fields.multivalue import CharMultipleValuesField
+from sakkada.models.fields.multivalue import MultipleValuesModelMixin
 
 
-class MyModel(models.Model)
-    comma_separated = CharMultipleValuesField(max_length=1024)
-    slash_separated = CharMultipleValuesField(max_length=1024, delimiter='/')
+class MyModel(MultipleValuesModelMixin, models.Model)
+    comma_separated = CharMultipleValuesField(
+        max_length=1024, default=['a', 'b',])
+    slash_separated = CharMultipleValuesField(
+        max_length=1024, delimiter='/', default=['a', 'b', 'c',])
+    newline_separated = TextMultipleValuesField(blank=True)
 
-    newline_separated = TextMultipleValuesField()
-    integer_values = TextMultipleValuesField(coerce=int)
-
-    float_with_choices = CharMultipleValuesFormField(
+    integer_values = TextMultipleValuesField(coerce=int, default=[1, 2, 3,])
+    float_with_choices_values = CharMultipleValuesFormField(
         coerce=float, delimiter='|', default=[1.0, 2.0,],
         choices=((1.0, 'One',), (1.5, 'One and half',), (2.0, 'Two',),))
+
+
+obj = MyModel.objects.first()
+obj.comma_separated  # ['a', 'b']
+obj.newline_separated  # []
+obj.integer_values  # [1, 2, 3,]
+obj.get_float_with_choices_display()  # One, Two
+
+obj.integer_values += [4, 5,]
+obj.save()
+obj.refresh_from_db()
+obj.integer_values  # [1, 2, 3, 4, 5,]

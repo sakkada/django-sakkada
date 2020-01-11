@@ -4,8 +4,7 @@ from django import forms
 from django.db import models
 from django.core.validators import MaxLengthValidator
 from django.forms.fields import TypedMultipleChoiceField
-from django.utils import six
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 
 
 # Multiple values form fields classes
@@ -16,7 +15,8 @@ class BaseMultipleValuesFormField(forms.CharField):
     def __init__(self, *args, **kwargs):
         self.coerce = kwargs.pop('coerce', lambda value: value)
         self.delimiter = kwargs.pop('delimiter', None) or self.delimiter
-        self.empty_value = kwargs.pop('empty_value', [])  # default is list
+        self.empty_value = kwargs.pop('empty_value', [])
+        # default empty_value is list, change it on your own risk
         super().__init__(
             empty_value=self.empty_value, *args, **kwargs)
 
@@ -64,40 +64,43 @@ class BaseMultipleValuesFormField(forms.CharField):
 
 class CharMultipleValuesFormField(BaseMultipleValuesFormField):
     widget = forms.TextInput
-    delimiter = u','
+    delimiter = ','
 
 
 class TextMultipleValuesFormField(BaseMultipleValuesFormField):
     widget = forms.Textarea
-    delimiter = u'\n'
+    delimiter = '\n'
 
 
 # Multiple values model fields classes
 # ------------------------------------
 class MultipleValuesDeferredAttribute(models.fields.DeferredAttribute):
-    def __init__(self, field_name, model, field):
-        super().__init__(field_name, model)
-        self.field = field
-
     def __set__(self, obj, value):
-        obj.__dict__[self.field_name] = self.field.to_python(value)
+        obj.__dict__[self.field.attname] = self.field.to_python(value)
 
 
 class BaseMultipleValuesField(object):
     multi_value_form_field_class = CharMultipleValuesFormField
     multi_value_form_field_class_choices = TypedMultipleChoiceField
     multi_value_delimiter = ','
-    multi_value_coerce = six.text_type
+    multi_value_coerce = str
 
     def __init__(self, *args, **kwargs):
         self.delimiter = kwargs.pop('delimiter', self.multi_value_delimiter)
         self.coerce = kwargs.pop('coerce', self.multi_value_coerce)
         super().__init__(*args, **kwargs)
 
+    def deconstruct(self):
+        name, path, args, kwargs = super().deconstruct()
+        if self.delimiter != self.multi_value_delimiter:
+            kwargs['delimiter'] = self.delimiter
+        if self.coerce != self.multi_value_coerce:
+            kwargs['coerce'] = self.coerce
+        return name, path, args, kwargs
+
     def contribute_to_class(self, cls, name, **kwargs):
         super().contribute_to_class(cls, name, **kwargs)
-        setattr(cls, self.name,
-                MultipleValuesDeferredAttribute(self.attname, cls, self))
+        setattr(cls, self.name, MultipleValuesDeferredAttribute(self))
 
     def to_python(self, value):
         # receives list value from field's clean method for example
@@ -106,12 +109,14 @@ class BaseMultipleValuesField(object):
         # returns empty value in the following way:
         #   if value is None return it (we care about it only if forms)
         #   otherwise always return empty list
-        assert(isinstance(value, (list, tuple, six.string_types, type(None))))
+        if not isinstance(value, (list, tuple, str, type(None))):
+            raise ValueError('Multiple Values Fields receive only '
+                             'strings, lists, tuples or None values.')
         if not value:
             return value if value is None else []
 
         values = ([i.strip() for i in value.split(self.delimiter)]
-                  if isinstance(value, six.string_types) else value)
+                  if isinstance(value, str) else value)
         return [self.coerce(v) for v in values]
 
     def validate(self, value, model_instance):
@@ -124,14 +129,22 @@ class BaseMultipleValuesField(object):
         # value is already a list here (from to_python), so check every item
         if self.choices and value not in self.empty_values:
             for vitem in value:
+                valid_value = False
                 for option_key, option_value in self.choices:
                     if isinstance(option_value, (list, tuple)):
                         # This is an optgroup, so look inside for options.
                         for optgroup_key, optgroup_value in option_value:
                             if vitem == optgroup_key:
-                                return
+                                valid_value = True
+                                break
                     elif vitem == option_key:
-                        return
+                        valid_value = True
+                    # current vitem is valid
+                    if valid_value:
+                        break
+
+                if valid_value:
+                    continue
                 raise forms.ValidationError(
                     self.error_messages['invalid_choice'],
                     code='invalid_choice',
@@ -151,11 +164,11 @@ class BaseMultipleValuesField(object):
         # may be still list of values because to_python method will be called
         # in CharField and TextField fields' get_prep_value method
         value = super(BaseMultipleValuesField, self).get_prep_value(value)
-        # convert list to string if required for database
-        if isinstance(value, (list, tuple)):
-            value = self.delimiter.join([six.text_type(s) for s in value])
-        return (value if isinstance(value, (six.string_types, type(None))) else
-                force_text(value))
+        # convert list to string if required for database (it may be None)
+        if isinstance(value, list):
+            value = self.delimiter.join([str(s) for s in value])
+        return (value if isinstance(value, (str, type(None))) else
+                force_str(value))
 
     def get_choices(self, include_blank=True, **kwargs):
         # disable blank option anyway for multiple select
@@ -163,7 +176,7 @@ class BaseMultipleValuesField(object):
             include_blank=False, **kwargs)
 
     def formfield(self, form_class=None, choices_form_class=None, **kwargs):
-        # set coerce anyway, by default it equals to default text_type
+        # set coerce anyway, by default it equals to str
         kwargs.update(coerce=kwargs.get('coerce', self.coerce))
         if not self.choices:
             kwargs.update(delimiter=kwargs.get('delimiter', self.delimiter))
@@ -202,9 +215,26 @@ class CharMultipleValuesField(BaseMultipleValuesField, models.CharField):
 
 class TextMultipleValuesField(BaseMultipleValuesField, models.TextField):
     multi_value_form_field_class = TextMultipleValuesFormField
-    multi_value_delimiter = u'\n'
+    multi_value_delimiter = '\n'
 
     def formfield(self, **kwargs):
         if self.choices:
             kwargs.update(widget=kwargs.get('widget', None))  # unset Textarea
         return super().formfield(**kwargs)
+
+
+# Multiple values model mixin classes
+# -----------------------------------
+class MultipleValuesModelMixin(models.Model):
+    def _get_FIELD_display(self, field):
+        value = getattr(self, field.attname)
+        if value is None:
+            return ''
+        # force_str() to coerce lazy strings.
+        return ', '.join(
+            force_str(dict(field.flatchoices).get(v, v), strings_only=True)
+            for v in value
+        )
+
+    class Meta:
+        abstract = True

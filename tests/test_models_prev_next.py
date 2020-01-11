@@ -1,7 +1,8 @@
 from django.db import models
 from django.conf import settings
 from django.test import TestCase
-from main.models import PrevNextTestModel as Model
+from main.models import (
+    PrevNextTestModel as Model, PrevNextNoOrderingTestModel as NoOrderingModel)
 
 
 class QueryStringTests(TestCase):
@@ -22,17 +23,33 @@ class QueryStringTests(TestCase):
 
     def test_get_current_ordering(self):
         qset_default = Model.objects.all()
+        qset_not_default = Model.objects.all().order_by()  # default_ordering is False
+        qset_not_default_defined = Model.objects.all().order_by().order_by('slug')  # default_ordering is False
         qset_defined = Model.objects.all().order_by('-nweight', 'title')
+        qset_defined_extra = Model.objects.all().extra(order_by = ['-slug', 'nweight',])
         qset_with_id = Model.objects.all().order_by('-weight', '-id', 'title')
+        qset_empty = NoOrderingModel.objects.all()
+        qset_empty_defined = NoOrderingModel.objects.all().order_by('-nweight', 'title')
         instance = Model.objects.first()
 
         self.assertEqual(list(Model._meta.ordering), ['-weight',])
         self.assertEqual(instance._get_current_ordering(qset_default),
                          ['-weight', 'id'])
+        self.assertEqual(instance._get_current_ordering(qset_not_default),
+                         ['id'])
+        self.assertEqual(instance._get_current_ordering(qset_not_default_defined),
+                         ['slug', 'id'])
         self.assertEqual(instance._get_current_ordering(qset_defined),
                          ['-nweight', 'title', 'id'])
+        self.assertEqual(instance._get_current_ordering(qset_defined_extra),
+                         ['-slug', 'nweight', 'id'])
         self.assertEqual(instance._get_current_ordering(qset_with_id),
                          ['-weight', '-id'])
+
+        self.assertEqual(list(NoOrderingModel._meta.ordering), [])
+        self.assertEqual(instance._get_current_ordering(qset_empty), ['id'])
+        self.assertEqual(instance._get_current_ordering(qset_empty_defined),
+                         ['-nweight', 'title', 'id'])
 
     def test_get_next_or_prev_by_order(self):
         qset_default = Model.objects.all()

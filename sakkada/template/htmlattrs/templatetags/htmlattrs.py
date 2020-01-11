@@ -6,7 +6,7 @@ from django.template import Library, Node, TemplateSyntaxError
 from django.template.base import FilterExpression
 from django.forms.forms import BoundField
 from django.utils.safestring import mark_safe
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.module_loading import import_string
 from django.utils.html import format_html
 from django.conf import settings
@@ -529,7 +529,7 @@ class AttrsNode(Node):
 
     def render(self, context):
         boundfield = self.field.resolve(context)
-        extra = [[name, sign, (force_text(value.resolve(context))
+        extra = [[name, sign, (force_str(value.resolve(context))
                                if isinstance(value, FilterExpression) else
                                value),]
                  for name, sign, value in self.extra]
@@ -558,7 +558,7 @@ class AttrsNode(Node):
         if self.asvar:
             context[self.asvar] = boundfield
             return ''
-        return force_text(boundfield)
+        return force_str(boundfield)
 
 
 @register.tag(name='htmlattrs')
@@ -616,8 +616,8 @@ class HtmlAttrsNode(Node):
         self.asvar = asvar
 
     def render(self, context):
-        html, regex = (force_text(self.html.resolve(context)),
-                       force_text(self.regex.resolve(context)),)
+        html, regex = (force_str(self.html.resolve(context)),
+                       force_str(self.regex.resolve(context)),)
         regex, sliceobj = regex_parser(regex)
 
         container = None
@@ -626,7 +626,7 @@ class HtmlAttrsNode(Node):
             withfield = monkey_patch_bound_field(withfield)
             container = getattr(withfield, CONTAINER)
 
-        extra = [[name, sign, (force_text(value.resolve(context))
+        extra = [[name, sign, (force_str(value.resolve(context))
                                if isinstance(value, FilterExpression) else
                                value),]
                  for name, sign, value in self.extra]
@@ -703,7 +703,7 @@ def htmlattrs(html, extra=None):
         container = getattr(withfield, CONTAINER, None)
 
     if not isinstance(html, str):
-        html = mark_safe(force_text(html))
+        html = mark_safe(force_str(html))
     if not extra:
         return html
 
